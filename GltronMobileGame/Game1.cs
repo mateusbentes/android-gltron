@@ -12,6 +12,9 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
     private SpriteFont _font;
     private GltronMobileEngine.Video.HUD _hud;
+    private GltronMobileEngine.Video.WorldGraphics _worldGraphics;
+    private GltronMobileEngine.Video.TrailsRenderer _trailsRenderer;
+    private GltronMobileEngine.Video.Camera _camera;
 
     public Game1()
     {
@@ -53,6 +56,15 @@ public class Game1 : Game
         _hud = new GltronMobileEngine.Video.HUD(_spriteBatch, _font);
         _glTronGame.tronHUD = _hud;
 
+        // Initialize 3D graphics components
+        _worldGraphics = new GltronMobileEngine.Video.WorldGraphics(GraphicsDevice, Content);
+        _worldGraphics.LoadContent(Content);
+        
+        _trailsRenderer = new GltronMobileEngine.Video.TrailsRenderer(GraphicsDevice);
+        _trailsRenderer.LoadContent(Content);
+        
+        _camera = new GltronMobileEngine.Video.Camera(GraphicsDevice.Viewport);
+
         // Initialize sound and start music
         try
         {
@@ -92,9 +104,48 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        // Ensure a visible background
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        // Clear with dark background
+        GraphicsDevice.Clear(Color.Black);
 
+        // Update camera to follow player
+        var playerPos = Vector3.Zero;
+        if (_glTronGame.GetOwnPlayer() != null)
+        {
+            var player = _glTronGame.GetOwnPlayer();
+            playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
+        }
+        _camera.Update(playerPos, gameTime);
+
+        // Begin 3D rendering
+        _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
+
+        // Draw floor
+        _worldGraphics.DrawFloor();
+
+        // Draw walls
+        var walls = _glTronGame.GetWalls();
+        if (walls != null)
+        {
+            _worldGraphics.DrawWalls(walls);
+        }
+
+        // Draw player trails
+        var players = _glTronGame.GetPlayers();
+        if (players != null)
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                if (players[i] != null)
+                {
+                    _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                }
+            }
+        }
+
+        // End 3D rendering
+        _worldGraphics.EndDraw();
+
+        // Run game logic rendering (win/lose logic)
         _glTronGame.RenderGame(GraphicsDevice);
 
         // Draw HUD with real score if available

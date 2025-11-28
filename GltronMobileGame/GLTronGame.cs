@@ -83,6 +83,21 @@ namespace GltronMobileGame
             return Players[OWN_PLAYER].getScore();
         }
 
+        public Player GetOwnPlayer()
+        {
+            return Players[OWN_PLAYER];
+        }
+
+        public Player[] GetPlayers()
+        {
+            return Players;
+        }
+
+        public GltronMobileEngine.Interfaces.ISegment[] GetWalls()
+        {
+            return Walls;
+        }
+
         public void initialiseGame()
         {
             // Inicialização de sons, HUD, preferências e modelos será feita no Game1.LoadContent()

@@ -1,13 +1,15 @@
+#nullable enable
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using GltronMobileEngine;
 
 namespace GltronMobileGame
 {
-    public class Player
+    public class Player : GltronMobileEngine.Interfaces.IPlayer
     {
         // Constantes e variáveis do Java Player.java
-        private Model Cycle; // Substituir por um modelo MonoGame
+        private Model? Cycle; // Substituir por um modelo MonoGame
         private int Player_num;
         private int Direction;
         private int LastDirection;
@@ -216,6 +218,13 @@ namespace GltronMobileGame
         public Segment getTrail(int offset)
         {
             return Trails[offset];
+        }
+
+        // Interface implementation
+        GltronMobileEngine.Interfaces.ISegment? GltronMobileEngine.Interfaces.IPlayer.getTrail(int index)
+        {
+            if (index < 0 || index >= Trails.Length) return null;
+            return Trails[index];
         }
 
         public int getDirection()

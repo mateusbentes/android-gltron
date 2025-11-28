@@ -1,13 +1,18 @@
 using System;
+using GltronMobileEngine;
 
 namespace GltronMobileGame;
 
-public class Segment
+public class Segment : GltronMobileEngine.Interfaces.ISegment
 {
     public Vec vStart = new Vec();
     public Vec vDirection = new Vec();
     public float t1 = 0.0f;
     public float t2 = 0.0f;
+
+    // Interface implementation
+    GltronMobileEngine.Vec GltronMobileEngine.Interfaces.ISegment.vStart => vStart;
+    GltronMobileEngine.Vec GltronMobileEngine.Interfaces.ISegment.vDirection => vDirection;
 
     public Segment() { }
 

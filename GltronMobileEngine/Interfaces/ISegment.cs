@@ -2,6 +2,6 @@ namespace GltronMobileEngine.Interfaces;
 
 public interface ISegment
 {
-    Vec vStart { get; }
-    Vec vDirection { get; }
+    GltronMobileEngine.Vec vStart { get; }
+    GltronMobileEngine.Vec vDirection { get; }
 }
