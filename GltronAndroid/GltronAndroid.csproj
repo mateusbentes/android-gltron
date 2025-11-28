@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <TargetAndroidVersion>34</TargetAndroidVersion>
+    <AndroidUseLatestPlatformSdk>false</AndroidUseLatestPlatformSdk>
+    <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
+    <AndroidTargetFrameworkVersion>v34.0</AndroidTargetFrameworkVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.companyname.gltronandroid</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.1.303" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GltronMonoGame/GltronMonoGame.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <MonoGameContentReference Include="../GltronMonoGame/Content/Content.mgcb" />
+  </ItemGroup>
+  <Target Name="BuildContent" BeforeTargets="Build">
+    <Message Text="Building MGCB content..." Importance="high" />
+    <Exec Command="dotnet mgcb /quiet -@:&quot;$(MSBuildProjectDirectory)/../GltronMonoGame/Content/Content.mgcb&quot; /platform:Android /outputDir:&quot;$(MSBuildProjectDirectory)/Content/bin/Android&quot; /intermediateDir:&quot;$(MSBuildProjectDirectory)/Content/obj/Android&quot;" ContinueOnError="false" />
+  </Target>
+</Project>

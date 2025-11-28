@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<XnaContent xmlns:ns="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
+  <Asset Type="ns:FontDescription">
+    <FontName>Arial</FontName>
+    <Size>14</Size>
+    <Spacing>2</Spacing>
+    <UseKerning>true</UseKerning>
+    <Style>Regular</Style>
+    <DefaultCharacter>*</DefaultCharacter>
+    <CharacterRegions>
+      <CharacterRegion>
+        <Start> </Start>
+        <End>~</End>
+      </CharacterRegion>
+    </CharacterRegions>
+  </Asset>
+</XnaContent>

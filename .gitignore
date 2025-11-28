@@ -1,0 +1,69 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Editors/IDEs
+.vscode/
+.idea/
+.vs/
+.ionide/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider/JetBrains
+.fleet/
+
+# Mono/.NET
+bin/
+obj/
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+
+# MonoGame Content pipeline outputs
+Content/bin/
+Content/obj/
+GltronMonoGame/Content/bin/
+GltronMonoGame/Content/obj/
+GltronAndroid/Content/bin/
+GltronAndroid/Content/obj/
+*/Content/bin/
+*/Content/obj/
+
+# Android build artifacts
+**/bin/
+**/obj/
+**/.gradle/
+**/.idea/
+**/.externalNativeBuild/
+**/.cxx/
+**/build/
+**/local.properties
+**/gradle.properties
+**/gradlew
+**/gradlew.bat
+**/gradle/
+*.apk
+*.aab
+
+# Android Studio/IntelliJ
+*.iml
+
+# OS/editor temp
+*~
+*.swp
+*.swo
+._*
+.Trash-*
+.history
+
+# Environment files
+.env
+.env.*

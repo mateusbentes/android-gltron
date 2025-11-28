@@ -1,5 +1,19 @@
 Android Port of glTRON -
 
+MonoGame Android Port (current build path)
+=========================================
+The active Android build now uses MonoGame (.NET) with scripts to scaffold and build an APK.
+
+Start here:
+- Quick start and project pointers: README_ANDROID_PORT.md
+- One-shot build: ./scripts/build-android-app.sh -c Release
+- SDK env helper: source ./scripts/setup-android-env.sh
+
+Legacy Java Android project
+===========================
+The original Android Java/OpenGL ES implementation remains under GlTron/ for reference and parity checks. It is not used by the new build scripts.
+
+
 INTRODUCTION
 ============
 This project was undertaken by myself (Iain Churcher) to learn both android and openGL ES programming.
