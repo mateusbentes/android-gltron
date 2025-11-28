@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify Android build setup and content pipeline
+# Verify Android build setup and content pipeline for the new solution-based architecture
 # Usage: ./scripts/verify-build.sh [-v]
 
 set -euo pipefail
@@ -21,7 +21,7 @@ log() {
 
 echo "🔍 Verifying Android build setup..."
 
-# Check .NET environment
+# 1) Check .NET environment
 echo "1. Checking .NET environment..."
 if command -v dotnet &>/dev/null; then
     DOTNET_VERSION=$(dotnet --version)
@@ -31,7 +31,7 @@ else
     exit 1
 fi
 
-# Check Android workload
+# 2) Check Android workload
 echo "2. Checking Android workload..."
 if dotnet workload list | grep -q android; then
     echo "  ✓ Android workload installed"
@@ -39,41 +39,52 @@ else
     echo "  ⚠️  Android workload not found. Install with: dotnet workload install android"
 fi
 
-# Check MGCB tool
+# 3) Check MGCB tool
 echo "3. Checking MGCB tool..."
-if command -v mgcb &>/dev/null || command -v dotnet-mgcb &>/dev/null; then
+if command -v mgcb &>/dev/null || command -v dotnet-mgcb &>/dev/null || command -v mgcb-editor &>/dev/null; then
     echo "  ✓ MGCB tool found"
 else
-    echo "  ⚠️  MGCB tool not found. Install with: dotnet tool install -g dotnet-mgcb"
+    echo "  ⚠️  MGCB tool not found. Install with: dotnet tool install -g dotnet-mgcb-editor"
 fi
 
-# Check project structure
-echo "4. Checking project structure..."
-if [ -f "GltronAndroid/GltronAndroid.csproj" ]; then
-    echo "  ✓ Android project found"
+# 4) Check solution and projects
+echo "4. Checking solution and projects..."
+if [ -f "GltronMobile.sln" ]; then
+    echo "  ✓ Android solution found: GltronMobile.sln"
 else
-    echo "  ❌ Android project not found"
+    echo "  ❌ Android solution not found (GltronMobile.sln)"
     exit 1
 fi
 
-if [ -f "GltronAndroid/Content/Content.mgcb" ]; then
+if [ -f "GltronMobile.Full.sln" ]; then
+    echo "  ✓ Full solution found: GltronMobile.Full.sln (includes iOS)"
+else
+    echo "  ⚠️  Full solution not found (iOS builds will not be available)"
+fi
+
+if [ -f "GltronMobileEngine/GltronMobileEngine.csproj" ]; then
+    echo "  ✓ Engine project found"
+else
+    echo "  ❌ Engine project not found"
+    exit 1
+fi
+
+if [ -f "GltronMobileGame/GltronAndroid.csproj" ]; then
+    echo "  ✓ Android game project found"
+else
+    echo "  ❌ Android game project not found"
+    exit 1
+fi
+
+# 5) Check content
+echo "5. Checking content..."
+CONTENT_DIR="GltronMobileGame/Content"
+if [ -f "$CONTENT_DIR/Content.mgcb" ]; then
     echo "  ✓ Content.mgcb found"
-    
-    # Check platform setting
-    if grep -q "/platform:Android" "GltronAndroid/Content/Content.mgcb"; then
-        echo "  ✓ Content.mgcb configured for Android"
-    else
-        echo "  ❌ Content.mgcb not configured for Android platform"
-        exit 1
-    fi
 else
-    echo "  ❌ Content.mgcb not found"
+    echo "  ❌ Content.mgcb not found at $CONTENT_DIR/Content.mgcb"
     exit 1
 fi
-
-# Check essential content files
-echo "5. Checking content files..."
-CONTENT_DIR="GltronAndroid/Content"
 
 if [ -f "$CONTENT_DIR/Fonts/Default.spritefont" ]; then
     echo "  ✓ Default font found"
@@ -81,7 +92,7 @@ else
     echo "  ❌ Default font missing"
 fi
 
-# Check for audio files
+# Audio files count (informational)
 AUDIO_COUNT=0
 for audio in "Assets/game_engine.ogg" "Assets/game_crash.ogg" "Assets/song_revenge_of_cats.ogg"; do
     if [ -f "$CONTENT_DIR/$audio" ]; then
@@ -91,10 +102,10 @@ for audio in "Assets/game_engine.ogg" "Assets/game_crash.ogg" "Assets/song_reven
 done
 echo "  ✓ Found $AUDIO_COUNT/3 audio files"
 
-# Check Activity1.cs
+# 6) Check Activity1.cs configuration
 echo "6. Checking Activity configuration..."
-if [ -f "GltronAndroid/Activity1.cs" ]; then
-    if grep -q "AndroidGameActivity" "GltronAndroid/Activity1.cs"; then
+if [ -f "GltronMobileGame/Activity1.cs" ]; then
+    if grep -q "AndroidGameActivity" "GltronMobileGame/Activity1.cs"; then
         echo "  ✓ Activity1 properly configured"
     else
         echo "  ❌ Activity1 not properly configured"
@@ -103,30 +114,14 @@ else
     echo "  ❌ Activity1.cs not found"
 fi
 
-# Check for duplicate files (should be removed)
-echo "7. Checking for duplicate files..."
-DUPLICATES=0
-for file in "GLTronGame.cs" "Player.cs" "Vec.cs" "Segment.cs"; do
-    if [ -f "GltronAndroid/$file" ]; then
-        echo "  ⚠️  Duplicate file found: GltronAndroid/$file (should be removed)"
-        ((DUPLICATES++))
-    fi
-done
-
-if [ $DUPLICATES -eq 0 ]; then
-    echo "  ✓ No duplicate files found"
-fi
-
-# Test content build (dry run)
-echo "8. Testing content build..."
+# 7) Test content build (dry run)
+echo "7. Testing content build..."
 if command -v mgcb &>/dev/null; then
     log "Testing MGCB build..."
-    if mgcb -@:"GltronAndroid/Content/Content.mgcb" /platform:Android /outputDir:"GltronAndroid/Content/bin/Android" /intermediateDir:"GltronAndroid/Content/obj/Android" /quiet; then
+    if mgcb -@:"$CONTENT_DIR/Content.mgcb" /platform:Android /outputDir:"$CONTENT_DIR/bin/Android" /intermediateDir:"$CONTENT_DIR/obj/Android" /quiet; then
         echo "  ✓ Content build test successful"
-        
-        # Check if XNB files were created
-        if [ -d "GltronAndroid/Content/bin/Android" ]; then
-            XNB_COUNT=$(find "GltronAndroid/Content/bin/Android" -name "*.xnb" | wc -l)
+        if [ -d "$CONTENT_DIR/bin/Android" ]; then
+            XNB_COUNT=$(find "$CONTENT_DIR/bin/Android" -name "*.xnb" | wc -l)
             echo "  ✓ Generated $XNB_COUNT XNB files"
         fi
     else
@@ -142,5 +137,5 @@ echo ""
 echo "Next steps:"
 echo "  1. If any ❌ errors above, fix them first"
 echo "  2. Run: ./scripts/clean-build.sh -a"
-echo "  3. Run: ./scripts/build-android.sh -c Debug"
+echo "  3. Run: ./scripts/build-android.sh -c Release"
 echo "  4. Deploy with: adb install -r path/to/generated.apk"

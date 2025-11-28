@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-ios</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GltronMobileGame</RootNamespace>
+    <AssemblyName>GltronMobileGame.iOS</AssemblyName>
+    
+    <!-- iOS app metadata -->
+    <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
+    <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
+    <ApplicationId>com.companyname.gltronmobilegame.ios</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    
+    <!-- MonoGame Content Pipeline Configuration -->
+    <MonoGamePlatform>iOS</MonoGamePlatform>
+    <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.1.303" />
+  </ItemGroup>
+  
+  <!-- Use shared MonoGame content -->
+  <ItemGroup>
+    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.mgcb" />
+  </ItemGroup>
+  
+  <!-- Reference shared engine -->
+  <ItemGroup>
+    <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
+  </ItemGroup>
+  
+  <!-- Link shared game source files -->
+  <ItemGroup>
+    <Compile Include="..\GltronMobileGame\Game1.cs" Link="Game1.cs" />
+    <Compile Include="..\GltronMobileGame\GLTronGame.cs" Link="GLTronGame.cs" />
+    <Compile Include="..\GltronMobileGame\Player.cs" Link="Player.cs" />
+    <Compile Include="..\GltronMobileGame\Segment.cs" Link="Segment.cs" />
+    <Compile Include="..\GltronMobileGame\Vec.cs" Link="Vec.cs" />
+    <Compile Include="..\GltronMobileGame\GameState.cs" Link="GameState.cs" />
+    <Compile Include="..\GltronMobileGame\Video\**\*.cs" Link="Video\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\GltronMobileGame\Sound\SoundManager.cs" Link="Sound\SoundManager.cs" />
+  </ItemGroup>
+</Project>

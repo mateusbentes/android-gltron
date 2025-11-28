@@ -2,13 +2,13 @@
 # Clean MonoGame Android project build artifacts
 # Usage: ./scripts/clean-build.sh [-p ProjectDir] [-a] [-v]
 # Options:
-#   -p ProjectDir  : Specify project directory (default: GltronAndroid)
-#   -a            : Clean all projects (GltronAndroid + GltronMonoGame)
+#   -p ProjectDir  : Specify project directory (default: GltronMobileGame)
+#   -a            : Clean all projects (GltronMobileGame + GltronMobileEngine + GltronMobileGame.iOS)
 #   -v            : Verbose output
 
 set -euo pipefail
 
-PROJ_DIR="GltronAndroid"
+PROJ_DIR="GltronMobileGame"
 CLEAN_ALL=false
 VERBOSE=false
 
@@ -94,7 +94,8 @@ clean_project "$PROJ_DIR"
 
 # Clean additional projects if requested
 if [ "$CLEAN_ALL" = true ]; then
-    clean_project "GltronMonoGame"
+    clean_project "GltronMobileEngine"
+    clean_project "GltronMobileGame.iOS"
 fi
 
 # Clean any global build artifacts in root
@@ -119,7 +120,7 @@ done
 echo "✓ Build clean complete!"
 echo ""
 echo "To rebuild, run:"
-echo "  ./scripts/build-android.sh -c Debug"
+echo "  ./scripts/build-android.sh -c Release"
 echo ""
 echo "To clean all projects next time, use:"
 echo "  ./scripts/clean-build.sh -a -v"

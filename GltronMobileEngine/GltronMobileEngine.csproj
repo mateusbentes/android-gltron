@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GltronMobileEngine</RootNamespace>
+    <AssemblyName>GltronMobileEngine</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <!-- Support for cross-platform content building -->
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Exclude game-level classes from engine build -->
+    <Compile Remove="Game1.cs" />
+    <Compile Remove="GLTronGame.cs" />
+    <Compile Remove="Player.cs" />
+    <Compile Remove="Segment.cs" />
+  </ItemGroup>
+</Project>
