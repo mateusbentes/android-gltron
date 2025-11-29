@@ -17,6 +17,7 @@ public class Game1 : Game
     private GltronMobileEngine.Video.TrailsRenderer _trailsRenderer;
     private GltronMobileEngine.Video.Camera _camera;
     private Texture2D _whitePixel;
+    private Texture2D _menuBackground;
 
     public Game1()
     {
@@ -189,6 +190,18 @@ public class Game1 : Game
             _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
             _whitePixel.SetData(new[] { Color.White });
             System.Diagnostics.Debug.WriteLine("GLTRON: White pixel texture created");
+
+            // Load menu background image (like original Java version)
+            try
+            {
+                _menuBackground = Content.Load<Texture2D>("Assets/gltron_bitmap");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Menu background loaded successfully");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Menu background load failed: {ex.Message}");
+                _menuBackground = null;
+            }
 
             // Try to load font (non-critical)
             try
@@ -404,11 +417,11 @@ public class Game1 : Game
                     // Try simple clear first (Android compatibility)
                     try
                     {
-                        GraphicsDevice.Clear(Color.Red);
+                        GraphicsDevice.Clear(Color.Black);
                         try
                         {
 #if ANDROID
-                            Android.Util.Log.Info("GLTRON", "Screen cleared with dark blue - simple clear worked");
+                            Android.Util.Log.Info("GLTRON", "Screen cleared with black for 3D game");
 #endif
                         }
                         catch { }
@@ -509,14 +522,104 @@ public class Game1 : Game
                         return; // Skip 3D rendering if BeginDraw fails
                     }
 
-                    // SKIP ALL 3D DRAWING TO TEST CLEAR COLOR VISIBILITY
+                    // Draw floor
                     try
                     {
+                        _worldGraphics.DrawFloor();
+                        try
+                        {
 #if ANDROID
-                        Android.Util.Log.Info("GLTRON", "SKIPPING ALL 3D DRAWING - TESTING RED CLEAR COLOR");
+                            Android.Util.Log.Info("GLTRON", "Floor drawn successfully");
 #endif
+                        }
+                        catch { }
                     }
-                    catch { }
+                    catch (System.Exception ex)
+                    {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Error("GLTRON", $"DrawFloor FAILED: {ex.Message}");
+#endif
+                        }
+                        catch { }
+                    }
+
+                    // Draw walls
+                    var walls = _glTronGame?.GetWalls();
+                    if (walls != null)
+                    {
+                        try
+                        {
+                            _worldGraphics.DrawWalls(walls);
+                            try
+                            {
+#if ANDROID
+                                Android.Util.Log.Info("GLTRON", "Walls drawn successfully");
+#endif
+                            }
+                            catch { }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            try
+                            {
+#if ANDROID
+                                Android.Util.Log.Error("GLTRON", $"DrawWalls FAILED: {ex.Message}");
+#endif
+                            }
+                            catch { }
+                        }
+                    }
+
+                    // Draw player trails
+                    var players = _glTronGame?.GetPlayers();
+                    if (players != null && _trailsRenderer != null)
+                    {
+                        for (int i = 0; i < players.Length; i++)
+                        {
+                            if (players[i] != null)
+                            {
+                                try
+                                {
+                                    _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                                }
+                                catch (System.Exception ex)
+                                {
+                                    try
+                                    {
+#if ANDROID
+                                        Android.Util.Log.Error("GLTRON", $"DrawTrail FAILED for player {i}: {ex.Message}");
+#endif
+                                    }
+                                    catch { }
+                                }
+                            }
+                        }
+                    }
+
+                    // End 3D rendering
+                    try
+                    {
+                        _worldGraphics.EndDraw();
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Info("GLTRON", "3D rendering completed successfully");
+#endif
+                        }
+                        catch { }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Error("GLTRON", $"EndDraw FAILED: {ex.Message}");
+#endif
+                        }
+                        catch { }
+                    }
                 }
                 catch (System.Exception ex)
                 {
@@ -557,7 +660,14 @@ public class Game1 : Game
                 {
                     if (isInMenu)
                     {
-                        // MENU: Show instructions like original Java version
+                        // MENU: Draw background image first (like original Java drawSplash)
+                        if (_menuBackground != null)
+                        {
+                            // Draw fullscreen background image
+                            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, viewport.Width, viewport.Height), Color.White);
+                        }
+                        
+                        // Show instructions like original Java version
                         var centerX = viewport.Width / 2;
                         var centerY = viewport.Height / 2;
                         
@@ -565,24 +675,18 @@ public class Game1 : Game
                         var startText = "Tap screen to Start";
                         var startSize = _font.MeasureString(startText);
                         _spriteBatch.DrawString(_font, startText, 
-                            new Vector2(centerX - startSize.X/2, centerY - 50), Color.White);
+                            new Vector2(centerX - startSize.X/2, centerY + 100), Color.White);
                         
                         // Secondary instruction
                         var instructText = "Tap left/right to turn";
                         var instructSize = _font.MeasureString(instructText);
                         _spriteBatch.DrawString(_font, instructText, 
-                            new Vector2(centerX - instructSize.X/2, centerY + 20), Color.White);
-                        
-                        // Title
-                        var titleText = "GL TRON";
-                        var titleSize = _font.MeasureString(titleText);
-                        _spriteBatch.DrawString(_font, titleText, 
-                            new Vector2(centerX - titleSize.X/2, centerY - 150), Color.Cyan);
+                            new Vector2(centerX - instructSize.X/2, centerY + 150), Color.White);
                         
                         try
                         {
 #if ANDROID
-                            Android.Util.Log.Info("GLTRON", "Drawing menu instructions on black background");
+                            Android.Util.Log.Info("GLTRON", "Drawing menu with background image");
 #endif
                         }
                         catch { }
