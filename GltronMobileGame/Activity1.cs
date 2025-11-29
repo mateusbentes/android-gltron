@@ -23,7 +23,11 @@ namespace gltron.org.gltronmobile
 
         protected override void OnCreate(Bundle bundle)
         {
+            Android.Util.Log.Info("GLTRON", "OnCreate method entry - before base.OnCreate");
+            
             base.OnCreate(bundle);
+            
+            Android.Util.Log.Info("GLTRON", "OnCreate method - after base.OnCreate");
 
             try
             {
