@@ -11,7 +11,7 @@
     android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
     
     <activity 
-      android:name=".Activity1"
+      android:name="GltronMobileGame.Activity1"
       android:label="GLTron Mobile"
       android:screenOrientation="sensorLandscape"
       android:configChanges="orientation|keyboardHidden|screenSize|screenLayout"
