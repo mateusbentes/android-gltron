@@ -26,6 +26,9 @@ public class Game1 : Game
             System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor start");
             
             // CRITICAL: Initialize GraphicsDeviceManager first - this must succeed
+            // Add a small delay to ensure Android context is ready
+            System.Threading.Thread.Sleep(100);
+            
             _graphics = new GraphicsDeviceManager(this);
             if (_graphics == null)
             {
@@ -43,21 +46,8 @@ public class Game1 : Game
             _graphics.PreferredBackBufferWidth = 1280;
             _graphics.PreferredBackBufferHeight = 720;
             
-            // CRITICAL: Only create GLTronGame after graphics setup, don't initialize it yet
-            try
-            {
-                _glTronGame = new GLTronGame();
-                if (_glTronGame == null)
-                {
-                    throw new System.InvalidOperationException("Failed to create GLTronGame instance");
-                }
-                System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created successfully");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame creation failed: {ex}");
-                throw new System.InvalidOperationException($"Failed to create GLTronGame: {ex.Message}", ex);
-            }
+            // Delay GLTronGame creation until later to avoid initialization issues
+            _glTronGame = null; // Will be created in Initialize()
             
             // CRITICAL: Don't access GraphicsDevice here - it doesn't exist yet!
             
@@ -144,26 +134,37 @@ public class Game1 : Game
             }
             catch { /* Ignore platform-specific logging errors */ }
             
-            // Initialize game with screen size - with comprehensive null checks
-            if (_glTronGame != null)
+            // Create GLTronGame now that graphics are initialized
+            if (_glTronGame == null)
             {
                 try
                 {
-                    _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
-                    _glTronGame.initialiseGame();
-                    System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame initialized successfully");
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Creating GLTronGame in Initialize");
+                    _glTronGame = new GLTronGame();
+                    if (_glTronGame == null)
+                    {
+                        throw new System.InvalidOperationException("Failed to create GLTronGame instance");
+                    }
+                    System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created successfully");
                 }
                 catch (System.Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame initialization failed: {ex}");
-                    throw new System.InvalidOperationException($"GLTronGame initialization failed: {ex.Message}", ex);
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame creation failed: {ex}");
+                    throw new System.InvalidOperationException($"Failed to create GLTronGame: {ex.Message}", ex);
                 }
             }
-            else
+
+            // Initialize game with screen size - with comprehensive null checks
+            try
             {
-                var error = "GLTronGame is null in Initialize!";
-                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
-                throw new System.InvalidOperationException(error);
+                _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
+                _glTronGame.initialiseGame();
+                System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame initialized successfully");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame initialization failed: {ex}");
+                throw new System.InvalidOperationException($"GLTronGame initialization failed: {ex.Message}", ex);
             }
             
             // REMOVED: TouchPanel.EnabledGestures = GestureType.Tap;

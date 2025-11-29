@@ -26,6 +26,12 @@
     <PackageReference Include="MonoGame.Framework.Android" Version="3.8.1.303" />
   </ItemGroup>
   
+  <!-- Add Android-specific properties that MonoGame might need -->
+  <PropertyGroup>
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+  </PropertyGroup>
+  
   <!-- Use proper MonoGame content integration -->
   <ItemGroup>
     <MonoGameContentReference Include="Content/Content.mgcb" />

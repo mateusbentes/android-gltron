@@ -4,7 +4,6 @@ using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
-using System.Threading.Tasks;
 
 namespace gltron.org.gltronmobile
 {
@@ -32,8 +31,18 @@ namespace gltron.org.gltronmobile
                 base.OnCreate(bundle);
                 Android.Util.Log.Info("GLTRON", "Activity.OnCreate completed");
 
-                // For MonoGame 3.8+, create and run the game directly
-                InitializeGame();
+                Android.Util.Log.Info("GLTRON", "Step 1: Creating Game1 instance...");
+                
+                // Create the game instance
+                _game = new Game1();
+                
+                Android.Util.Log.Info("GLTRON", "Step 2: Setting game view...");
+                
+                // For MonoGame 3.8.1.303, we need to run the game directly
+                // The framework will handle Android integration internally
+                _game.Run();
+                
+                Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
             catch (System.Exception ex)
             {
@@ -43,36 +52,6 @@ namespace gltron.org.gltronmobile
                 Android.Util.Log.Error("GLTRON", $"EXCEPTION STACK: {ex.StackTrace}");
                 
                 ShowErrorScreen(ex);
-            }
-        }
-
-        private void InitializeGame()
-        {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "Step 1: Creating Game1 instance...");
-                
-                // Create the game instance
-                _game = new Game1();
-                
-                if (_game == null)
-                {
-                    throw new System.InvalidOperationException("Game1 instance creation returned null");
-                }
-                
-                Android.Util.Log.Info("GLTRON", "Step 2: Starting MonoGame...");
-                
-                // Simple approach - just run the game directly
-                // MonoGame will handle the Android integration internally
-                _game.Run();
-                
-                Android.Util.Log.Info("GLTRON", "MonoGame started successfully!");
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Game initialization failed: {ex}");
-                ShowErrorScreen(ex);
-                throw;
             }
         }
 
