@@ -46,6 +46,17 @@ public class SimpleGame : Game
 
             // Recalculate scaler with current backbuffer size
             _scaler.Recalculate(GraphicsDevice);
+
+            // Handle dynamic size changes
+            this.Window.ClientSizeChanged += (_, __) =>
+            {
+                try
+                {
+                    Android.Util.Log.Info("GLTRON", "ClientSizeChanged: recalculating scaler");
+                    _scaler.Recalculate(GraphicsDevice);
+                }
+                catch { }
+            };
             
             // Log resolution info
             var viewport = GraphicsDevice.Viewport;

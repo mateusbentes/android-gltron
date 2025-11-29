@@ -1,6 +1,7 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Views;
 using Microsoft.Xna.Framework;
 
 namespace GltronMobileGame
@@ -22,53 +23,31 @@ namespace GltronMobileGame
 
         protected override void OnCreate(Bundle bundle)
         {
-            try
+            base.OnCreate(bundle);
+
+            // Fullscreen flags
+            Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
+
+            // Custom host view approach for MonoGame
+            _game = new SimpleGame();
+
+            // Force creation of the Game's window and associated Android view
+            var _ = _game.Window?.Handle;
+            var view = (View)_game.Services.GetService(typeof(View));
+            if (view == null)
             {
-                Android.Util.Log.Info("GLTRON", "Activity OnCreate start");
-                base.OnCreate(bundle);
-
-                // Set fullscreen flags
-                Window?.SetFlags(Android.Views.WindowManagerFlags.Fullscreen, Android.Views.WindowManagerFlags.Fullscreen);
-
-                // Create the MonoGame Game and set content view to its window
-                _game = new SimpleGame();
-
-                // Obtain the Android view from the Game's services and set it as content view
-                var view = (Android.Views.View)_game.Services.GetService(typeof(Android.Views.View));
-                if (view == null)
-                {
-                    // Force window/view creation by touching the handle, then try again
-                    var _ = _game.Window?.Handle;
-                    view = (Android.Views.View)_game.Services.GetService(typeof(Android.Views.View));
-                }
-                if (view != null)
-                {
-                    SetContentView(view);
-                }
-
-                _game.Run();
-
-                Android.Util.Log.Info("GLTRON", "Activity OnCreate complete");
+                // Touch handle again in case it was lazy
+                _ = _game.Window?.Handle;
+                view = (View)_game.Services.GetService(typeof(View));
             }
-            catch (System.Exception ex)
+
+            if (view != null)
             {
-                Android.Util.Log.Error("GLTRON", $"Activity OnCreate failed: {ex}");
-                Finish();
+                SetContentView(view);
             }
-        }
 
-        protected override void OnDestroy()
-        {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "Activity OnDestroy");
-                _game?.Dispose();
-                base.OnDestroy();
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Activity OnDestroy error: {ex}");
-            }
+            // Start the game loop
+            _game.Run();
         }
     }
 }
