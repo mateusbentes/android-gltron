@@ -63,10 +63,9 @@ public class SoundManager
             if (_engineInstance.State != SoundState.Playing)
                 _engineInstance.Play();
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            // Log error but don't crash the game
-            try { Android.Util.Log.Error("GLTRON", $"PlayEngine error: {ex}"); } catch { }
+            // Ignore sound errors to prevent game crashes
         }
     }
 
@@ -77,10 +76,9 @@ public class SoundManager
             if (_engineInstance != null && _engineInstance.State == SoundState.Playing)
                 _engineInstance.Stop();
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            // Log error but don't crash the game
-            try { Android.Util.Log.Error("GLTRON", $"StopEngine error: {ex}"); } catch { }
+            // Ignore sound errors to prevent game crashes
         }
     }
 
@@ -90,10 +88,9 @@ public class SoundManager
         {
             _crash?.Play(volume, 0f, 0f);
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            // Log error but don't crash the game
-            try { Android.Util.Log.Error("GLTRON", $"PlayCrash error: {ex}"); } catch { }
+            // Ignore sound errors to prevent game crashes
         }
     }
 
@@ -104,9 +101,9 @@ public class SoundManager
             _engineInstance?.Dispose();
             _engineInstance = null;
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            try { Android.Util.Log.Error("GLTRON", $"SoundManager dispose error: {ex}"); } catch { }
+            // Ignore disposal errors
         }
     }
 }
