@@ -3,11 +3,11 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
+using GltronMobileGame;
 
-namespace GltronMobileGame
+namespace gltron.org.gltronmobile
 {
     [Activity(
-        Name = "GltronMobileGame.Activity1",
         Label = "@string/app_name",
         MainLauncher = true,
         Icon = "@drawable/icon",
@@ -25,32 +25,76 @@ namespace GltronMobileGame
         {
             base.OnCreate(bundle);
 
-            // Fullscreen flags
-            Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
-
-            // Create the game
-            _game = new SimpleGame();
-
-            // Force creation and obtain the Android view via services (MonoGame Android 3.8 style)
-            var _ = _game.Window?.Handle; // touch handle to force platform init
-            var view = (View)_game.Services.GetService(typeof(View));
-            if (view == null)
+            try
             {
-                // Try again once after forcing handle
-                _ = _game.Window?.Handle;
-                view = (View)_game.Services.GetService(typeof(View));
-            }
+                Android.Util.Log.Info("GLTRON", "Activity1.OnCreate started");
 
-            if (view != null)
-            {
-                SetContentView(view);
+                // Fullscreen flags
+                Android.Util.Log.Info("GLTRON", "Setting fullscreen flags");
+                Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
+
+                // Create the game
+                Android.Util.Log.Info("GLTRON", "Creating SimpleGame instance");
+                _game = new SimpleGame();
+                Android.Util.Log.Info("GLTRON", "SimpleGame instance created successfully");
+
+                // Start the game loop first (this will create & register the View internally)
+                Android.Util.Log.Info("GLTRON", "Starting game loop");
                 _game.Run();
+                Android.Util.Log.Info("GLTRON", "Game loop started successfully");
+
+                // Now poll for the view with timeout
+                View view = null;
+                const int timeoutMs = 2000;
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                while (sw.ElapsedMilliseconds < timeoutMs && view == null)
+                {
+                    view = _game.Services.GetService(typeof(View)) as View;
+                    if (view == null)
+                        System.Threading.Thread.Sleep(50);
+                }
+
+                if (view == null)
+                {
+                    Android.Util.Log.Error("GLTRON", "Game view never became available after timeout.");
+                    Finish();
+                    return;
+                }
+
+                // Set the content view
+                SetContentView(view);
+                Android.Util.Log.Info("GLTRON", "Game view successfully set as content view.");
             }
-            else
+            catch (System.Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", "Game view is null; finishing Activity to avoid silent kill.");
+                Android.Util.Log.Error("GLTRON", $"OnCreate failed - Exception: {ex.GetType().Name}");
+                Android.Util.Log.Error("GLTRON", $"OnCreate failed - Message: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"OnCreate failed - StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Android.Util.Log.Error("GLTRON", $"OnCreate failed - InnerException: {ex.InnerException}");
+                }
                 Finish();
             }
+        }
+
+        protected override void OnPause()
+        {
+            base.OnPause();
+            Android.Util.Log.Info("GLTRON", "Activity1.OnPause");
+        }
+
+        protected override void OnResume()
+        {
+            base.OnResume();
+            Android.Util.Log.Info("GLTRON", "Activity1.OnResume");
+        }
+
+        protected override void OnDestroy()
+        {
+            Android.Util.Log.Info("GLTRON", "Activity1.OnDestroy");
+            _game?.Dispose();
+            base.OnDestroy();
         }
     }
 }

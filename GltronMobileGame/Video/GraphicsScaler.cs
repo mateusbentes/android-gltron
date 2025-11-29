@@ -27,6 +27,8 @@ namespace GltronMobileGame.Video
         {
             if (graphicsDevice == null) return;
 
+            if (graphicsDevice.PresentationParameters == null) return;
+
             BackBufferWidth = graphicsDevice.PresentationParameters.BackBufferWidth;
             BackBufferHeight = graphicsDevice.PresentationParameters.BackBufferHeight;
 

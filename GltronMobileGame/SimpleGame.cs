@@ -19,18 +19,29 @@ public class SimpleGame : Game
         {
             Android.Util.Log.Info("GLTRON", "SimpleGame constructor start");
             
+            Android.Util.Log.Info("GLTRON", "Creating GraphicsDeviceManager");
             _graphics = new GraphicsDeviceManager(this);
+            Android.Util.Log.Info("GLTRON", "GraphicsDeviceManager created");
+            
+            Android.Util.Log.Info("GLTRON", "Setting Content.RootDirectory");
             Content.RootDirectory = "Content";
+            Android.Util.Log.Info("GLTRON", "Content.RootDirectory set");
             
             // Set up graphics for mobile landscape
+            Android.Util.Log.Info("GLTRON", "Setting graphics properties");
             _graphics.IsFullScreen = true;
             _graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+            Android.Util.Log.Info("GLTRON", "Graphics properties set");
             
             Android.Util.Log.Info("GLTRON", "SimpleGame constructor complete");
         }
         catch (System.Exception ex)
         {
-            try { Android.Util.Log.Error("GLTRON", $"SimpleGame constructor failed: {ex}"); } catch { }
+            try { 
+                Android.Util.Log.Error("GLTRON", $"SimpleGame constructor failed - Exception: {ex.GetType().Name}");
+                Android.Util.Log.Error("GLTRON", $"SimpleGame constructor failed - Message: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"SimpleGame constructor failed - StackTrace: {ex.StackTrace}");
+            } catch { }
             throw;
         }
     }
@@ -78,44 +89,80 @@ public class SimpleGame : Game
         try
         {
             Android.Util.Log.Info("GLTRON", "LoadContent start");
+            
+            if (GraphicsDevice == null)
+            {
+                Android.Util.Log.Error("GLTRON", "GraphicsDevice is null in LoadContent");
+                return;
+            }
+            
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            Android.Util.Log.Info("GLTRON", "SpriteBatch created");
             
             // Create a simple white pixel texture
             _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
             _whitePixel.SetData(new[] { Color.White });
+            Android.Util.Log.Info("GLTRON", "White pixel texture created");
             
             Android.Util.Log.Info("GLTRON", "LoadContent complete");
         }
         catch (System.Exception ex)
         {
             try { Android.Util.Log.Error("GLTRON", $"LoadContent error: {ex}"); } catch { }
+            throw; // Re-throw to see the actual error
         }
     }
 
     protected override void Update(GameTime gameTime)
     {
-        // Handle touch input
-        TouchCollection touchCollection = TouchPanel.GetState();
-        foreach (TouchLocation touch in touchCollection)
+        try
         {
-            if (touch.State == TouchLocationState.Pressed)
+            // Handle touch input
+            TouchCollection touchCollection = TouchPanel.GetState();
+            foreach (TouchLocation touch in touchCollection)
             {
-                try 
-                { 
-                    Android.Util.Log.Info("GLTRON", $"Touch detected at: {touch.Position.X}, {touch.Position.Y}"); 
-                    _showMenu = !_showMenu; // Toggle between menu and game
-                } 
-                catch { }
+                if (touch.State == TouchLocationState.Pressed)
+                {
+                    try 
+                    { 
+                        Android.Util.Log.Info("GLTRON", $"Touch detected at: {touch.Position.X}, {touch.Position.Y}"); 
+                        _showMenu = !_showMenu; // Toggle between menu and game
+                    } 
+                    catch { }
+                }
             }
-        }
 
-        base.Update(gameTime);
+            base.Update(gameTime);
+        }
+        catch (System.Exception ex)
+        {
+            try { Android.Util.Log.Error("GLTRON", $"Update error: {ex}"); } catch { }
+            throw;
+        }
     }
 
     protected override void Draw(GameTime gameTime)
     {
         try
         {
+            if (GraphicsDevice == null)
+            {
+                Android.Util.Log.Error("GLTRON", "GraphicsDevice is null in Draw");
+                return;
+            }
+
+            if (_spriteBatch == null)
+            {
+                Android.Util.Log.Error("GLTRON", "SpriteBatch is null in Draw");
+                return;
+            }
+
+            if (_whitePixel == null)
+            {
+                Android.Util.Log.Error("GLTRON", "WhitePixel texture is null in Draw");
+                return;
+            }
+
             // Clear with dark background
             GraphicsDevice.Clear(Color.Black);
 
@@ -139,12 +186,13 @@ public class SimpleGame : Game
             }
             
             _spriteBatch.End();
+
+            base.Draw(gameTime);
         }
         catch (System.Exception ex)
         {
             try { Android.Util.Log.Error("GLTRON", $"Draw error: {ex}"); } catch { }
+            throw;
         }
-
-        base.Draw(gameTime);
     }
 }
