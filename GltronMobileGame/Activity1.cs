@@ -1,10 +1,12 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Microsoft.Xna.Framework;
 
 namespace GltronMobileGame
 {
     [Activity(
+        Name = "GltronMobileGame.Activity1",
         Label = "@string/app_name",
         MainLauncher = true,
         Icon = "@drawable/icon",
@@ -16,7 +18,7 @@ namespace GltronMobileGame
     )]
     public class Activity1 : Activity
     {
-        private SimpleGame _game;
+        private Game _game;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -25,45 +27,33 @@ namespace GltronMobileGame
                 Android.Util.Log.Info("GLTRON", "Activity OnCreate start");
                 base.OnCreate(bundle);
 
-                // Set fullscreen
+                // Set fullscreen flags
                 Window?.SetFlags(Android.Views.WindowManagerFlags.Fullscreen, Android.Views.WindowManagerFlags.Fullscreen);
-                
-                // Create and run the simple game first
+
+                // Create the MonoGame Game and set content view to its window
                 _game = new SimpleGame();
+
+                // Obtain the Android view from the Game's services and set it as content view
+                var view = (Android.Views.View)_game.Services.GetService(typeof(Android.Views.View));
+                if (view == null)
+                {
+                    // Force window/view creation by touching the handle, then try again
+                    var _ = _game.Window?.Handle;
+                    view = (Android.Views.View)_game.Services.GetService(typeof(Android.Views.View));
+                }
+                if (view != null)
+                {
+                    SetContentView(view);
+                }
+
                 _game.Run();
-                
+
                 Android.Util.Log.Info("GLTRON", "Activity OnCreate complete");
             }
             catch (System.Exception ex)
             {
                 Android.Util.Log.Error("GLTRON", $"Activity OnCreate failed: {ex}");
                 Finish();
-            }
-        }
-
-        protected override void OnPause()
-        {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "Activity OnPause");
-                base.OnPause();
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Activity OnPause error: {ex}");
-            }
-        }
-
-        protected override void OnResume()
-        {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "Activity OnResume");
-                base.OnResume();
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Activity OnResume error: {ex}");
             }
         }
 

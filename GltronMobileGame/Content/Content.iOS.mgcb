@@ -3,7 +3,7 @@
 
 /outputDir:bin/$(Platform)
 /intermediateDir:obj/$(Platform)
-/platform:Android
+/platform:iOS
 /config:
 /profile:Reach
 /compress:False
@@ -36,4 +36,3 @@
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /build:Assets/game_crash.ogg
-

@@ -8,7 +8,7 @@
     <!-- iOS app metadata -->
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
-    <ApplicationId>com.companyname.gltronmobile.ios</ApplicationId>
+    <ApplicationId>gltron.org.gltronmobile.ios</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     
@@ -24,7 +24,7 @@
   
   <!-- Use shared MonoGame content -->
   <ItemGroup>
-    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.mgcb" />
+    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.iOS.mgcb" />
   </ItemGroup>
   
   <!-- Reference shared engine -->

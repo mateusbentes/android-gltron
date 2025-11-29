@@ -11,13 +11,14 @@
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
     <AndroidTargetFrameworkVersion>v34.0</AndroidTargetFrameworkVersion>
     <OutputType>Exe</OutputType>
-    <ApplicationId>com.companyname.gltronmobile</ApplicationId>
+    <ApplicationId>gltron.org.gltronmobile</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     
     <!-- MonoGame Content Pipeline Configuration -->
     <MonoGamePlatform>Android</MonoGamePlatform>
     <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
+    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
   </PropertyGroup>
   
   <ItemGroup>

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
+using GltronMobileGame.Video;
 
 namespace GltronMobileGame;
 
@@ -10,6 +11,7 @@ public class SimpleGame : Game
     private SpriteBatch _spriteBatch;
     private Texture2D _whitePixel;
     private bool _showMenu = true;
+    private GraphicsScaler _scaler = new GraphicsScaler(1280, 720);
 
     public SimpleGame()
     {
@@ -41,10 +43,13 @@ public class SimpleGame : Game
             
             // Apply graphics settings
             _graphics.ApplyChanges();
+
+            // Recalculate scaler with current backbuffer size
+            _scaler.Recalculate(GraphicsDevice);
             
             // Log resolution info
             var viewport = GraphicsDevice.Viewport;
-            Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height}");
+            Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height} (virtual: {_scaler.VirtualWidth}x{_scaler.VirtualHeight})");
             
             TouchPanel.EnabledGestures = GestureType.Tap;
             Android.Util.Log.Info("GLTRON", "SimpleGame Initialize complete");
@@ -103,24 +108,23 @@ public class SimpleGame : Game
             // Clear with dark background
             GraphicsDevice.Clear(Color.Black);
 
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(transformMatrix: _scaler.SpriteTransform);
             
-            var viewport = GraphicsDevice.Viewport;
-            
+            // Use virtual coordinates (1280x720) below; scaler will transform to screen
             if (_showMenu)
             {
-                // Draw menu - cyan rectangle in center
-                _spriteBatch.Draw(_whitePixel, new Rectangle(viewport.Width/2 - 200, viewport.Height/2 - 100, 400, 200), Color.Cyan);
+                // Draw menu - cyan rectangle in center of virtual space
+                _spriteBatch.Draw(_whitePixel, new Rectangle(1280/2 - 200, 720/2 - 100, 400, 200), Color.Cyan);
                 // Draw smaller rectangle as "text"
-                _spriteBatch.Draw(_whitePixel, new Rectangle(viewport.Width/2 - 150, viewport.Height/2 - 50, 300, 20), Color.White);
-                _spriteBatch.Draw(_whitePixel, new Rectangle(viewport.Width/2 - 100, viewport.Height/2, 200, 20), Color.Yellow);
+                _spriteBatch.Draw(_whitePixel, new Rectangle(1280/2 - 150, 720/2 - 50, 300, 20), Color.White);
+                _spriteBatch.Draw(_whitePixel, new Rectangle(1280/2 - 100, 720/2, 200, 20), Color.Yellow);
             }
             else
             {
                 // Draw game - green rectangle in corner
                 _spriteBatch.Draw(_whitePixel, new Rectangle(10, 10, 200, 100), Color.Green);
-                // Draw some "game elements"
-                _spriteBatch.Draw(_whitePixel, new Rectangle(viewport.Width/2, viewport.Height/2, 50, 50), Color.Red);
+                // Draw some "game elements" in the center of virtual space
+                _spriteBatch.Draw(_whitePixel, new Rectangle(1280/2, 720/2, 50, 50), Color.Red);
             }
             
             _spriteBatch.End();
