@@ -62,7 +62,8 @@ namespace gltron.org.gltronmobile
                 
                 Android.Util.Log.Info("GLTRON", "Step 2: Starting MonoGame...");
                 
-                // Start the game - MonoGame will handle the Android integration
+                // Simple approach - just run the game directly
+                // MonoGame will handle the Android integration internally
                 _game.Run();
                 
                 Android.Util.Log.Info("GLTRON", "MonoGame started successfully!");

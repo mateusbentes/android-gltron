@@ -9,6 +9,31 @@ namespace GltronMobileGame
 {
     public class GLTronGame
     {
+        // Multiplatform logging helper
+        private static void LogInfo(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: {message}");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", message); } catch { }
+#endif
+        }
+        
+        private static void LogError(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {message}");
+#if ANDROID
+            try { Android.Util.Log.Error("GLTRON", message); } catch { }
+#endif
+        }
+        
+        private static void LogWarn(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: WARN - {message}");
+#if ANDROID
+            try { Android.Util.Log.Warn("GLTRON", message); } catch { }
+#endif
+        }
+
         // Define Time data
         public long TimeLastFrame;
         public long TimeCurrent;
@@ -79,30 +104,40 @@ namespace GltronMobileGame
         {
             try
             {
-                Android.Util.Log.Info("GLTRON", "GLTronGame constructor: Starting initialization");
+                LogInfo("GLTronGame constructor: Starting initialization");
                 
                 // Initialize walls array first
+                if (Walls == null)
+                {
+                    Walls = new Segment[4];
+                }
+                
                 for (int i = 0; i < 4; i++)
                 {
                     Walls[i] = new Segment();
                 }
-                Android.Util.Log.Info("GLTRON", "GLTronGame constructor: Walls array initialized");
+                LogInfo("GLTronGame constructor: Walls array initialized");
                 
                 initWalls();
-                Android.Util.Log.Info("GLTRON", "GLTronGame constructor: Walls initialized successfully");
+                LogInfo("GLTronGame constructor: Walls initialized successfully");
                 
                 // Initialize Players array
+                if (Players == null)
+                {
+                    Players = new Player[MAX_PLAYERS];
+                }
+                
                 for (int i = 0; i < MAX_PLAYERS; i++)
                 {
                     Players[i] = null; // Explicitly set to null initially
                 }
-                Android.Util.Log.Info("GLTRON", "GLTronGame constructor: Players array initialized");
+                LogInfo("GLTronGame constructor: Players array initialized");
                 
-                Android.Util.Log.Info("GLTRON", "GLTronGame constructor: Completed successfully");
+                LogInfo("GLTronGame constructor: Completed successfully");
             }
             catch (System.Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", $"GLTronGame constructor failed: {ex}");
+                LogError($"GLTronGame constructor failed: {ex}");
                 throw;
             }
         }

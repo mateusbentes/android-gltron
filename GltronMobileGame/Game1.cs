@@ -44,10 +44,19 @@ public class Game1 : Game
             _graphics.PreferredBackBufferHeight = 720;
             
             // CRITICAL: Only create GLTronGame after graphics setup, don't initialize it yet
-            _glTronGame = new GLTronGame();
-            if (_glTronGame == null)
+            try
             {
-                throw new System.InvalidOperationException("Failed to create GLTronGame instance");
+                _glTronGame = new GLTronGame();
+                if (_glTronGame == null)
+                {
+                    throw new System.InvalidOperationException("Failed to create GLTronGame instance");
+                }
+                System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created successfully");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame creation failed: {ex}");
+                throw new System.InvalidOperationException($"Failed to create GLTronGame: {ex.Message}", ex);
             }
             
             // CRITICAL: Don't access GraphicsDevice here - it doesn't exist yet!
