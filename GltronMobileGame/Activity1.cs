@@ -28,15 +28,15 @@ namespace GltronMobileGame
             // Fullscreen flags
             Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
 
-            // Custom host view approach for MonoGame
+            // Create the game
             _game = new SimpleGame();
 
-            // Force creation of the Game's window and associated Android view
-            var _ = _game.Window?.Handle;
+            // Force creation and obtain the Android view via services (MonoGame Android 3.8 style)
+            var _ = _game.Window?.Handle; // touch handle to force platform init
             var view = (View)_game.Services.GetService(typeof(View));
             if (view == null)
             {
-                // Touch handle again in case it was lazy
+                // Try again once after forcing handle
                 _ = _game.Window?.Handle;
                 view = (View)_game.Services.GetService(typeof(View));
             }
@@ -44,10 +44,13 @@ namespace GltronMobileGame
             if (view != null)
             {
                 SetContentView(view);
+                _game.Run();
             }
-
-            // Start the game loop
-            _game.Run();
+            else
+            {
+                Android.Util.Log.Error("GLTRON", "Game view is null; finishing Activity to avoid silent kill.");
+                Finish();
+            }
         }
     }
 }
