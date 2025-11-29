@@ -1,14 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net8.0-android</TargetFrameworks>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>GltronMobileEngine</RootNamespace>
     <AssemblyName>GltronMobileEngine</AssemblyName>
+    
+    <!-- Android-specific properties -->
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android'">24.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <!-- Multiplatform MonoGame support -->
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.1.303" Condition="'$(TargetFramework)' == 'net8.0-android'" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" Condition="'$(TargetFramework)' == 'net8.0'" />
     <!-- Support for cross-platform content building -->
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
   </ItemGroup>
