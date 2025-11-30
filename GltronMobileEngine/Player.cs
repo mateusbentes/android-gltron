@@ -341,18 +341,28 @@ namespace GltronMobileEngine
         // Métodos de colisão
         public void doCrashTestWalls(Segment[] Walls)
         {
+            // CRITICAL FIX: Use EXACT same logic as trail collision (doCrashTestPlayer)
+            if (Walls == null || Speed == 0.0f) return;
+
             Segment Current = Trails[trailOffset];
+            Segment Wall;
             Vec? V;
 
-            for (int j = 0; j < 4; j++)
+            // Use same loop structure as trail collision - check all walls, not just 4
+            for (int j = 0; j < Walls.Length; j++)
             {
-                V = Current.Intersect(Walls[j]);
+                if (Walls[j] == null) continue; // Same null check as trail collision
+                
+                Wall = Walls[j]; // Same variable naming as trail collision
+
+                V = Current.Intersect(Wall);
 
                 if (V != null)
                 {
+                    // IDENTICAL collision detection criteria as trail collision
                     if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                     {
-                        // Colisão detectada - stop at collision point
+                        // IDENTICAL collision response as trail collision
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                         Speed = 0.0f;
@@ -379,9 +389,9 @@ namespace GltronMobileEngine
                         }
                         
                         // Add console message (like Java version)
-                        LogCrash($"Player {Player_num} CRASH wall!");
+                        LogCrash($"Player {Player_num} CRASH wall {j}!");
 
-                        break;
+                        break; // Same break behavior as trail collision
                     }
                 }
             }

@@ -244,21 +244,50 @@ namespace GltronMobileGame
         private void initWalls()
         {
             if (Walls == null || Walls.Length < 4) Walls = new Segment[4];
-            float[,] raw = {
-                { 0.0f, 0.0f, 1.0f, 0.0f },
-                { 1.0f, 0.0f, 0.0f, 1.0f },
-                { 1.0f, 1.0f, -1.0f, 0.0f },
-                { 0.0f, 1.0f, 0.0f, -1.0f }
-            };
-            float w = mCurrentGridSize;
-            float h = mCurrentGridSize;
-            for (int j = 0; j < 4; j++)
+            
+            // CRITICAL FIX: Create collision walls that match the visual arena exactly
+            // Visual arena goes from (0,0) to (gridSize,gridSize)
+            // So collision walls should be positioned at the exact same boundaries
+            float size = mCurrentGridSize;
+            
+            LogInfo($"initWalls: Creating collision walls for arena size {size}");
+            
+            // Wall 0: Bottom wall - from (0,0) to (size,0)
+            if (Walls[0] == null) Walls[0] = new Segment();
+            Walls[0].vStart.v[0] = 0.0f;
+            Walls[0].vStart.v[1] = 0.0f;
+            Walls[0].vDirection.v[0] = size;
+            Walls[0].vDirection.v[1] = 0.0f;
+            
+            // Wall 1: Right wall - from (size,0) to (size,size)
+            if (Walls[1] == null) Walls[1] = new Segment();
+            Walls[1].vStart.v[0] = size;
+            Walls[1].vStart.v[1] = 0.0f;
+            Walls[1].vDirection.v[0] = 0.0f;
+            Walls[1].vDirection.v[1] = size;
+            
+            // Wall 2: Top wall - from (size,size) to (0,size)
+            if (Walls[2] == null) Walls[2] = new Segment();
+            Walls[2].vStart.v[0] = size;
+            Walls[2].vStart.v[1] = size;
+            Walls[2].vDirection.v[0] = -size;
+            Walls[2].vDirection.v[1] = 0.0f;
+            
+            // Wall 3: Left wall - from (0,size) to (0,0)
+            if (Walls[3] == null) Walls[3] = new Segment();
+            Walls[3].vStart.v[0] = 0.0f;
+            Walls[3].vStart.v[1] = size;
+            Walls[3].vDirection.v[0] = 0.0f;
+            Walls[3].vDirection.v[1] = -size;
+            
+            // Log wall positions for debugging
+            for (int i = 0; i < 4; i++)
             {
-                if (Walls[j] == null) Walls[j] = new Segment();
-                Walls[j].vStart.v[0] = raw[j, 0] * w;
-                Walls[j].vStart.v[1] = raw[j, 1] * h;
-                Walls[j].vDirection.v[0] = raw[j, 2] * w;
-                Walls[j].vDirection.v[1] = raw[j, 3] * h;
+                float startX = Walls[i].vStart.v[0];
+                float startY = Walls[i].vStart.v[1];
+                float endX = startX + Walls[i].vDirection.v[0];
+                float endY = startY + Walls[i].vDirection.v[1];
+                LogInfo($"Wall {i}: ({startX:F1},{startY:F1}) to ({endX:F1},{endY:F1})");
             }
         }
 

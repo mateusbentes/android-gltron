@@ -138,20 +138,18 @@ public class WorldGraphics
         Effect.DiffuseColor = Vector3.One;
         Effect.Alpha = 1.0f;
 
-        // CRITICAL FIX: Base arena size on actual player coordinate system
-        // Players use normalized coordinates (0.0-1.0) * gridSize
-        // So the arena should span from 0 to gridSize in both X and Z
+        // SIMPLE FIX: Use player coordinate system directly
+        // Players use coordinates from 0 to gridSize, so floor should match exactly
         float arenaSize = _gridSize;
-        
-        // Use reasonable tile size based on arena size for good texture detail
-        int tileSize = Math.Max(1, (int)(arenaSize / 8f)); // 8 tiles across the arena
-        float uvScale = 1.0f; // Simple 1:1 UV mapping per tile
+        int tileSize = Math.Max(1, (int)(arenaSize / 10f)); // 10 tiles across for good detail
+        float uvScale = 1.0f;
 
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Floor rendering - ArenaSize: {arenaSize}, TileSize: {tileSize}, UVScale: {uvScale}");
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Floor rendering - ArenaSize: {arenaSize}, TileSize: {tileSize}");
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
+            
             for (int x = 0; x < (int)arenaSize; x += tileSize)
             {
                 for (int z = 0; z < (int)arenaSize; z += tileSize)
@@ -188,54 +186,42 @@ public class WorldGraphics
         _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
 
-        // CRITICAL FIX: Base wall dimensions on actual player coordinate system
-        // Players move in 0 to gridSize range, so walls should enclose this area
+        // SIMPLE FIX: Draw walls around the arena perimeter (ignore buggy collision data)
+        // Create a simple square arena that matches the floor
         float arenaSize = _gridSize;
-        float wallHeight = arenaSize * 0.4f; // Wall height proportional to arena size
-        float uvScale = 1.0f; // Simple UV mapping
-
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Wall rendering - ArenaSize: {arenaSize}, WallHeight: {wallHeight}, UVScale: {uvScale}");
-
-        // Create walls that properly enclose the player movement area (0 to gridSize)
-        var quads = new (Vector3 a, Vector3 b, Vector3 c, Vector3 d)[]
-        {
-            // Bottom wall (Z=0) - from X=0 to X=arenaSize
-            (new Vector3(0, wallHeight, 0), new Vector3(arenaSize, wallHeight, 0), 
-             new Vector3(0, 0, 0), new Vector3(arenaSize, 0, 0)),
-            
-            // Right wall (X=arenaSize) - from Z=0 to Z=arenaSize
-            (new Vector3(arenaSize, wallHeight, 0), new Vector3(arenaSize, wallHeight, arenaSize), 
-             new Vector3(arenaSize, 0, 0), new Vector3(arenaSize, 0, arenaSize)),
-            
-            // Top wall (Z=arenaSize) - from X=arenaSize to X=0
-            (new Vector3(arenaSize, wallHeight, arenaSize), new Vector3(0, wallHeight, arenaSize), 
-             new Vector3(arenaSize, 0, arenaSize), new Vector3(0, 0, arenaSize)),
-            
-            // Left wall (X=0) - from Z=arenaSize to Z=0
-            (new Vector3(0, wallHeight, arenaSize), new Vector3(0, wallHeight, 0), 
-             new Vector3(0, 0, arenaSize), new Vector3(0, 0, 0)),
-        };
-
-        // Simple UV coordinates for clean wall texturing
-        var uvs = new Vector2[]
-        {
-            new Vector2(uvScale, 1f), new Vector2(0f, 1f), new Vector2(uvScale, 0f), new Vector2(0f, 0f)
-        };
+        float wallHeight = arenaSize * 0.3f; // Proportional wall height
+        
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing simple arena walls - Size: {arenaSize}, Height: {wallHeight}");
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            foreach (var q in quads)
-            {
-                var verts = new VertexPositionTexture[4];
-                verts[0] = new VertexPositionTexture(q.a, uvs[0]);
-                verts[1] = new VertexPositionTexture(q.b, uvs[1]);
-                verts[2] = new VertexPositionTexture(q.c, uvs[2]);
-                verts[3] = new VertexPositionTexture(q.d, uvs[3]);
-
-                DrawQuad(verts);
-            }
+            
+            // Draw 4 simple walls around the arena perimeter
+            DrawSimpleWall(0, 0, arenaSize, 0, wallHeight);           // Bottom wall
+            DrawSimpleWall(arenaSize, 0, arenaSize, arenaSize, wallHeight); // Right wall  
+            DrawSimpleWall(arenaSize, arenaSize, 0, arenaSize, wallHeight); // Top wall
+            DrawSimpleWall(0, arenaSize, 0, 0, wallHeight);           // Left wall
         }
+    }
+    
+    /// <summary>
+    /// Draw a simple wall segment
+    /// </summary>
+    private void DrawSimpleWall(float x1, float z1, float x2, float z2, float height)
+    {
+        // Create wall quad vertices
+        var verts = new VertexPositionTexture[4];
+        
+        // Bottom edge (on ground)
+        verts[0] = new VertexPositionTexture(new Vector3(x1, 0, z1), new Vector2(0, 1));
+        verts[1] = new VertexPositionTexture(new Vector3(x2, 0, z2), new Vector2(1, 1));
+        
+        // Top edge (at wall height)
+        verts[2] = new VertexPositionTexture(new Vector3(x1, height, z1), new Vector2(0, 0));
+        verts[3] = new VertexPositionTexture(new Vector3(x2, height, z2), new Vector2(1, 0));
+        
+        DrawQuad(verts);
     }
 
     public void DrawSkybox()
