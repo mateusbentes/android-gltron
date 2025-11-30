@@ -45,9 +45,9 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        // CRITICAL FIX: Load motorcycle and recognizer models with robust multi-path loading
-        _lightCycleObjModel = TryLoadObjModel("lightcyclehigh.obj", content);
-        _recognizerObjModel = TryLoadObjModel("recognizerhigh.obj", content);
+        // CRITICAL FIX: Load motorcycle and recognizer models with simplified reliable loading
+        _lightCycleObjModel = TryLoadObjModel("lightcyclehigh.obj");
+        _recognizerObjModel = TryLoadObjModel("recognizerhigh.obj");
         
         if (_recognizerObjModel != null)
         {
@@ -57,63 +57,45 @@ public class WorldGraphics
     }
     
     /// <summary>
-    /// CRITICAL FIX: Robust OBJ model loading with multiple path fallbacks
-    /// Uses TitleContainer.OpenStream for cross-platform file access
+    /// CRITICAL FIX: Simplified and reliable OBJ model loading
+    /// Uses TitleContainer.OpenStream with the exact path where we copied the files
     /// </summary>
-    private SimpleObjLoader.SimpleObjModel? TryLoadObjModel(string filename, ContentManager content)
+    private SimpleObjLoader.SimpleObjModel? TryLoadObjModel(string filename)
     {
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load {filename}");
+        // We know we copied *.obj into "assets/Content/Assets/..." via AndroidAsset/BundleResource
+        string relativePath = Path.Combine("Content", "Assets", filename);
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Loading OBJ from '{relativePath}'");
         
-        // Try multiple path formats for cross-platform compatibility
-        // Note: Files should be set to "Copy to Output Directory = Copy if newer" in project
-        string[] possiblePaths = {
-            $"Content/Assets/{filename}",                           // Standard content path
-            $"Assets/{filename}",                                   // Direct assets path
-            filename,                                               // Direct filename
-            $"./Content/Assets/{filename}",                         // Relative content path
-            $"./Assets/{filename}",                                 // Relative assets path
-            $"./{filename}",                                        // Current directory
-            Path.Combine("Content", "Assets", filename),            // Platform-specific path
-            Path.Combine("Assets", filename)                        // Platform-specific assets path
-        };
-        
-        foreach (string relativePath in possiblePaths)
+        try
         {
-            try
+            using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(relativePath);
+            if (stream == null || stream.Length == 0)
             {
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Trying TitleContainer path: {relativePath}");
-                
-                using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(relativePath);
-                if (stream == null || stream.Length == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Stream is null or empty for {relativePath}");
-                    continue;
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Stream opened successfully, length: {stream.Length}");
-                
-                var model = SimpleObjLoader.LoadFromStream(stream);
-                
-                if (model != null && model.Vertices.Length > 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: {filename} loaded successfully from {relativePath}");
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Model stats - {model.Vertices.Length} vertices, {model.TriangleCount} triangles");
-                    return model;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Model parsing failed or empty for {relativePath}");
-                }
+                throw new FileNotFoundException("Stream is null or empty", relativePath);
             }
-            catch (System.Exception pathEx)
+            
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Stream opened successfully, length: {stream.Length}");
+            
+            var model = SimpleObjLoader.LoadFromStream(stream);
+            
+            if (model != null && model.Vertices.Length > 0)
             {
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load from {relativePath}: {pathEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: {filename} loaded successfully!");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Model stats - {model.Vertices.Length} vertices, {model.TriangleCount} triangles");
+                return model;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Model parsing failed or returned empty model");
+                return null;
             }
         }
-        
-        System.Diagnostics.Debug.WriteLine($"GLTRON: ALL ATTEMPTS FAILED for {filename} - will use fallback cube rendering");
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Make sure {filename} is set to 'Copy to Output Directory = Copy if newer' in the project");
-        return null;
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ load failed for {filename}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Make sure {filename} is properly packaged as AndroidAsset/BundleResource");
+            return null;
+        }
     }
 
     public void BeginDraw(Matrix view, Matrix proj)
@@ -294,6 +276,7 @@ public class WorldGraphics
             if (_lightCycleObjModel != null)
             {
                 // Use loaded OBJ model
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing real motorcycle model for player {p.getPlayerNum()}");
                 var world = Matrix.CreateScale(0.5f) * // Scale down the model
                            Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
                            Matrix.CreateTranslation(x, 0f, y);
@@ -320,9 +303,11 @@ public class WorldGraphics
             else
             {
                 // Fallback: Draw a motorcycle-shaped representation
-                var world = Matrix.CreateScale(2f, 1.5f, 4f) * // Motorcycle proportions: wider than tall, longer than wide
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Using fallback cube for player {p.getPlayerNum()} (model failed to load)");
+                var scale = new Vector3(2f, 1.5f, 4f); // Motorcycle proportions: wider than tall, longer than wide
+                var world = Matrix.CreateScale(scale) *
                            Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
-                           Matrix.CreateTranslation(x, 1f, y); // Position on ground
+                           Matrix.CreateTranslation(x, scale.Y / 2f, y); // Position properly above ground
                 fx.World = world;
                 
                 // Get player color
@@ -334,16 +319,18 @@ public class WorldGraphics
                 fx.DiffuseColor = GetPlayerColor(colorIndex);
                 fx.Alpha = 1.0f;
                 
-                // Disable texture for solid color rendering
+                // Set up for solid color rendering with basic lighting
                 fx.TextureEnabled = false;
                 fx.VertexColorEnabled = false;
-                fx.LightingEnabled = false;
+                fx.LightingEnabled = true;
+                fx.EnableDefaultLighting();
                 
                 // Draw a motorcycle-shaped cube
                 DrawSimpleCube(fx);
                 
                 // Reset effect state
                 fx.TextureEnabled = true;
+                fx.LightingEnabled = false;
             }
         }
         catch (System.Exception ex)
@@ -354,36 +341,63 @@ public class WorldGraphics
     
     private void DrawSimpleCube(BasicEffect fx)
     {
-        // CRITICAL FIX: Draw a visible cube using BasicEffect's DiffuseColor
-        // Use simple vertex positions without colors (let BasicEffect handle coloring)
-        var vertices = new VertexPositionTexture[]
+        // CRITICAL FIX: Draw a proper 6-faced motorcycle-shaped cube as fallback
+        // Create all 8 corners of a unit cube
+        var corners = new Vector3[]
         {
-            // Multiple faces for a more visible cube
-            // Top face
-            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, -0.5f), Vector2.Zero),
-            new VertexPositionTexture(new Vector3(0.5f, 0.5f, -0.5f), Vector2.UnitX),
-            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, 0.5f), Vector2.UnitY),
-            new VertexPositionTexture(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One),
-            
-            // Front face
-            new VertexPositionTexture(new Vector3(-0.5f, -0.5f, 0.5f), Vector2.Zero),
-            new VertexPositionTexture(new Vector3(0.5f, -0.5f, 0.5f), Vector2.UnitX),
-            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, 0.5f), Vector2.UnitY),
-            new VertexPositionTexture(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One),
+            new Vector3(-0.5f, -0.5f, -0.5f), // 0: bottom-back-left
+            new Vector3( 0.5f, -0.5f, -0.5f), // 1: bottom-back-right
+            new Vector3( 0.5f,  0.5f, -0.5f), // 2: top-back-right
+            new Vector3(-0.5f,  0.5f, -0.5f), // 3: top-back-left
+            new Vector3(-0.5f, -0.5f,  0.5f), // 4: bottom-front-left
+            new Vector3( 0.5f, -0.5f,  0.5f), // 5: bottom-front-right
+            new Vector3( 0.5f,  0.5f,  0.5f), // 6: top-front-right
+            new Vector3(-0.5f,  0.5f,  0.5f), // 7: top-front-left
         };
+        
+        // Define 12 triangles (2 per face) using indices
+        var indices = new int[]
+        {
+            // Back face (facing -Z)
+            0, 1, 2,  0, 2, 3,
+            // Front face (facing +Z)
+            4, 6, 5,  4, 7, 6,
+            // Bottom face (facing -Y)
+            0, 4, 5,  0, 5, 1,
+            // Top face (facing +Y)
+            3, 2, 6,  3, 6, 7,
+            // Left face (facing -X)
+            0, 3, 7,  0, 7, 4,
+            // Right face (facing +X)
+            1, 5, 6,  1, 6, 2
+        };
+        
+        // Create vertices with normals for proper lighting
+        var vertices = new VertexPositionNormalTexture[indices.Length];
+        for (int i = 0; i < indices.Length; i += 3)
+        {
+            // Calculate face normal
+            var v0 = corners[indices[i]];
+            var v1 = corners[indices[i + 1]];
+            var v2 = corners[indices[i + 2]];
+            var normal = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
+            
+            // Create vertices for this triangle
+            vertices[i] = new VertexPositionNormalTexture(v0, normal, Vector2.Zero);
+            vertices[i + 1] = new VertexPositionNormalTexture(v1, normal, Vector2.UnitX);
+            vertices[i + 2] = new VertexPositionNormalTexture(v2, normal, Vector2.UnitY);
+        }
         
         foreach (var pass in fx.CurrentTechnique.Passes)
         {
             pass.Apply();
             
-            using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), vertices.Length, BufferUsage.WriteOnly);
+            using var vb = new VertexBuffer(_gd, typeof(VertexPositionNormalTexture), vertices.Length, BufferUsage.WriteOnly);
             vb.SetData(vertices);
             _gd.SetVertexBuffer(vb);
             
-            // Draw top face
-            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-            // Draw front face  
-            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 4, 2);
+            // Draw all 12 triangles (6 faces)
+            _gd.DrawPrimitives(PrimitiveType.TriangleList, 0, vertices.Length / 3);
         }
     }
 
@@ -469,7 +483,19 @@ public class WorldGraphics
 
     public void DrawRecognizer(BasicEffect fx, Recognizer recognizer)
     {
-        if (recognizer == null || _recognizerObjModel == null) return;
+        if (recognizer == null) 
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: DrawRecognizer called with null recognizer");
+            return;
+        }
+        
+        if (_recognizerObjModel == null) 
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: Recognizer model is null - model failed to load");
+            return;
+        }
+        
+        System.Diagnostics.Debug.WriteLine("GLTRON: Drawing recognizer with loaded OBJ model");
         
         try
         {

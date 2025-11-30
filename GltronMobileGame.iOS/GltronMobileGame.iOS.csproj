@@ -44,19 +44,19 @@
     <Compile Include="..\GltronMobileGame\Sound\SoundManager.cs" Link="Sound\SoundManager.cs" />
   </ItemGroup>
   
-  <!-- CRITICAL FIX: Ensure .obj/.mtl files are copied to output for runtime loading -->
+  <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as iOS bundle resources for runtime loading -->
   <ItemGroup>
-    <None Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.obj" Link="Content\Assets\lightcyclehigh.obj">
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.obj" Link="Content\Assets\lightcyclehigh.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\GltronMobileGame\Content\Assets\lightcycle.mtl" Link="Content\Assets\lightcycle.mtl">
+    </BundleResource>
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\lightcycle.mtl" Link="Content\Assets\lightcycle.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\GltronMobileGame\Content\Assets\recognizerhigh.obj" Link="Content\Assets\recognizerhigh.obj">
+    </BundleResource>
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\recognizerhigh.obj" Link="Content\Assets\recognizerhigh.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\GltronMobileGame\Content\Assets\recognizer.mtl" Link="Content\Assets\recognizer.mtl">
+    </BundleResource>
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\recognizer.mtl" Link="Content\Assets\recognizer.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </BundleResource>
   </ItemGroup>
 </Project>

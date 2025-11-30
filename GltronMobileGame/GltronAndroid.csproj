@@ -46,19 +46,19 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
   
-  <!-- CRITICAL FIX: Ensure .obj/.mtl files are copied to output for runtime loading -->
+  <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as Android assets for runtime loading -->
   <ItemGroup>
-    <None Include="Content\Assets\lightcyclehigh.obj">
+    <AndroidAsset Include="Content\Assets\lightcyclehigh.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Assets\lightcycle.mtl">
+    </AndroidAsset>
+    <AndroidAsset Include="Content\Assets\lightcycle.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Assets\recognizerhigh.obj">
+    </AndroidAsset>
+    <AndroidAsset Include="Content\Assets\recognizerhigh.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Content\Assets\recognizer.mtl">
+    </AndroidAsset>
+    <AndroidAsset Include="Content\Assets\recognizer.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </AndroidAsset>
   </ItemGroup>
 </Project>
