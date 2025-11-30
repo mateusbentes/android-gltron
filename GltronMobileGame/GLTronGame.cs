@@ -311,6 +311,17 @@ namespace GltronMobileGame
                     LogInfo("GLTronGame.initialiseGame: OWN_PLAYER created successfully");
                 }
 
+                // CRITICAL: Initialize AI system (like Java version)
+                try
+                {
+                    GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
+                    LogInfo("GLTronGame.initialiseGame: AI system initialized");
+                }
+                catch (System.Exception ex)
+                {
+                    LogError($"GLTronGame.initialiseGame: AI initialization failed: {ex}");
+                }
+
                 // Reset timing and flags
                 ResetTime();
                 LogInfo("GLTronGame.initialiseGame: Time reset");
@@ -466,7 +477,9 @@ namespace GltronMobileGame
                 }
 
                 UpdateTime(gameTime);
-                // ComputerAI.updateTime(TimeDt, TimeCurrent); // Implementar depois
+                
+                // CRITICAL: Update AI timing (like Java version)
+                GltronMobileEngine.ComputerAI.UpdateTime(TimeDt, TimeCurrent);
 
                 if (boProcessInput)
                 {
@@ -489,20 +502,172 @@ namespace GltronMobileGame
 
                 if (boProcessReset)
                 {
-                    SoundManager.Instance.StopEngine();
-                    for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
-                    {
-                        Players[plyr] = new Player(plyr, mCurrentGridSize);
-                        Players[plyr].setSpeed(10.0f);
-                    }
-                    // Rendering is handled where GraphicsDevice is available (e.g., Draw/Render method)
-                    boInitialState = true;
+                    ResetGame();
                     boProcessReset = false;
+                }
+                
+                // CRITICAL: Run game logic (like Java version)
+                if (!boInitialState && !boShowMenu)
+                {
+                    RunGameLogic();
                 }
             }
             catch (System.Exception ex)
             {
                 Android.Util.Log.Error("GLTRON", $"RunGame: Exception: {ex}");
+            }
+        }
+        
+        private void ResetGame()
+        {
+            try
+            {
+                SoundManager.Instance.StopEngine();
+                
+                // Reinitialize all players
+                for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
+                {
+                    Players[plyr] = new Player(plyr, mCurrentGridSize);
+                    Players[plyr].setSpeed(10.0f);
+                }
+                
+                // Reinitialize AI
+                GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
+                
+                // Reset game state
+                boInitialState = true;
+                
+                // Reset HUD
+                tronHUD?.ResetConsole();
+                tronHUD?.DisplayInstr(true);
+                
+                LogInfo("Game reset completed");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"ResetGame failed: {ex}");
+            }
+        }
+        
+        private void RunGameLogic()
+        {
+            try
+            {
+                bool ownPlayerActive = true;
+                bool otherPlayersActive = false;
+                bool checkWinner = false;
+                
+                // Process all players (like Java version)
+                for (int player = 0; player < mCurrentPlayers; player++)
+                {
+                    if (Players[player] == null) continue;
+                    
+                    // Move player
+                    Players[player].doMovement(TimeDt, TimeCurrent, Walls, Players);
+                    
+                    // Check win/lose conditions
+                    if (player == OWN_PLAYER)
+                    {
+                        if (Players[player].getSpeed() == 0.0f)
+                            ownPlayerActive = false;
+                    }
+                    else
+                    {
+                        if (Players[player].getSpeed() > 0.0f)
+                            otherPlayersActive = true;
+                    }
+                    
+                    checkWinner = true;
+                }
+                
+                // Round robin AI processing (like Java version)
+                if (aiCount < mCurrentPlayers && aiCount > 0) // Skip OWN_PLAYER (index 0)
+                {
+                    if (Players[aiCount] != null && Players[aiCount].getTrailHeight() == Player.TRAIL_HEIGHT)
+                    {
+                        GltronMobileEngine.ComputerAI.DoComputer(aiCount, OWN_PLAYER);
+                    }
+                }
+                
+                aiCount++;
+                if (aiCount >= mCurrentPlayers)
+                    aiCount = 1; // Skip OWN_PLAYER
+                
+                // Manage sounds (like Java version)
+                ManageSounds();
+                
+                // Check win/lose conditions
+                if (checkWinner)
+                {
+                    CheckWinLoseConditions(ownPlayerActive, otherPlayersActive);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"RunGameLogic failed: {ex}");
+            }
+        }
+        
+        private void ManageSounds()
+        {
+            try
+            {
+                if (Players[OWN_PLAYER] == null) return;
+                
+                if (Players[OWN_PLAYER].getSpeed() == 0.0f)
+                {
+                    SoundManager.Instance.StopEngine();
+                    mEngineStartTime = 0;
+                    mEngineSoundModifier = 1.0f;
+                }
+                else if (!boInitialState)
+                {
+                    if (mEngineSoundModifier < 1.5f)
+                    {
+                        if (mEngineStartTime != 0)
+                        {
+                            if ((TimeCurrent + 1000) > mEngineStartTime)
+                            {
+                                mEngineSoundModifier += 0.01f;
+                                SoundManager.Instance.PlayEngine(mEngineSoundModifier, true);
+                            }
+                        }
+                    }
+                }
+                
+                mEngineStartTime = TimeCurrent;
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"ManageSounds failed: {ex}");
+            }
+        }
+        
+        private void CheckWinLoseConditions(bool ownPlayerActive, bool otherPlayersActive)
+        {
+            try
+            {
+                if (!ownPlayerActive && otherPlayersActive)
+                {
+                    // Player lost
+                    tronHUD?.DisplayLose();
+                    LogInfo("Player lost the round");
+                }
+                else if (ownPlayerActive && !otherPlayersActive)
+                {
+                    // Player won
+                    tronHUD?.DisplayWin();
+                    if (Players[OWN_PLAYER] != null)
+                    {
+                        Players[OWN_PLAYER].setSpeed(0.0f);
+                        Players[OWN_PLAYER].addScore(100); // Bonus for winning
+                    }
+                    LogInfo("Player won the round");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"CheckWinLoseConditions failed: {ex}");
             }
         }
     }

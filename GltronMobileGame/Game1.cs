@@ -512,7 +512,13 @@ public class Game1 : Game
                                 int playerDirection = player.getDirection();
                                 int lastDirection = player.getLastDirection();
                                 long currentTime = (long)gameTime.TotalGameTime.TotalMilliseconds;
-                                long turnTime = player.TurnTime;
+                                
+                                // Get turn time from player (cast to concrete type)
+                                long turnTime = 0;
+                                if (player is GltronMobileEngine.Player concretePlayer)
+                                {
+                                    turnTime = concretePlayer.TurnTime;
+                                }
                                 
                                 // Use smooth turn interpolation like Java version
                                 _camera.UpdateWithTurn(playerPos, playerDirection, lastDirection, 
@@ -810,20 +816,26 @@ public class Game1 : Game
                     }
                     else
                     {
-                        // GAME: Show HUD elements like original
-                        // Score
-                        int score = 0;
-                        try { score = _glTronGame?.GetOwnPlayerScore() ?? 0; } catch { }
-                        _spriteBatch.DrawString(_font, $"Score: {score}", new Vector2(10, 10), Color.Yellow);
+                        // GAME: Show HUD elements like original Java version
+                        // Note: HUD draws its own SpriteBatch, so we need to end ours first
+                        _spriteBatch.End();
                         
-                        // Game status
-                        _spriteBatch.DrawString(_font, "Game Running", new Vector2(10, 40), Color.White);
+                        if (_hud != null)
+                        {
+                            // Use the proper HUD system
+                            int score = 0;
+                            try { score = _glTronGame?.GetOwnPlayerScore() ?? 0; } catch { }
+                            _hud.Draw(gameTime, score);
+                        }
                         
-                        // Camera mode indicator
+                        // Restart SpriteBatch for additional UI elements
+                        _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
+                        
+                        // Camera mode indicator (additional to HUD)
                         if (_camera != null)
                         {
                             var cameraMode = _camera.GetCameraType().ToString();
-                            _spriteBatch.DrawString(_font, $"Camera: {cameraMode}", new Vector2(10, 70), Color.Cyan);
+                            _spriteBatch.DrawString(_font, $"Camera: {cameraMode}", new Vector2(viewport.Width - 200, viewport.Height - 50), Color.Cyan);
                             _spriteBatch.DrawString(_font, "Tap top-right to switch camera", new Vector2(viewport.Width - 300, 10), Color.Gray);
                         }
                         

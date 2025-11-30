@@ -171,6 +171,16 @@ namespace GltronMobileEngine
             LastDirection = Direction;
             Direction = (Direction + direction) % 4;
             TurnTime = current_time;
+            
+            // Sound feedback for turns (like Java version)
+            try
+            {
+                SoundManager.Instance.PlayEngine(1.3f, true); // Boost engine sound on turn
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Turn sound error: {ex.Message}");
+            }
         }
 
         public void doMovement(long dt, long current_time, Interfaces.ISegment[] walls, Interfaces.IPlayer[] players)
@@ -341,7 +351,7 @@ namespace GltronMobileEngine
                 {
                     if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                     {
-                        // Colisão detectada
+                        // Colisão detectada - stop at collision point
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                         Speed = 0.0f;
@@ -366,6 +376,9 @@ namespace GltronMobileEngine
                         {
                             System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
                         }
+                        
+                        // Add console message (like Java version)
+                        LogCrash($"Player {Player_num} CRASH wall!");
 
                         break;
                     }
@@ -399,14 +412,14 @@ namespace GltronMobileEngine
                     {
                         if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                         {
-                            // Colisão detectada
+                            // Colisão detectada - stop at collision point
                             Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                             Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                             Speed = 0.0f;
                             _exploding = true;
                             _explodeTimer = 0f;
 
-                            // Console message and SFX
+                            // Award points to the player whose trail was hit (like Java version)
                             players[j].addScore(10);
                             
                             // Multiplatform sound handling
@@ -419,12 +432,28 @@ namespace GltronMobileEngine
                             {
                                 System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
                             }
+                            
+                            // Add console message (like Java version)
+                            LogCrash($"Player {Player_num} CRASH trail!");
 
                             break;
                         }
                     }
                 }
             }
+        }
+        
+        private void LogCrash(string message)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: {message}");
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", message);
+#endif
+                // TODO: Add to HUD console when available
+            }
+            catch { /* Ignore logging errors */ }
         }
 
     }
