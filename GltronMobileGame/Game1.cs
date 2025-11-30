@@ -648,10 +648,13 @@ public class Game1 : Game
                     {
                         try
                         {
-                            // Debug wall positions
+                            // Debug wall positions and grid size
                             try
                             {
 #if ANDROID
+                                float gridSize = _glTronGame?.GetGridSize() ?? 100f;
+                                Android.Util.Log.Info("GLTRON", $"Arena grid size: {gridSize}");
+                                
                                 for (int i = 0; i < walls.Length && i < 4; i++)
                                 {
                                     if (walls[i] != null)
@@ -710,6 +713,17 @@ public class Game1 : Game
                                     // Draw bike (like Java version)
                                     if (players[i].getSpeed() > 0.0f || players[i].getExplode())
                                     {
+                                        float x = players[i].getXpos();
+                                        float y = players[i].getYpos();
+                                        
+                                        try
+                                        {
+#if ANDROID
+                                            Android.Util.Log.Debug("GLTRON", $"Drawing player {i} bike at ({x:F1},{y:F1}) speed={players[i].getSpeed():F1}");
+#endif
+                                        }
+                                        catch { }
+                                        
                                         if (players[i].getExplode())
                                         {
                                             _worldGraphics.DrawExplosion(_worldGraphics.Effect, players[i]);

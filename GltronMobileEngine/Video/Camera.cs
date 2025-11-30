@@ -86,9 +86,10 @@ public class Camera
         _cameraType = CameraType.Follow;
         InitializeFollowCamera();
         
-        // Set initial camera position to see arena center
-        _target = new Vector3(50f, 0f, 50f); // Arena center at ground level
-        _camPos = new Vector3(50f, 15f, 70f); // Behind and above arena center
+        // CRITICAL FIX: Set initial camera position to see arena center properly
+        float arenaCenter = 50f; // Should be gridSize / 2
+        _target = new Vector3(arenaCenter, 0f, arenaCenter); // Arena center at ground level
+        _camPos = new Vector3(arenaCenter, 25f, arenaCenter + 30f); // Higher and further back for better view
         
         UpdateViewMatrix();
     }
@@ -106,7 +107,7 @@ public class Camera
     {
         // CRITICAL FIX: Match Java camera defaults exactly
         _movement[0] = CAM_FOLLOW_DIST; // 20.0f - same as Java
-        _movement[1] = MathHelper.Pi / 4.0f; // 45 degree elevation - same as Java
+        _movement[1] = MathHelper.Pi / 4.0f; // 45 degree elevation - same as Java  
         _movement[2] = MathHelper.Pi / 72.0f; // Small rotation offset - same as Java
         _movement[3] = 0.0f; // No additional offset
         _phi = 0.0f;

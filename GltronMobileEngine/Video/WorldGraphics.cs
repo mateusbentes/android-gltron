@@ -56,6 +56,7 @@ public class WorldGraphics
         Effect.Texture = _texFloor;
         Effect.World = Matrix.Identity;
 
+        // CRITICAL FIX: Match Java floor rendering exactly
         int l = (int)(_gridSize / 4f);
         if (l <= 0) l = 25;
         float t = l / 12f;
@@ -67,6 +68,7 @@ public class WorldGraphics
             {
                 for (int j = 0; j < (int)_gridSize; j += l)
                 {
+                    // Match Java floor quad generation
                     var verts = new VertexPositionTexture[4];
                     verts[0] = new VertexPositionTexture(new Vector3(i, 0, j), new Vector2(0f, 0f));
                     verts[1] = new VertexPositionTexture(new Vector3(i + l, 0, j), new Vector2(t, 0f));
@@ -94,14 +96,20 @@ public class WorldGraphics
         _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
 
-        float h = 48.0f;
+        // CRITICAL FIX: Match Java wall geometry exactly
+        float h = 48.0f; // Wall height from Java
         float s = _gridSize;
 
+        // Java wall vertices (converted to MonoGame coordinate system)
         var quads = new (Vector3 a, Vector3 b, Vector3 c, Vector3 d)[]
         {
+            // Wall 1: Bottom wall (Y=0)
             (new Vector3(0, h, 0), new Vector3(s, h, 0), new Vector3(0, 0, 0), new Vector3(s, 0, 0)),
+            // Wall 2: Right wall (X=gridSize)  
             (new Vector3(s, h, 0), new Vector3(s, h, s), new Vector3(s, 0, 0), new Vector3(s, 0, s)),
+            // Wall 3: Top wall (Y=gridSize)
             (new Vector3(s, h, s), new Vector3(0, h, s), new Vector3(s, 0, s), new Vector3(0, 0, s)),
+            // Wall 4: Left wall (X=0)
             (new Vector3(0, h, s), new Vector3(0, h, 0), new Vector3(0, 0, s), new Vector3(0, 0, 0)),
         };
 
@@ -141,25 +149,18 @@ public class WorldGraphics
         _gd.BlendState = BlendState.Opaque; // No blending for skybox
         Effect.World = Matrix.Identity;
 
-        // CRITICAL FIX: Center skybox around grid center, not origin
+        // CRITICAL FIX: Skybox positioning like Java version
         float d = _gridSize * 3f;
-        float centerX = _gridSize / 2f;
-        float centerZ = _gridSize / 2f;
 
         var faces = new Vector3[][]
         {
-            // Right face
-            new [] { new Vector3(centerX+d,d,-d+centerZ), new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX+d,-d,d+centerZ), new Vector3(centerX+d,d,d+centerZ) },
-            // Top face  
-            new [] { new Vector3(centerX+d,d,d+centerZ), new Vector3(centerX-d,d,d+centerZ), new Vector3(centerX-d,-d,d+centerZ), new Vector3(centerX+d,-d,d+centerZ) },
-            // Left face
-            new [] { new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX+d,d,-d+centerZ), new Vector3(centerX+d,d,d+centerZ), new Vector3(centerX-d,d,d+centerZ) },
-            // Bottom face
-            new [] { new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX-d,-d,d+centerZ), new Vector3(centerX+d,-d,d+centerZ) },
-            // Back face
-            new [] { new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX+d,d,-d+centerZ) },
-            // Front face
-            new [] { new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX-d,d,d+centerZ), new Vector3(centerX-d,-d,d+centerZ) },
+            // Match Java skybox face order and positioning
+            new [] { new Vector3(d,d,-d), new Vector3(d,-d,-d), new Vector3(d,-d,d), new Vector3(d,d,d) },      // Right
+            new [] { new Vector3(d,d,d), new Vector3(-d,d,d), new Vector3(-d,-d,d), new Vector3(d,-d,d) },      // Front
+            new [] { new Vector3(-d,d,-d), new Vector3(d,d,-d), new Vector3(d,d,d), new Vector3(-d,d,d) },      // Top
+            new [] { new Vector3(d,-d,-d), new Vector3(-d,-d,-d), new Vector3(-d,-d,d), new Vector3(d,-d,d) },  // Bottom
+            new [] { new Vector3(-d,d,-d), new Vector3(-d,-d,-d), new Vector3(d,-d,-d), new Vector3(d,d,-d) },  // Back
+            new [] { new Vector3(-d,-d,-d), new Vector3(-d,d,-d), new Vector3(-d,d,d), new Vector3(-d,-d,d) },  // Left
         };
 
         // CRITICAL FIX: Proper UV coordinates for skybox (match Java version)
@@ -193,30 +194,66 @@ public class WorldGraphics
     {
         if (p == null) return;
         
-        // TODO: Load and draw light cycle model
-        // For now, draw a simple colored cube to represent the bike
         try
         {
             float x = p.getXpos();
             float y = p.getYpos();
             int direction = p.getDirection();
             
-            // Create a simple bike representation using a colored cube
-            var world = Matrix.CreateTranslation(x, 2f, y); // Slightly above ground
+            // CRITICAL FIX: Draw a simple but visible bike representation
+            // Make sure the bike is visible and properly positioned
+            var world = Matrix.CreateScale(3f, 2f, 6f) * // Bigger bike for visibility
+                       Matrix.CreateRotationY(direction * MathHelper.PiOver2) * // Rotate based on direction
+                       Matrix.CreateTranslation(x, 3f, y); // Higher above ground for visibility
             fx.World = world;
-            fx.DiffuseColor = GetPlayerColor(p.getPlayerNum());
             
-            // Apply effect and draw a simple cube (placeholder until model loading is implemented)
-            foreach (var pass in fx.CurrentTechnique.Passes)
+            // Get player color
+            int colorIndex = p.getPlayerNum();
+            if (p is GltronMobileEngine.Player concretePlayer)
             {
-                pass.Apply();
-                // TODO: Draw actual light cycle model here
-                // For now, this is a placeholder that shows bike position
+                colorIndex = concretePlayer.getPlayerColorIndex();
             }
+            fx.DiffuseColor = GetPlayerColor(colorIndex);
+            fx.Alpha = 1.0f; // Make sure it's fully opaque
+            
+            // Enable vertex colors for the bike
+            fx.VertexColorEnabled = true;
+            fx.LightingEnabled = false; // Disable lighting for simple rendering
+            
+            // Draw a simple cube geometry
+            DrawSimpleCube(fx);
+            
+            // Reset effect state
+            fx.VertexColorEnabled = false;
+            fx.LightingEnabled = false;
         }
         catch (System.Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"GLTRON: DrawBike error: {ex.Message}");
+        }
+    }
+    
+    private void DrawSimpleCube(BasicEffect fx)
+    {
+        // CRITICAL FIX: Draw a simple but visible cube for bike representation
+        // Use triangle strip for simpler rendering
+        var vertices = new VertexPositionColor[]
+        {
+            // Simple quad for bike representation (top face)
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), Color.White),
+            new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), Color.White),
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), Color.White),
+            new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), Color.White),
+        };
+        
+        foreach (var pass in fx.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            
+            using var vb = new VertexBuffer(_gd, typeof(VertexPositionColor), vertices.Length, BufferUsage.WriteOnly);
+            vb.SetData(vertices);
+            _gd.SetVertexBuffer(vb);
+            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
         }
     }
 
@@ -250,14 +287,14 @@ public class WorldGraphics
     
     private Vector3 GetPlayerColor(int playerNum)
     {
-        // Match Java player colors
+        // CRITICAL FIX: Match Java player colors exactly (from ColourDiffuse array)
         Vector3[] colors = {
-            new Vector3(0.0f, 0.1f, 0.9f),    // Blue
-            new Vector3(1.0f, 0.55f, 0.14f),  // Orange/Yellow  
-            new Vector3(0.75f, 0.02f, 0.02f), // Red
-            new Vector3(0.8f, 0.8f, 0.8f),    // Grey
-            new Vector3(0.12f, 0.75f, 0.0f),  // Green
-            new Vector3(0.75f, 0.0f, 0.35f)   // Purple
+            new Vector3(0.0f, 0.1f, 0.900f),      // Blue - Player 0 (human)
+            new Vector3(1.00f, 0.550f, 0.140f),   // Orange/Yellow - Player 1 (AI)
+            new Vector3(0.750f, 0.020f, 0.020f),  // Red - Player 2 (AI)
+            new Vector3(0.800f, 0.800f, 0.800f),  // Grey - Player 3 (AI)
+            new Vector3(0.120f, 0.750f, 0.0f),    // Green - Player 4 (AI)
+            new Vector3(0.750f, 0.0f, 0.35f)      // Purple - Player 5 (AI)
         };
         
         return colors[playerNum % colors.Length];

@@ -55,13 +55,14 @@ namespace GltronMobileEngine
 
         private float exp_radius;
 
+        // CRITICAL FIX: Match Java START_POS exactly
         private readonly float[,] START_POS = {
-            { 0.2f, 0.2f },    // Player 0 - bottom left corner
-            { 0.8f, 0.2f },    // Player 1 - bottom right corner
-            { 0.8f, 0.8f },    // Player 2 - top right corner
-            { 0.2f, 0.8f },    // Player 3 - top left corner
-            { 0.5f, 0.2f },    // Extra positions if needed
-            { 0.5f, 0.8f }
+            { 0.5f, 0.25f },   // Player 0 - Java: { 0.5f, 0.25f}
+            { 0.75f, 0.5f },   // Player 1 - Java: {0.75f, 0.5f}
+            { 0.5f, 0.4f },    // Player 2 - Java: {0.5f, 0.4f}
+            { 0.25f, 0.5f },   // Player 3 - Java: {0.25f, 0.5f}
+            { 0.25f, 0.25f },  // Player 4 - Java: {0.25f, 0.25f}
+            { 0.65f, 0.35f }   // Player 5 - Java: {0.65f, 0.35f}
         };
 
         // Cores serão tratadas de forma diferente no MonoGame
@@ -79,13 +80,10 @@ namespace GltronMobileEngine
             int colour = 0;
             bool done = false;
 
-            // Set initial direction based on player position (face toward center)
-            // Player 0 (bottom-left): face up-right (0=up)
-            // Player 1 (bottom-right): face up-left (3=left) 
-            // Player 2 (top-right): face down-left (2=down)
-            // Player 3 (top-left): face down-right (1=right)
-            int[] startDirections = { 0, 3, 2, 1 }; // up, left, down, right
-            Direction = startDirections[player_number % 4];
+            // CRITICAL FIX: Use random direction like Java version
+            // Java: Direction = rand.nextInt(3); // accepts values 0..3
+            Random rand = new Random(player_number + (int)DateTime.Now.Ticks); // Seed with player number for variety
+            Direction = rand.Next(4); // 0, 1, 2, or 3 like Java
             LastDirection = Direction;
 
             Trails[0] = new Segment();
@@ -106,22 +104,23 @@ namespace GltronMobileEngine
             Player_num = player_number;
             Score = 0;
 
-            // Lógica de seleção de cor simplificada
+            // CRITICAL FIX: Color selection logic like Java version
             if (player_number == 0) // OWN_PLAYER
             {
-                for (colour = 0; colour < 6; colour++) // MAX_PLAYERS
+                // Reset color array for first player (like Java version)
+                for (colour = 0; colour < 6; colour++)
                 {
                     ColourTaken[colour] = false;
                 }
 
-                // ColourTaken[GLTronGame.mPrefs.PlayerColourIndex()] = true; // Substituir por preferência
-                // mPlayerColourIndex = GLTronGame.mPrefs.PlayerColourIndex(); // Substituir por preferência
-                mPlayerColourIndex = 0; // Cor padrão
+                // Player 0 gets blue (index 0) by default
+                mPlayerColourIndex = 0; // Blue for human player
                 ColourTaken[mPlayerColourIndex] = true;
             }
             else
             {
-                while (!done)
+                // AI players get different colors (like Java version)
+                while (!done && colour < 6)
                 {
                     if (!ColourTaken[colour])
                     {
@@ -130,7 +129,12 @@ namespace GltronMobileEngine
                         done = true;
                     }
                     colour++;
-                    if (colour >= 6) break; // Evitar loop infinito
+                }
+                
+                // Fallback if all colors taken
+                if (!done)
+                {
+                    mPlayerColourIndex = player_number % 6;
                 }
             }
         }
@@ -219,20 +223,12 @@ namespace GltronMobileEngine
                 Trails[trailOffset].vDirection.v[0] += t * DIRS_X[Direction];
                 Trails[trailOffset].vDirection.v[1] += t * DIRS_Y[Direction];
 
-                // Debug: Check if player is going outside expected bounds
+                // Debug: Check if player is going outside expected bounds (use actual grid size)
                 float currentX = getXpos();
                 float currentY = getYpos();
                 
-                if (currentX < 0 || currentX > 100 || currentY < 0 || currentY > 100)
-                {
-                    try
-                    {
-#if ANDROID
-                        Android.Util.Log.Warn("GLTRON", $"Player {Player_num} outside bounds: ({currentX:F1},{currentY:F1})");
-#endif
-                    }
-                    catch { }
-                }
+                // Note: Grid size should come from game, not hardcoded to 100
+                // This is just for debugging - actual collision is handled by wall collision detection
 
                 doCrashTestWalls(walls);
                 doCrashTestPlayer(players);
@@ -325,6 +321,11 @@ namespace GltronMobileEngine
         public int getPlayerNum()
         {
             return Player_num;
+        }
+        
+        public int getPlayerColorIndex()
+        {
+            return mPlayerColourIndex;
         }
 
         public int getScore()

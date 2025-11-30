@@ -116,7 +116,7 @@ namespace GltronMobileEngine
         private static float CalculateDistanceInDirection(float startX, float startY, int direction, float[] dirX, float[] dirY)
         {
             float distance = 0.0f;
-            float step = 1.0f;
+            float step = 2.0f; // Larger step for better performance
             float maxDistance = AI_LOOKAHEAD_DISTANCE;
             
             float dx = dirX[direction];
@@ -127,7 +127,7 @@ namespace GltronMobileEngine
                 float checkX = startX + dx * d;
                 float checkY = startY + dy * d;
                 
-                // Check wall collision
+                // Check wall collision first (more important)
                 if (CheckWallCollision(checkX, checkY))
                 {
                     return d;
@@ -149,8 +149,12 @@ namespace GltronMobileEngine
         {
             if (_walls == null) return false;
             
-            // Simple boundary check
-            if (x <= 0 || x >= _gridSize || y <= 0 || y >= _gridSize)
+            // CRITICAL FIX: Match Java wall collision detection
+            // Java walls are at the edges of the grid (0,0) to (gridSize, gridSize)
+            float margin = 1.0f; // Small margin for collision detection
+            
+            if (x <= margin || x >= (_gridSize - margin) || 
+                y <= margin || y >= (_gridSize - margin))
             {
                 return true;
             }
