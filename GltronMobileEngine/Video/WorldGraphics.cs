@@ -9,6 +9,7 @@ public class WorldGraphics
 {
     public BasicEffect Effect { get; private set; }
     private GraphicsDevice _gd;
+    private float _gridSize = 100f; // Default grid size
 
     private VertexBuffer? _floorVB;
     private Texture2D? _texFloor;
@@ -32,12 +33,13 @@ public class WorldGraphics
         _texWall = content.Load<Texture2D>("Assets/gltron_wall_1");
         _texSky = content.Load<Texture2D>("Assets/skybox0");
 
+        // Create floor quad properly oriented for GLTron with proper texture tiling
         var verts = new VertexPositionTexture[4];
-        float s = 1f;
-        verts[0] = new VertexPositionTexture(new Vector3(-s, 0, -s), new Vector2(0, 0));
-        verts[1] = new VertexPositionTexture(new Vector3(s, 0, -s), new Vector2(10, 0));
-        verts[2] = new VertexPositionTexture(new Vector3(-s, 0, s), new Vector2(0, 10));
-        verts[3] = new VertexPositionTexture(new Vector3(s, 0, s), new Vector2(10, 10));
+        float texScale = 8f; // Tile the texture 8 times across the floor for detail
+        verts[0] = new VertexPositionTexture(new Vector3(-1, 0, -1), new Vector2(0, 0));           // Bottom-left
+        verts[1] = new VertexPositionTexture(new Vector3(1, 0, -1), new Vector2(texScale, 0));     // Bottom-right
+        verts[2] = new VertexPositionTexture(new Vector3(-1, 0, 1), new Vector2(0, texScale));     // Top-left
+        verts[3] = new VertexPositionTexture(new Vector3(1, 0, 1), new Vector2(texScale, texScale)); // Top-right
         _floorVB = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
         _floorVB.SetData(verts);
     }
@@ -56,7 +58,11 @@ public class WorldGraphics
         _gd.RasterizerState = RasterizerState.CullNone;
         _gd.DepthStencilState = DepthStencilState.Default;
         Effect.Texture = _texFloor;
-        Effect.World = Matrix.CreateScale(100f, 1f, 100f);
+        
+        // GLTron arena floor: exactly 100x100 units, positioned from (0,0) to (100,100)
+        // Floor vertices go from -1 to 1, so scale by 50 and translate by 50
+        Effect.World = Matrix.CreateScale(50f, 1f, 50f) * Matrix.CreateTranslation(50f, 0f, 50f);
+        
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
@@ -78,7 +84,8 @@ public class WorldGraphics
         {
             var start = new Vector3(seg.vStart.v[0], 0, seg.vStart.v[1]);
             var end = new Vector3(seg.vStart.v[0] + seg.vDirection.v[0], 0, seg.vStart.v[1] + seg.vDirection.v[1]);
-            DrawWallSegment(start, end, 8f);
+            // GLTron wall height: 6 units (proportional to motorcycle size)
+            DrawWallSegment(start, end, 6f);
         }
     }
 
@@ -97,10 +104,12 @@ public class WorldGraphics
         var v3 = b + up;
 
         var verts = new VertexPositionTexture[4];
-        verts[0] = new VertexPositionTexture(v0, new Vector2(0, 1));
-        verts[1] = new VertexPositionTexture(v1, new Vector2(0, 0));
-        verts[2] = new VertexPositionTexture(v2, new Vector2(len * 0.05f, 1));
-        verts[3] = new VertexPositionTexture(v3, new Vector2(len * 0.05f, 0));
+        // Better texture coordinates for wall segments
+        float texRepeat = len / 10f; // Repeat texture every 10 units for proper scaling
+        verts[0] = new VertexPositionTexture(v0, new Vector2(0, 1));        // Bottom-left
+        verts[1] = new VertexPositionTexture(v1, new Vector2(0, 0));        // Top-left
+        verts[2] = new VertexPositionTexture(v2, new Vector2(texRepeat, 1)); // Bottom-right
+        verts[3] = new VertexPositionTexture(v3, new Vector2(texRepeat, 0)); // Top-right
 
         using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
         vb.SetData(verts);
@@ -126,6 +135,11 @@ public class WorldGraphics
     public void DrawExplosion(BasicEffect fx, IPlayer p)
     {
         // Placeholder: draw translucent ring later
+    }
+
+    public void SetGridSize(float gridSize)
+    {
+        _gridSize = gridSize;
     }
 
     public void EndDraw() { }

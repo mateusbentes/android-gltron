@@ -246,6 +246,11 @@ namespace GltronMobileGame
             return boShowMenu;
         }
 
+        public float GetGridSize()
+        {
+            return mCurrentGridSize;
+        }
+
         public void initialiseGame()
         {
             try
@@ -583,10 +588,10 @@ namespace GltronMobileGame
         private void initWalls()
         {
             float[,] raw = {
-                { 0.0f, 0.0f, 1.0f, 0.0f },
-                { 1.0f, 0.0f, 0.0f, 1.0f },
-                { 1.0f, 1.0f, -1.0f, 0.0f },
-                { 0.0f, 1.0f, 0.0f, -1.0f }
+                { 0.0f, 0.0f, 1.0f, 0.0f },    // Bottom wall: (0,0) to (100,0)
+                { 1.0f, 0.0f, 0.0f, 1.0f },    // Right wall: (100,0) to (100,100)
+                { 1.0f, 1.0f, -1.0f, 0.0f },   // Top wall: (100,100) to (0,100)
+                { 0.0f, 1.0f, 0.0f, -1.0f }    // Left wall: (0,100) to (0,0)
             };
 
             float width = mCurrentGridSize;
@@ -599,6 +604,17 @@ namespace GltronMobileGame
                 Walls[j].vStart.v[1] = raw[j, 1] * height;
                 Walls[j].vDirection.v[0] = raw[j, 2] * width;
                 Walls[j].vDirection.v[1] = raw[j, 3] * height;
+                
+                // Debug logging for wall positions
+                float endX = Walls[j].vStart.v[0] + Walls[j].vDirection.v[0];
+                float endY = Walls[j].vStart.v[1] + Walls[j].vDirection.v[1];
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", $"Wall {j}: ({Walls[j].vStart.v[0]:F1},{Walls[j].vStart.v[1]:F1}) to ({endX:F1},{endY:F1})");
+#endif
+                }
+                catch { }
             }
         }
 

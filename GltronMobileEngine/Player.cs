@@ -52,12 +52,12 @@ namespace GltronMobileEngine
         private float exp_radius;
 
         private readonly float[,] START_POS = {
-            { 0.25f, 0.25f },  // Player 0 - bottom left
-            { 0.75f, 0.25f },  // Player 1 - bottom right  
-            { 0.75f, 0.75f },  // Player 2 - top right
-            { 0.25f, 0.75f },  // Player 3 - top left
-            { 0.5f, 0.25f },   // Extra positions if needed
-            { 0.5f, 0.75f }
+            { 0.2f, 0.2f },    // Player 0 - bottom left corner
+            { 0.8f, 0.2f },    // Player 1 - bottom right corner
+            { 0.8f, 0.8f },    // Player 2 - top right corner
+            { 0.2f, 0.8f },    // Player 3 - top left corner
+            { 0.5f, 0.2f },    // Extra positions if needed
+            { 0.5f, 0.8f }
         };
 
         // Cores serão tratadas de forma diferente no MonoGame
@@ -76,6 +76,10 @@ namespace GltronMobileEngine
             bool done = false;
 
             // Set initial direction based on player position (face toward center)
+            // Player 0 (bottom-left): face up-right (0=up)
+            // Player 1 (bottom-right): face up-left (3=left) 
+            // Player 2 (top-right): face down-left (2=down)
+            // Player 3 (top-left): face down-right (1=right)
             int[] startDirections = { 0, 3, 2, 1 }; // up, left, down, right
             Direction = startDirections[player_number % 4];
             LastDirection = Direction;
@@ -201,6 +205,21 @@ namespace GltronMobileEngine
                 Trails[trailOffset].vDirection.v[0] += t * DIRS_X[Direction];
                 Trails[trailOffset].vDirection.v[1] += t * DIRS_Y[Direction];
 
+                // Debug: Check if player is going outside expected bounds
+                float currentX = getXpos();
+                float currentY = getYpos();
+                
+                if (currentX < 0 || currentX > 100 || currentY < 0 || currentY > 100)
+                {
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Warn("GLTRON", $"Player {Player_num} outside bounds: ({currentX:F1},{currentY:F1})");
+#endif
+                    }
+                    catch { }
+                }
+
                 doCrashTestWalls(walls);
                 doCrashTestPlayer(players);
 
@@ -324,6 +343,14 @@ namespace GltronMobileEngine
                         Speed = 0.0f;
                         _exploding = true;
                         _explodeTimer = 0f;
+                        
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Info("GLTRON", $"Player {Player_num} crashed into wall {j} at ({V.v[0]:F1},{V.v[1]:F1})");
+#endif
+                        }
+                        catch { }
                         
                         // Multiplatform sound handling
                         try

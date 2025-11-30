@@ -21,20 +21,21 @@ public class Camera
     public int ViewportWidth { get; }
     public int ViewportHeight { get; }
 
-    // GLTron camera constants (adjusted for better arena view)
-    private const float CAM_CIRCLE_DIST = 35.0f;  // Increased to see full arena
-    private const float CAM_FOLLOW_DIST = 25.0f;
-    private const float CAM_FOLLOW_FAR_DIST = 45.0f;
-    private const float CAM_FOLLOW_CLOSE_DIST = 15.0f;
-    private const float CAM_FOLLOW_BIRD_DIST = 80.0f;  // Better bird's eye view
-    private const float CAM_CIRCLE_Z = 20.0f;  // Higher up to see arena
+    // GLTron camera constants (optimized for following player)
+    private const float CAM_CIRCLE_DIST = 25.0f;
+    private const float CAM_FOLLOW_DIST = 20.0f;  // Good distance behind player
+    private const float CAM_FOLLOW_FAR_DIST = 35.0f;
+    private const float CAM_FOLLOW_CLOSE_DIST = 12.0f;
+    private const float CAM_FOLLOW_BIRD_DIST = 60.0f;
+    private const float CAM_CIRCLE_Z = 15.0f;
     private const float CAM_COCKPIT_Z = 4.0f;
-    private const float CAM_SPEED = 0.001f;  // Slightly faster rotation
+    private const float CAM_SPEED = 0.001f;
     private const float B_HEIGHT = 0.0f;
 
     private CameraType _cameraType;
     private Vector3 _target;
     private Vector3 _camPos;
+    private Vector3 _lastPlayerPos = Vector3.Zero; // For smooth following
     private float[] _movement = new float[4]; // R, CHI, PHI, PHI_OFFSET
     private float _phi;
 
@@ -54,14 +55,14 @@ public class Camera
         ViewportWidth = viewport.Width;
         ViewportHeight = viewport.Height;
         
-        // More conservative perspective settings
+        // Standard field of view
         Projection = Matrix.CreatePerspectiveFieldOfView(
-            MathHelper.PiOver4, // 45 degrees - more standard
+            MathHelper.PiOver4, // 45 degrees - standard
             viewport.AspectRatio,
-            0.1f,  // Very close near plane
-            1000f); // Far plane to see everything
+            1.0f,  // Near plane
+            500f); // Far plane
         
-        // Start with a simple follow camera that works
+        // Start with follow camera that tracks the player
         _cameraType = CameraType.Follow;
         InitializeFollowCamera();
         
@@ -101,11 +102,126 @@ public class Camera
 
     public void Update(Vector3 playerPos, GameTime gameTime)
     {
-        // Simple camera setup - look at arena center from a good angle
-        _target = new Vector3(50f, 0f, 50f); // Center of 100x100 arena
-        _camPos = new Vector3(50f, 80f, 120f); // Behind and above center
+        // Choose camera behavior based on type
+        switch (_cameraType)
+        {
+            case CameraType.Follow:
+                UpdateFollowingCamera(playerPos, gameTime);
+                break;
+            case CameraType.Bird:
+                UpdateBirdEyeCamera();
+                break;
+            default:
+                UpdateFollowingCamera(playerPos, gameTime);
+                break;
+        }
         
         UpdateViewMatrix();
+    }
+
+    // Add method to update camera with player direction
+    public void UpdateWithPlayerDirection(Vector3 playerPos, int playerDirection, GameTime gameTime)
+    {
+        // Choose camera behavior based on type
+        switch (_cameraType)
+        {
+            case CameraType.Follow:
+                UpdateFollowingCameraWithDirection(playerPos, playerDirection, gameTime);
+                break;
+            case CameraType.Bird:
+                UpdateBirdEyeCamera();
+                break;
+            default:
+                UpdateFollowingCameraWithDirection(playerPos, playerDirection, gameTime);
+                break;
+        }
+        
+        UpdateViewMatrix();
+    }
+
+    private void UpdateFollowingCamera(Vector3 playerPos, GameTime gameTime)
+    {
+        // GLTron-style third-person camera following behind the motorcycle
+        if (playerPos != Vector3.Zero)
+        {
+            // Smooth camera interpolation for less jarring movement
+            float lerpFactor = 0.2f; // Slightly faster for responsive following
+            
+            if (_lastPlayerPos == Vector3.Zero)
+            {
+                _lastPlayerPos = playerPos; // First frame
+            }
+            
+            Vector3 smoothPlayerPos = Vector3.Lerp(_lastPlayerPos, playerPos, lerpFactor);
+            _lastPlayerPos = smoothPlayerPos;
+            
+            // Target slightly ahead of the player for better view
+            _target = new Vector3(smoothPlayerPos.X, 2f, smoothPlayerPos.Z);
+            
+            // GLTron-style camera: close behind and slightly above the motorcycle
+            // Distance: 12 units behind, Height: 8 units above ground
+            float cameraDistance = 12f;
+            float cameraHeight = 8f;
+            
+            _camPos = new Vector3(smoothPlayerPos.X, cameraHeight, smoothPlayerPos.Z + cameraDistance);
+        }
+        else
+        {
+            // Fallback to arena center view when no player position
+            _target = new Vector3(50f, 2f, 50f);
+            _camPos = new Vector3(50f, 8f, 62f);
+        }
+    }
+
+    private void UpdateFollowingCameraWithDirection(Vector3 playerPos, int playerDirection, GameTime gameTime)
+    {
+        // GLTron-style third-person camera following behind the motorcycle based on direction
+        if (playerPos != Vector3.Zero)
+        {
+            // Smooth camera interpolation
+            float lerpFactor = 0.25f; // Responsive following
+            
+            if (_lastPlayerPos == Vector3.Zero)
+            {
+                _lastPlayerPos = playerPos;
+            }
+            
+            Vector3 smoothPlayerPos = Vector3.Lerp(_lastPlayerPos, playerPos, lerpFactor);
+            _lastPlayerPos = smoothPlayerPos;
+            
+            // GLTron direction vectors: 0=up(-Y), 1=right(+X), 2=down(+Y), 3=left(-X)
+            Vector3[] directionVectors = {
+                new Vector3(0, 0, -1), // Up (negative Z)
+                new Vector3(1, 0, 0),  // Right (positive X)
+                new Vector3(0, 0, 1),  // Down (positive Z)
+                new Vector3(-1, 0, 0)  // Left (negative X)
+            };
+            
+            Vector3 forwardDir = directionVectors[playerDirection % 4];
+            Vector3 backwardDir = -forwardDir;
+            
+            // Target slightly ahead of the player in movement direction
+            _target = smoothPlayerPos + forwardDir * 3f + new Vector3(0, 1f, 0);
+            
+            // Position camera behind the motorcycle
+            float cameraDistance = 10f;
+            float cameraHeight = 6f;
+            
+            _camPos = smoothPlayerPos + backwardDir * cameraDistance + new Vector3(0, cameraHeight, 0);
+        }
+        else
+        {
+            // Fallback
+            _target = new Vector3(50f, 1f, 50f);
+            _camPos = new Vector3(50f, 6f, 60f);
+        }
+    }
+
+    private void UpdateBirdEyeCamera()
+    {
+        // Bird's eye view - good for seeing entire arena
+        _target = new Vector3(50f, 0f, 50f); // Arena center
+        _camPos = new Vector3(50f, 60f, 50f); // High above center
     }
 
     private void UpdateCirclingCamera(float dt)
@@ -201,5 +317,18 @@ public class Camera
             _movement[1] = CamDefaults[index, 1];
             _movement[2] = CamDefaults[index, 2];
         }
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", $"Camera type changed to: {type}");
+#endif
+        }
+        catch { }
+    }
+
+    public CameraType GetCameraType()
+    {
+        return _cameraType;
     }
 }

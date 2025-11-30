@@ -233,6 +233,12 @@ public class Game1 : Game
                 System.Diagnostics.Debug.WriteLine("GLTRON: Initializing 3D graphics components");
                 _worldGraphics = new GltronMobileEngine.Video.WorldGraphics(GraphicsDevice, Content);
                 _worldGraphics.LoadContent(Content);
+                
+                // Set the grid size to match the game
+                if (_glTronGame != null)
+                {
+                    _worldGraphics.SetGridSize(_glTronGame.GetGridSize());
+                }
                 _trailsRenderer = new GltronMobileEngine.Video.TrailsRenderer(GraphicsDevice);
                 _trailsRenderer.LoadContent(Content);
                 _camera = new GltronMobileEngine.Video.Camera(GraphicsDevice.Viewport);
@@ -323,7 +329,27 @@ public class Game1 : Game
                 try 
                 { 
                     Android.Util.Log.Info("GLTRON", $"Touch detected at: {touch.Position.X}, {touch.Position.Y}"); 
-                    _glTronGame?.addTouchEvent(touch.Position.X, touch.Position.Y, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+                    
+                    // Check for camera switch (top-right corner tap)
+                    var viewport = GraphicsDevice.Viewport;
+                    if (touch.Position.X > viewport.Width * 0.8f && touch.Position.Y < viewport.Height * 0.2f)
+                    {
+                        // Switch camera mode
+                        if (_camera != null)
+                        {
+                            var currentType = _camera.GetCameraType();
+                            var newType = currentType == GltronMobileEngine.Video.CameraType.Follow ? 
+                                         GltronMobileEngine.Video.CameraType.Bird : 
+                                         GltronMobileEngine.Video.CameraType.Follow;
+                            _camera.SetCameraType(newType);
+                            Android.Util.Log.Info("GLTRON", $"Camera switched to: {newType}");
+                        }
+                    }
+                    else
+                    {
+                        // Normal game input
+                        _glTronGame?.addTouchEvent(touch.Position.X, touch.Position.Y, viewport.Width, viewport.Height);
+                    }
                 } 
                 catch (System.Exception ex)
                 {
@@ -453,41 +479,39 @@ public class Game1 : Game
                             try
                             {
 #if ANDROID
-                                Android.Util.Log.Info("GLTRON", $"Player position: X={x:F2}, Y={y:F2}");
+                                Android.Util.Log.Debug("GLTRON", $"Camera following player at: X={x:F2}, Y={y:F2}");
 #endif
                             }
                             catch { }
                         }
                         catch (System.Exception ex)
                         {
-                            try
-                            {
-#if ANDROID
-                                Android.Util.Log.Error("GLTRON", $"Failed to get player position: {ex.Message}");
-#endif
-                            }
-                            catch { }
-                            playerPos = Vector3.Zero; // Fallback if player coordinates not ready
+                            playerPos = new Vector3(50f, 0f, 50f); // Default to arena center
                         }
                     }
                     else
                     {
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Warn("GLTRON", "Player is null - using default camera position");
-#endif
-                        }
-                        catch { }
+                        playerPos = new Vector3(50f, 0f, 50f); // Default to arena center
                     }
 
                     try
                     {
-                        _camera.Update(playerPos, gameTime);
+                        // Get player direction for proper camera positioning
+                        int playerDirection = 0;
+                        if (player != null)
+                        {
+                            try
+                            {
+                                playerDirection = player.getDirection();
+                            }
+                            catch { }
+                        }
+                        
+                        _camera.UpdateWithPlayerDirection(playerPos, playerDirection, gameTime);
                         try
                         {
 #if ANDROID
-                            Android.Util.Log.Info("GLTRON", $"Camera updated successfully - playerPos: {playerPos}");
+                            Android.Util.Log.Debug("GLTRON", $"Camera updated - pos: {playerPos}, dir: {playerDirection}");
 #endif
                         }
                         catch { }
@@ -771,6 +795,14 @@ public class Game1 : Game
                         
                         // Game status
                         _spriteBatch.DrawString(_font, "Game Running", new Vector2(10, 40), Color.White);
+                        
+                        // Camera mode indicator
+                        if (_camera != null)
+                        {
+                            var cameraMode = _camera.GetCameraType().ToString();
+                            _spriteBatch.DrawString(_font, $"Camera: {cameraMode}", new Vector2(10, 70), Color.Cyan);
+                            _spriteBatch.DrawString(_font, "Tap top-right to switch camera", new Vector2(viewport.Width - 300, 10), Color.Gray);
+                        }
                         
                         try
                         {
