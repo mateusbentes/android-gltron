@@ -1400,17 +1400,18 @@ public class WorldGraphics
             }
             catch { }
             
-            _bikeModel = SafeLoadModel(content, new [] { "Assets/lightcyclehigh", "lightcyclehigh", "Assets/lightcyclehigh.fbx", "lightcyclehigh.fbx" }, "FBX bike");
+            // Use centralized loader
+            _bikeModel = ModelLoader.LoadLightcycle(content, 0);
             
             try
             {
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "Loading recognizerhigh (FBX)...");
+                Android.Util.Log.Info("GLTRON", "Loading recognizerhigh (FBX) via ModelLoader...");
 #endif
             }
             catch { }
             
-            _recognizerModel = SafeLoadModel(content, new [] { "Assets/recognizerhigh", "recognizerhigh", "Assets/recognizerhigh.fbx", "recognizerhigh.fbx" }, "FBX recognizer");
+            _recognizerModel = ModelLoader.LoadRecognizer(content);
             
             try
             {
