@@ -13,36 +13,36 @@
 
 #---------------------------------- Content ---------------------------------#
 
-# SpriteFont
-#begin Fonts/Default.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Fonts/Default.spritefont
-
-# Audio
-#begin Assets/song_revenge_of_cats.ogg
+#begin Assets/game_crash.ogg
 /importer:OggImporter
-/processor:SongProcessor
-/build:Assets/song_revenge_of_cats.ogg
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/game_crash.ogg
 
 #begin Assets/game_engine.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
+/processorParam:Quality=Best
 /build:Assets/game_engine.ogg
-
-#begin Assets/game_crash.ogg
-/importer:OggImporter
-/processor:SoundEffectProcessor
-/build:Assets/game_crash.ogg
 
 #begin Assets/game_recognizer.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
+/processorParam:Quality=Best
 /build:Assets/game_recognizer.ogg
 
-# Textures
+#begin Assets/gltron_bitmap.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/gltron_bitmap.png
+
 #begin Assets/gltron_floor.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -54,6 +54,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/gltron_floor.png
+
+#begin Assets/gltron_impact.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/gltron_impact.png
+
+#begin Assets/gltron_trail.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/gltron_trail.png
 
 #begin Assets/gltron_wall_1.png
 /importer:TextureImporter
@@ -103,31 +127,82 @@
 /processorParam:TextureFormat=Color
 /build:Assets/gltron_wall_4.png
 
-#begin Assets/gltron_trail.png
-/importer:TextureImporter
-/processor:TextureProcessor
+#begin Assets/lightcyclehigh.fbx
+/importer:OpenAssetImporter
+/processor:ModelProcessor
 /processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=False
+/processorParam:DefaultEffect=BasicEffect
 /processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/gltron_trail.png
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/lightcyclehigh.fbx
 
-#begin Assets/gltron_impact.png
-/importer:TextureImporter
-/processor:TextureProcessor
+#begin Assets/lightcyclehigh.obj
+/importer:OpenAssetImporter
+/processor:ModelProcessor
 /processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=False
+/processorParam:DefaultEffect=BasicEffect
 /processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/gltron_impact.png
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/lightcyclehigh.obj
 
-# Skybox textures
+#begin Assets/recognizerhigh.fbx
+/importer:OpenAssetImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=False
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/recognizerhigh.fbx
+
+#begin Assets/recognizerhigh.obj
+/importer:OpenAssetImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=False
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/recognizerhigh.obj
+
 #begin Assets/skybox0.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -200,97 +275,16 @@
 /processorParam:TextureFormat=Color
 /build:Assets/skybox5.png
 
-#begin Assets/gltron_bitmap.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:GenerateMipmaps=False
+#begin Assets/song_revenge_of_cats.ogg
+/importer:OggImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Assets/song_revenge_of_cats.ogg
+
+#begin Fonts/Default.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/gltron_bitmap.png
-
-# 3D Models
-#begin Assets/lightcyclehigh.fbx
-/importer:OpenAssetImporter
-/processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
-/build:Assets/lightcyclehigh.fbx
-
-#begin Assets/recognizerhigh.fbx
-/importer:OpenAssetImporter
-/processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
-/build:Assets/recognizerhigh.fbx
-
-# Fallback OBJ Models (if FBX fails)
-#begin Assets/lightcyclehigh.obj
-/importer:OpenAssetImporter
-/processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
-/build:Assets/lightcyclehigh.obj
-
-#begin Assets/recognizerhigh.obj
-/importer:OpenAssetImporter
-/processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
-/build:Assets/recognizerhigh.obj
-
-
-
-
+/build:Fonts/Default.spritefont
 
