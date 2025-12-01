@@ -55,6 +55,10 @@ namespace GltronMobileGame
         public const int MAX_PLAYERS = 6;
         public const int OWN_PLAYER = 0;
         public int mCurrentPlayers = 4; // Original GLTron has 4 players
+        
+        // Auto-reset state
+        private bool _autoResetPending = false;
+        private long _autoResetAt = 0;
 
         // Define game textures (serão carregadas no MonoGame Game1)
         // private GLTexture ExplodeTex;
@@ -467,7 +471,10 @@ namespace GltronMobileGame
                     Android.Util.Log.Info("GLTRON", "addTouchEvent: Menu tap detected, starting game");
                     boShowMenu = false;
                     tronHUD?.AddLineToConsole("Game Started!");
-                    tronHUD?.DisplayInstr(true);
+                    // Auto-start round immediately (skip initial idle state)
+                    boInitialState = false;
+                    tronHUD?.DisplayInstr(false);
+                    try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
                     return;
                 }
 
@@ -543,17 +550,14 @@ namespace GltronMobileGame
                 {
                     mRecognizer.DoMovement(TimeDt);
                     
-                    // CRITICAL FIX: Play recognizer sound (like Java version)
-                    if (!boInitialState)
+                    // Always allow recognizer sound in running rounds
+                    try
                     {
-                        try
-                        {
-                            SoundManager.Instance.PlayRecognizer(0.3f, true);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            LogError($"RunGame: Failed to play recognizer sound: {ex}");
-                        }
+                        SoundManager.Instance.PlayRecognizer(0.3f, true);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        LogError($"RunGame: Failed to play recognizer sound: {ex}");
                     }
                 }
                 else
@@ -594,10 +598,17 @@ namespace GltronMobileGame
                     boProcessReset = false;
                 }
                 
-                // CRITICAL: Run game logic (like Java version)
-                if (!boInitialState && !boShowMenu)
+                // Run game logic when in-game (menu hidden)
+                if (!boShowMenu)
                 {
                     RunGameLogic();
+                }
+                
+                // Auto-reset timer check
+                if (_autoResetPending && TimeCurrent >= _autoResetAt)
+                {
+                    _autoResetPending = false;
+                    ResetGame();
                 }
             }
             catch (System.Exception ex)
@@ -638,14 +649,13 @@ namespace GltronMobileGame
                     LogError($"ResetGame: Failed to stop recognizer sound: {ex}");
                 }
                 
-                // Reset game state
-                boInitialState = true;
-                
-                // Reset HUD
+                // Reset game state - auto-start next round immediately
+                boInitialState = false;
                 tronHUD?.ResetConsole();
-                tronHUD?.DisplayInstr(true);
+                tronHUD?.DisplayInstr(false);
+                try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
                 
-                LogInfo("Game reset completed");
+                LogInfo("Game reset completed and next round auto-started");
             }
             catch (System.Exception ex)
             {
@@ -687,7 +697,7 @@ namespace GltronMobileGame
                 // Round robin AI processing (like Java version)
                 if (aiCount < mCurrentPlayers && aiCount > 0) // Skip OWN_PLAYER (index 0)
                 {
-                    if (Players[aiCount] != null && Players[aiCount].getTrailHeight() == Player.TRAIL_HEIGHT)
+                    if (Players[aiCount] != null && Players[aiCount].getTrailHeight() == Player.TRAIL_HEIGHT && Players[aiCount].getSpeed() > 0.0f)
                     {
                         GltronMobileEngine.ComputerAI.DoComputer(aiCount, OWN_PLAYER);
                     }
@@ -724,7 +734,7 @@ namespace GltronMobileGame
                     mEngineStartTime = 0;
                     mEngineSoundModifier = 1.0f;
                 }
-                else if (!boInitialState)
+                else if (true) // auto-started rounds remove initial idle
                 {
                     if (mEngineSoundModifier < 1.5f)
                     {
@@ -756,6 +766,9 @@ namespace GltronMobileGame
                     // Player lost
                     tronHUD?.DisplayLose();
                     LogInfo("Player lost the round");
+                    // Auto-advance to next round after short delay
+                    _autoResetPending = true;
+                    _autoResetAt = TimeCurrent + 1000; // 1s delay
                 }
                 else if (ownPlayerActive && !otherPlayersActive)
                 {
@@ -767,6 +780,9 @@ namespace GltronMobileGame
                         Players[OWN_PLAYER].addScore(100); // Bonus for winning
                     }
                     LogInfo("Player won the round");
+                    // Auto-advance to next round after short delay
+                    _autoResetPending = true;
+                    _autoResetAt = TimeCurrent + 1000; // 1s delay
                 }
             }
             catch (System.Exception ex)

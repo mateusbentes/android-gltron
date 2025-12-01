@@ -369,9 +369,14 @@ namespace GltronMobileEngine
                 V = Current.Intersect(Wall);
                 if (V != null)
                 {
-                    // Walls: allow collision anywhere on the wall segment, including its endpoint
-                    // t1 < 1.0f avoids colliding with our own current endpoint
-                    if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 <= 1.0f)
+                    // Accept collision with wall when our moving segment crosses it anywhere except exactly at our own start point.
+                    // For walls we also accept hits on the wall endpoints (t2 == 1 allowed).
+                    bool hitCurrentSegment = Current.t1 > 0.0f && Current.t1 < 1.0f; // strictly inside our segment progression
+                    bool onWallSegment = Wall.t1 >= 0.0f && Wall.t1 <= 1.0f; // use wall's parameter (t over Wall) if set by Intersect
+                    // Some implementations store other segment's param in Current.t2; preserve existing behavior as fallback
+                    bool onWallViaCurrent = Current.t2 >= 0.0f && Current.t2 <= 1.0f;
+
+                    if ((hitCurrentSegment && onWallViaCurrent) || (hitCurrentSegment && onWallSegment))
                     {
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
