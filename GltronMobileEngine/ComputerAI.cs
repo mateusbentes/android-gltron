@@ -16,11 +16,14 @@ namespace GltronMobileEngine
         private static long _currentTime;
         private static long _deltaTime;
         
-        // AI constants from Java version
-        private const float AI_LOOKAHEAD_DISTANCE = 15.0f;
-        private const float AI_TURN_PROBABILITY = 0.3f;
-        private const float AI_AGGRESSIVE_DISTANCE = 25.0f;
-        private const float AI_EVASIVE_DISTANCE = 10.0f;
+        // Per-AI turn cooldown tracking
+        private static long[]? _lastTurnTime;
+        
+        // AI constants tuned for better pathfinding
+        private const float AI_LOOKAHEAD_DISTANCE = 28.0f; // longer lookahead
+        private const float AI_TURN_PROBABILITY = 0.18f;   // less random jitter
+        private const float AI_AGGRESSIVE_DISTANCE = 30.0f;
+        private const float AI_EVASIVE_DISTANCE = 12.0f;   // react sooner
         
         // AI timing
         private static readonly Random _random = new Random();
@@ -32,6 +35,7 @@ namespace GltronMobileEngine
                 _walls = walls;
                 _players = players;
                 _gridSize = gridSize;
+                _lastTurnTime = new long[players.Length];
                 
                 System.Diagnostics.Debug.WriteLine($"GLTRON: AI initialized for {players.Length} players on {gridSize}x{gridSize} grid");
                 
@@ -59,13 +63,19 @@ namespace GltronMobileEngine
             var player = _players[playerIndex];
             if (player == null || player.getSpeed() <= 0.0f) return;
             
+            // Turn cooldown: avoid oscillations
+            if (_lastTurnTime != null)
+            {
+                long last = _lastTurnTime[playerIndex];
+                const long TURN_COOLDOWN_MS = 250;
+                if (last != 0 && (_currentTime - last) < TURN_COOLDOWN_MS)
+                {
+                    return; // skip decision this frame
+                }
+            }
+            
             try
             {
-                // Get player position and direction
-                float x = player.getXpos();
-                float y = player.getYpos();
-                int direction = player.getDirection();
-                
                 // Calculate distances to obstacles
                 float[] distances = CalculateDistances(player);
                 
@@ -75,14 +85,7 @@ namespace GltronMobileEngine
                 if (action != 0) // 0 = no turn
                 {
                     player.doTurn(action, _currentTime);
-                    
-                    try
-                    {
-#if ANDROID
-                        Android.Util.Log.Debug("GLTRON", $"AI Player {playerIndex} turned {(action == Player.TURN_LEFT ? "LEFT" : "RIGHT")} at ({x:F1},{y:F1})");
-#endif
-                    }
-                    catch { }
+                    if (_lastTurnTime != null) _lastTurnTime[playerIndex] = _currentTime;
                 }
             }
             catch (System.Exception ex)
@@ -116,7 +119,7 @@ namespace GltronMobileEngine
         private static float CalculateDistanceInDirection(float startX, float startY, int direction, float[] dirX, float[] dirY)
         {
             float distance = 0.0f;
-            float step = 2.0f; // Larger step for better performance
+            float step = 1.0f; // finer sampling for better precision
             float maxDistance = AI_LOOKAHEAD_DISTANCE;
             
             float dx = dirX[direction];
@@ -130,13 +133,13 @@ namespace GltronMobileEngine
                 // Check wall collision first (more important)
                 if (CheckWallCollision(checkX, checkY))
                 {
-                    return d;
+                    return d - 0.5f; // small bias to consider collision slightly earlier
                 }
                 
                 // Check trail collision
                 if (CheckTrailCollision(checkX, checkY))
                 {
-                    return d;
+                    return d - 0.5f; // small bias
                 }
                 
                 distance = d;
@@ -170,11 +173,16 @@ namespace GltronMobileEngine
             {
                 if (player == null || player.getTrailHeight() <= 0) continue;
                 
-                // Simple distance check to player trails
-                float playerX = player.getXpos();
-                float playerY = player.getYpos();
-                float distance = (float)Math.Sqrt((x - playerX) * (x - playerX) + (y - playerY) * (y - playerY));
+                // Ignore immediate vicinity of the player's own head to avoid self-hit artifacts
+                float headX = player.getXpos();
+                float headY = player.getYpos();
+                float dx = x - headX;
+                float dy = y - headY;
+                float distHead = (float)Math.Sqrt(dx * dx + dy * dy);
+                if (distHead < 1.0f) continue;
                 
+                // Approximate trail occupancy by proximity to the player's path
+                float distance = (float)Math.Sqrt((x - headX) * (x - headX) + (y - headY) * (y - headY));
                 if (distance < 2.0f) // Trail width approximation
                 {
                     return true;
@@ -186,63 +194,177 @@ namespace GltronMobileEngine
         
         private static int DetermineAIAction(IPlayer player, float[] distances, int ownPlayerIndex)
         {
-            float forwardDist = distances[1]; // forward
-            float leftDist = distances[0];    // left
-            float rightDist = distances[2];   // right
-            
-            // Emergency avoidance - turn away from immediate danger
-            if (forwardDist < AI_EVASIVE_DISTANCE)
+            // Tron-style: prefer straight, turn decisively when needed
+            const float SAFE_STRAIGHT = 20.0f;  // if we have this much free space, keep straight
+            const float MIN_WIDTH = 3.0f;       // minimal comfortable corridor width
+            const float TURN_CLEAR_MARGIN = 2.0f; // require this much better score to turn
+
+            float forwardDist = DistanceUntilCollision(player, 0);
+            float leftLane = DistanceUntilCollision(player, -1);
+            float rightLane = DistanceUntilCollision(player, 1);
+
+            float widthForward = CorridorWidth(player, 0);
+            float widthLeft = CorridorWidth(player, -1);
+            float widthRight = CorridorWidth(player, 1);
+
+            // Emergency: if forward is tight, pick safer side
+            if (forwardDist < AI_EVASIVE_DISTANCE || widthForward < (MIN_WIDTH - 0.5f))
             {
-                if (leftDist > rightDist)
-                {
-                    return Player.TURN_LEFT;
-                }
-                else if (rightDist > leftDist)
-                {
-                    return Player.TURN_RIGHT;
-                }
-                else
-                {
-                    // Both sides equal, choose randomly
-                    return _random.NextDouble() < 0.5 ? Player.TURN_LEFT : Player.TURN_RIGHT;
-                }
-            }
-            
-            // Aggressive behavior - try to get closer to human player
-            if (_players != null && ownPlayerIndex < _players.Length)
-            {
-                var ownPlayer = _players[ownPlayerIndex];
-                if (ownPlayer != null && ownPlayer.getSpeed() > 0.0f)
-                {
-                    float ownX = ownPlayer.getXpos();
-                    float ownY = ownPlayer.getYpos();
-                    float myX = player.getXpos();
-                    float myY = player.getYpos();
-                    
-                    float distanceToOwn = (float)Math.Sqrt((ownX - myX) * (ownX - myX) + (ownY - myY) * (ownY - myY));
-                    
-                    if (distanceToOwn > AI_AGGRESSIVE_DISTANCE && forwardDist > AI_LOOKAHEAD_DISTANCE * 0.7f)
-                    {
-                        // Try to move toward human player
-                        float angleToOwn = (float)Math.Atan2(ownY - myY, ownX - myX);
-                        int currentDir = player.getDirection();
-                        
-                        // Simple direction adjustment toward target
-                        if (_random.NextDouble() < AI_TURN_PROBABILITY)
-                        {
-                            return _random.NextDouble() < 0.5 ? Player.TURN_LEFT : Player.TURN_RIGHT;
-                        }
-                    }
-                }
-            }
-            
-            // Random movement to avoid predictability
-            if (forwardDist > AI_LOOKAHEAD_DISTANCE * 0.8f && _random.NextDouble() < AI_TURN_PROBABILITY * 0.3f)
-            {
+                // score sides by lane length and width
+                float scoreL = leftLane + widthLeft * 2.0f - EnclosurePenalty(player, -1);
+                float scoreR = rightLane + widthRight * 2.0f - EnclosurePenalty(player, 1);
+                if (scoreL > scoreR + 0.5f) return Player.TURN_LEFT;
+                if (scoreR > scoreL + 0.5f) return Player.TURN_RIGHT;
+                // tie-breaker: pick the longer lane
+                if (leftLane > rightLane) return Player.TURN_LEFT;
+                if (rightLane > leftLane) return Player.TURN_RIGHT;
                 return _random.NextDouble() < 0.5 ? Player.TURN_LEFT : Player.TURN_RIGHT;
             }
-            
-            return 0; // No turn
+
+            // If straight is safe and corridor is decent, stay straight
+            if (forwardDist >= SAFE_STRAIGHT && widthForward >= MIN_WIDTH)
+            {
+                return 0;
+            }
+
+            // Evaluate sides using a weighted heuristic
+            float scoreForward = forwardDist + widthForward * 2.5f - EnclosurePenalty(player, 0) * 0.5f;
+            float scoreLeft = leftLane + widthLeft * 2.5f - EnclosurePenalty(player, -1);
+            float scoreRight = rightLane + widthRight * 2.5f - EnclosurePenalty(player, 1);
+
+            float bestSide = Math.Max(scoreLeft, scoreRight);
+            if (bestSide > scoreForward + TURN_CLEAR_MARGIN)
+            {
+                return (scoreLeft > scoreRight) ? Player.TURN_LEFT : Player.TURN_RIGHT;
+            }
+
+            // Otherwise, keep steady
+            return 0;
+        }
+
+        // Distance until collision from player's position in relative direction (-1 left, 0 forward, 1 right)
+        private static float DistanceUntilCollision(IPlayer player, int relTurn)
+        {
+            int dir = (player.getDirection() + (relTurn == -1 ? 3 : (relTurn == 1 ? 1 : 0))) % 4;
+            float[] dirX = { 0.0f, 1.0f, 0.0f, -1.0f };
+            float[] dirY = { -1.0f, 0.0f, 1.0f, 0.0f };
+            float x = player.getXpos();
+            float y = player.getYpos();
+            float step = 1.0f;
+            float distance = 0.0f;
+            for (float d = step; d <= AI_LOOKAHEAD_DISTANCE; d += step)
+            {
+                float cx = x + dirX[dir] * d;
+                float cy = y + dirY[dir] * d;
+                if (CheckWallCollision(cx, cy) || CheckTrailCollision(cx, cy))
+                {
+                    return Math.Max(0.0f, d - 0.5f);
+                }
+                distance = d;
+            }
+            return distance;
+        }
+
+        // Estimate corridor width by sampling perpendicular offsets ahead of the player
+        private static float CorridorWidth(IPlayer player, int relTurn)
+        {
+            int dir = (player.getDirection() + (relTurn == -1 ? 3 : (relTurn == 1 ? 1 : 0))) % 4;
+            float[] dirX = { 0.0f, 1.0f, 0.0f, -1.0f };
+            float[] dirY = { -1.0f, 0.0f, 1.0f, 0.0f };
+            float x = player.getXpos();
+            float y = player.getYpos();
+
+            float perpX = dirY[dir];
+            float perpY = -dirX[dir];
+
+            // sample at few steps ahead to average corridor
+            float[] depths = new float[] { 2f, 4f, 6f };
+            float maxPerp = 4.0f;
+            float step = 1.0f;
+            float totalWidth = 0.0f;
+            int samples = 0;
+            foreach (var depth in depths)
+            {
+                float cx = x + dirX[dir] * depth;
+                float cy = y + dirY[dir] * depth;
+                float width = 0.0f;
+                // expand to both sides until hit
+                for (float p = step; p <= maxPerp; p += step)
+                {
+                    float lx = cx + perpX * p;
+                    float ly = cy + perpY * p;
+                    float rx = cx - perpX * p;
+                    float ry = cy - perpY * p;
+                    bool leftFree = !CheckWallCollision(lx, ly) && !CheckTrailCollision(lx, ly);
+                    bool rightFree = !CheckWallCollision(rx, ry) && !CheckTrailCollision(rx, ry);
+                    if (leftFree) width += 0.5f; else break; // stop at first collision on left side
+                }
+                for (float p = step; p <= maxPerp; p += step)
+                {
+                    float rx = cx - perpX * p;
+                    float ry = cy - perpY * p;
+                    if (!CheckWallCollision(rx, ry) && !CheckTrailCollision(rx, ry)) width += 0.5f; else break;
+                }
+                totalWidth += width;
+                samples++;
+            }
+            return samples > 0 ? totalWidth / samples : 0.0f;
+        }
+
+        // Penalize directions that quickly lead into enclosed areas (simple bounded exploration)
+        private static float EnclosurePenalty(IPlayer player, int relTurn)
+        {
+            int dir = (player.getDirection() + (relTurn == -1 ? 3 : (relTurn == 1 ? 1 : 0))) % 4;
+            float[] dirX = { 0.0f, 1.0f, 0.0f, -1.0f };
+            float[] dirY = { -1.0f, 0.0f, 1.0f, 0.0f };
+            float startX = player.getXpos() + dirX[dir] * 2.0f;
+            float startY = player.getYpos() + dirY[dir] * 2.0f;
+
+            // Coarse exploration grid
+            float step = 2.0f;
+            int maxNodes = 40; // bounded search
+            int explored = 0;
+            // simple FIFO queue using arrays
+            int qh = 0, qt = 0;
+            const int QSIZE = 96;
+            float[] qx = new float[QSIZE];
+            float[] qy = new float[QSIZE];
+
+            // visited check via hashing to coarse cells
+            System.Collections.Generic.HashSet<long> visited = new System.Collections.Generic.HashSet<long>();
+            void Enqueue(float ex, float ey)
+            {
+                long key = (((long)Math.Floor(ex / step)) << 32) ^ (long)Math.Floor(ey / step);
+                if (visited.Contains(key)) return;
+                visited.Add(key);
+                qx[qt] = ex; qy[qt] = ey; qt = (qt + 1) % QSIZE;
+            }
+            bool Dequeue(out float ox, out float oy)
+            {
+                if (qh == qt) { ox = oy = 0; return false; }
+                ox = qx[qh]; oy = qy[qh]; qh = (qh + 1) % QSIZE; return true;
+            }
+
+            Enqueue(startX, startY);
+            while (Dequeue(out float cx, out float cy))
+            {
+                if (explored++ > maxNodes) break;
+                // neighbors 4-dir
+                float[,] neigh = new float[,] { { cx + step, cy }, { cx - step, cy }, { cx, cy + step }, { cx, cy - step } };
+                for (int i = 0; i < 4; i++)
+                {
+                    float nx = neigh[i,0];
+                    float ny = neigh[i,1];
+                    if (nx < 0 || ny < 0 || nx > _gridSize || ny > _gridSize) continue;
+                    if (CheckWallCollision(nx, ny) || CheckTrailCollision(nx, ny)) continue;
+                    Enqueue(nx, ny);
+                }
+            }
+
+            // If few nodes are reachable, it's enclosed: return higher penalty
+            float openness = explored; // proportional to reachable area estimate
+            float penalty = Math.Max(0.0f, 40 - openness) * 0.2f; // 0..~8
+            return penalty;
         }
         
         public static IPlayer? GetClosestOpponent(IPlayer player, int ownPlayerIndex)

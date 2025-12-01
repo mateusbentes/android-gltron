@@ -336,7 +336,7 @@ namespace GltronMobileGame
                             continue;
                         }
 
-                        Players[player].setSpeed(10.0f); // Set initial speed so players are active
+                        Players[player].setSpeed(6.0f); // Slower initial speed for better control
 
                         // Log player starting position and direction
                         float x = Players[player].getXpos();
@@ -627,7 +627,7 @@ namespace GltronMobileGame
                 for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
                 {
                     Players[plyr] = new Player(plyr, mCurrentGridSize);
-                    Players[plyr].setSpeed(10.0f);
+                    Players[plyr].setSpeed(6.0f);
                 }
                 
                 // Reinitialize AI

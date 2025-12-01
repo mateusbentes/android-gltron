@@ -97,7 +97,8 @@ namespace GltronMobileEngine
 
             // tronHUD = hud; // Removido por enquanto
 
-            Speed = 10.0f;
+            // Slower default speed for better control
+            Speed = 6.0f;
             exp_radius = 0.0f;
 
             // Cycle = mesh; // Removido por enquanto

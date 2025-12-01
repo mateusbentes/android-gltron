@@ -38,15 +38,15 @@
     <AndroidSdkBuildToolsVersion>34.0.0</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
   
-  <!-- Use proper MonoGame content integration -->
-  <ItemGroup>
+  <!-- Disable MGCB build for Android: rely on prebuilt assets in Content/Assets -->
+  <!-- <ItemGroup>
     <MonoGameContentReference Include="Content/Content.mgcb" />
-  </ItemGroup>
+  </ItemGroup> -->
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
   
-  <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as Android assets for runtime loading -->
+  <!-- Ensure .obj/.mtl files are packaged as Android assets for runtime loading -->
   <ItemGroup>
     <AndroidAsset Include="Content\Assets\lightcyclehigh.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
