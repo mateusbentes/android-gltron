@@ -245,7 +245,39 @@ namespace GltronMobileEngine
                 // Note: Grid size should come from game, not hardcoded to 100
                 // This is just for debugging - actual collision is handled by wall collision detection
 
+                // First, test explicit wall segment intersections
                 doCrashTestWalls(walls);
+                // Safety net: bounds check in case segment math misses exact boundary contact
+                try
+                {
+                    float gx = getXpos();
+                    float gy = getYpos();
+                    float gridSize = 100f; // default
+                    // Try to infer grid from walls
+                    if (walls != null && walls.Length >= 2 && walls[1] is Segment rw)
+                    {
+                        // right wall starts at (size,0)
+                        gridSize = Math.Max(gridSize, Math.Max(rw.vStart.v[0], rw.vStart.v[1]));
+                        gridSize = Math.Max(gridSize, Math.Abs(rw.vDirection.v[0]) + Math.Abs(rw.vDirection.v[1]));
+                    }
+                    const float eps = 0.01f;
+                    if (gx < -eps || gy < -eps || gx > gridSize + eps || gy > gridSize + eps)
+                    {
+                        // Clamp endpoint to boundary for visual consistency
+                        gx = Math.Clamp(gx, 0f, gridSize);
+                        gy = Math.Clamp(gy, 0f, gridSize);
+                        var Current = Trails[trailOffset];
+                        Current.vDirection.v[0] = gx - Current.vStart.v[0];
+                        Current.vDirection.v[1] = gy - Current.vStart.v[1];
+                        Speed = 0.0f;
+                        _exploding = true;
+                        _explodeTimer = 0f;
+                        try { SoundManager.Instance.PlayCrash(); SoundManager.Instance.StopEngine(); } catch (System.Exception ex) { System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}"); }
+                        LogCrash($"Player {Player_num} CRASH wall (bounds)!");
+                    }
+                }
+                catch { }
+
                 doCrashTestPlayer(players);
 
             }
