@@ -214,7 +214,7 @@
 
 # 3D Models
 #begin Assets/lightcyclehigh.fbx
-/importer:FbxImporter
+/importer:OpenAssetImporter
 /processor:ModelProcessor
 /processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=False
@@ -233,7 +233,7 @@
 /build:Assets/lightcyclehigh.fbx
 
 #begin Assets/recognizerhigh.fbx
-/importer:FbxImporter
+/importer:OpenAssetImporter
 /processor:ModelProcessor
 /processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=False
