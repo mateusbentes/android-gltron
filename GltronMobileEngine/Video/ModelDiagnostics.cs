@@ -36,11 +36,18 @@ namespace GltronMobileEngine.Video
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Basic asset loading failed: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine("❌ This suggests content pipeline issues");
+                return;
             }
             
             // Test 3: Try loading FBX models with detailed error reporting
-            TestModelLoading(content, "Assets/lightcyclehigh", "Lightcycle");
-            TestModelLoading(content, "Assets/recognizerhigh", "Recognizer");
+            System.Diagnostics.Debug.WriteLine("\n--- TESTING FBX MODELS ---");
+            TestModelLoading(content, "Assets/lightcyclehigh", "Lightcycle FBX");
+            TestModelLoading(content, "Assets/recognizerhigh", "Recognizer FBX");
+            
+            // Test 4: Try loading OBJ models as fallback
+            System.Diagnostics.Debug.WriteLine("\n--- TESTING OBJ MODELS ---");
+            TestModelLoading(content, "Assets/lightcyclehigh.obj", "Lightcycle OBJ");
+            TestModelLoading(content, "Assets/recognizerhigh.obj", "Recognizer OBJ");
             
             System.Diagnostics.Debug.WriteLine("=== END DIAGNOSTICS ===");
         }

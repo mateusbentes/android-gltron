@@ -24,11 +24,22 @@ public class WorldGraphics
     private Matrix[]? _recognizerBoneTransforms;
     private bool _useFbxModels = false;
     
+    // Content loading state
+    private bool _contentLoaded = false;
+    
     // Fallback procedural geometry
     private const float RECOGNIZER_SIZE = 2.0f;
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
     {
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", "🏗️ WorldGraphics constructor called!");
+#endif
+        }
+        catch { }
+        
         _gd = gd;
         Effect = new BasicEffect(gd)
         {
@@ -36,10 +47,36 @@ public class WorldGraphics
             LightingEnabled = false,
             VertexColorEnabled = false
         };
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", "✅ WorldGraphics constructor completed!");
+#endif
+        }
+        catch { }
     }
 
     public void LoadContent(ContentManager content)
     {
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", "🚀🚀🚀 WorldGraphics.LoadContent() STARTED! 🚀🚀🚀");
+#endif
+        }
+        catch { }
+        
+        System.Diagnostics.Debug.WriteLine("GLTRON: LoadContent called!");
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", "About to load textures...");
+#endif
+        }
+        catch { }
+        
         // Load textures
         _texFloor = content.Load<Texture2D>("Assets/gltron_floor");
         _texWall = content.Load<Texture2D>("Assets/gltron_wall_1");
@@ -50,11 +87,41 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "✅ Textures loaded successfully!");
+#endif
+        }
+        catch { }
+        
         // Run comprehensive diagnostics
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "=== STARTING MODEL LOADING DIAGNOSTICS ===");
+#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: === STARTING MODEL LOADING DIAGNOSTICS ===");
+        }
+        catch { }
+        
         ModelDiagnostics.DiagnoseModelLoading(content);
         
         // Try to load models in order of preference: FBX -> OBJ -> Procedural
         _useFbxModels = TryLoadModels(content);
+        
+        // Mark that LoadContent has been successfully called
+        _contentLoaded = true;
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", $"=== MODEL LOADING COMPLETE - Using FBX: {_useFbxModels} ===");
+            Android.Util.Log.Info("GLTRON", "🏁 WorldGraphics.LoadContent() FINISHED!");
+#endif
+            System.Diagnostics.Debug.WriteLine($"GLTRON: === MODEL LOADING COMPLETE - Using FBX: {_useFbxModels} ===");
+        }
+        catch { }
     }
     
     /// <summary>
@@ -153,6 +220,18 @@ public class WorldGraphics
 
     public void BeginDraw(Matrix view, Matrix proj)
     {
+        // Test if LoadContent was actually called
+        if (!_contentLoaded)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", "❌ CRITICAL: WorldGraphics.LoadContent() was never called!");
+#endif
+            }
+            catch { }
+        }
+        
         Effect.View = view;
         Effect.Projection = proj;
         Effect.World = Matrix.Identity;
@@ -341,7 +420,13 @@ public class WorldGraphics
             // Try to draw FBX model first
             if (_useFbxModels && _bikeModel != null && _bikeBoneTransforms != null)
             {
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing FBX lightcycle for player {p.getPlayerNum()} at ({x:F1}, {y:F1})");
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Debug("GLTRON", $"Drawing FBX lightcycle for player {p.getPlayerNum()} at ({x:F1}, {y:F1})");
+#endif
+                }
+                catch { }
                 
                 // CRITICAL FIX: Adjust scale and positioning for FBX models
                 const float FBX_BIKE_SCALE = 0.5f; // FBX models might be larger than expected
@@ -354,7 +439,13 @@ public class WorldGraphics
             }
             
             // Fallback to procedural motorcycle
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing procedural motorcycle for player {p.getPlayerNum()}");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Debug("GLTRON", $"Drawing procedural motorcycle for player {p.getPlayerNum()} (FBX not available)");
+#endif
+            }
+            catch { }
             
             fx.World = world;
             fx.DiffuseColor = playerColor;
@@ -458,7 +549,13 @@ public class WorldGraphics
             // Try to draw FBX model first
             if (_useFbxModels && _recognizerModel != null && _recognizerBoneTransforms != null)
             {
-                System.Diagnostics.Debug.WriteLine("GLTRON: Drawing FBX recognizer");
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Debug("GLTRON", "Drawing FBX recognizer");
+#endif
+                }
+                catch { }
                 
                 // CRITICAL FIX: Use a reasonable size for recognizer positioning
                 Vector3 modelSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
@@ -480,7 +577,13 @@ public class WorldGraphics
             }
             
             // Fallback to procedural recognizer
-            System.Diagnostics.Debug.WriteLine("GLTRON: Drawing procedural recognizer");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Debug("GLTRON", "Drawing procedural recognizer (FBX not available)");
+#endif
+            }
+            catch { }
             
             Vector3 recognizerSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
             Matrix worldMatrix = recognizer.GetWorldMatrix(recognizerSize);
@@ -1169,22 +1272,70 @@ public class WorldGraphics
     /// </summary>
     private bool TryLoadModels(ContentManager content)
     {
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "🚀 Starting model loading process...");
+#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: 🚀 Starting model loading process...");
+        }
+        catch { }
+        
         // Try FBX first
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "📁 Trying FBX models first...");
+#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: 📁 Trying FBX models first...");
+        }
+        catch { }
+        
         if (TryLoadFbxModels(content))
         {
-            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Using FBX models");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "🎉 SUCCESS! Using FBX models");
+#endif
+                System.Diagnostics.Debug.WriteLine("GLTRON: 🎉 SUCCESS! Using FBX models");
+            }
+            catch { }
             return true;
         }
         
         // Try OBJ as fallback
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "📁 FBX failed, trying OBJ models...");
+#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: 📁 FBX failed, trying OBJ models...");
+        }
+        catch { }
+        
         if (TryLoadObjModels(content))
         {
-            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Using OBJ models (FBX failed)");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "🎉 SUCCESS! Using OBJ models (FBX failed)");
+#endif
+                System.Diagnostics.Debug.WriteLine("GLTRON: 🎉 SUCCESS! Using OBJ models (FBX failed)");
+            }
+            catch { }
             return true;
         }
         
         // Fall back to procedural
-        System.Diagnostics.Debug.WriteLine("GLTRON: ⚠️ Using procedural models (both FBX and OBJ failed)");
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Warn("GLTRON", "⚠️ FALLBACK! Using procedural models (both FBX and OBJ failed)");
+#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: ⚠️ FALLBACK! Using procedural models (both FBX and OBJ failed)");
+        }
+        catch { }
         return false;
     }
     
@@ -1192,30 +1343,99 @@ public class WorldGraphics
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load FBX models...");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "🔄 Attempting to load FBX models...");
+                Android.Util.Log.Info("GLTRON", "Loading lightcyclehigh.fbx...");
+#endif
+            }
+            catch { }
             
             _bikeModel = content.Load<Model>("Assets/lightcyclehigh");
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "✅ Lightcycle FBX loaded!");
+                Android.Util.Log.Info("GLTRON", "Loading recognizerhigh.fbx...");
+#endif
+            }
+            catch { }
+            
             _recognizerModel = content.Load<Model>("Assets/recognizerhigh");
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "✅ Recognizer FBX loaded!");
+#endif
+            }
+            catch { }
             
             if (_bikeModel != null && _recognizerModel != null)
             {
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", "Setting up bone transforms...");
+#endif
+                }
+                catch { }
+                
                 _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
                 _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
                 
                 _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
                 _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
                 
-                System.Diagnostics.Debug.WriteLine($"GLTRON: FBX Bike - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
-                System.Diagnostics.Debug.WriteLine($"GLTRON: FBX Recognizer - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Bike: {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+                    Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Recognizer: {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+#endif
+                }
+                catch { }
                 
                 return true;
             }
-            
+            else
+            {
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Error("GLTRON", "❌ FBX models loaded but are null!");
+#endif
+                }
+                catch { }
+                return false;
+            }
+        }
+        catch (ContentLoadException ex)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"❌ FBX ContentLoadException: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"❌ Inner exception: {ex.InnerException?.Message}");
+                Android.Util.Log.Error("GLTRON", "❌ This means the FBX files weren't processed correctly by content pipeline");
+#endif
+            }
+            catch { }
             return false;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: FBX loading failed: {ex.Message}");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"❌ FBX loading failed with unexpected error: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"❌ Exception type: {ex.GetType().Name}");
+                Android.Util.Log.Error("GLTRON", $"❌ Stack trace: {ex.StackTrace}");
+#endif
+            }
+            catch { }
             return false;
         }
     }
@@ -1224,34 +1444,47 @@ public class WorldGraphics
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load OBJ models...");
+            System.Diagnostics.Debug.WriteLine("GLTRON: 🔄 Attempting to load OBJ models as fallback...");
             
-            // Try loading OBJ files processed by content pipeline
+            System.Diagnostics.Debug.WriteLine("GLTRON: Loading lightcyclehigh.obj...");
             var bikeModel = content.Load<Model>("Assets/lightcyclehigh.obj");
+            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Lightcycle OBJ loaded!");
+            
+            System.Diagnostics.Debug.WriteLine("GLTRON: Loading recognizerhigh.obj...");
             var recognizerModel = content.Load<Model>("Assets/recognizerhigh.obj");
+            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Recognizer OBJ loaded!");
             
             if (bikeModel != null && recognizerModel != null)
             {
                 _bikeModel = bikeModel;
                 _recognizerModel = recognizerModel;
                 
+                System.Diagnostics.Debug.WriteLine("GLTRON: Setting up OBJ bone transforms...");
                 _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
                 _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
                 
                 _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
                 _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
                 
-                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ Bike - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
-                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ Recognizer - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: 🎉 OBJ SUCCESS! Bike: {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: 🎉 OBJ SUCCESS! Recognizer: {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
                 
                 return true;
             }
-            
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: ❌ OBJ models loaded but are null!");
+                return false;
+            }
+        }
+        catch (ContentLoadException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ OBJ ContentLoadException: {ex.Message}");
             return false;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ loading failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ OBJ loading failed: {ex.Message}");
             return false;
         }
     }
