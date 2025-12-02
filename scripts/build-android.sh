@@ -36,17 +36,65 @@ fi
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
 
-# Build content if MGCB present
+# Build content if MGCB present, with change guard and sync to Content/Assets
 if [ -f "$PROJ_DIR/Content/Content.mgcb" ]; then
-  echo "Building content..."
-  if ! command -v mgcb-editor &>/dev/null && ! command -v mgcb &>/dev/null; then
-    echo "MGCB CLI not found. Install with: dotnet tool install -g dotnet-mgcb-editor"
+  echo "Checking content changes..."
+  CONTENT_FILE="$PROJ_DIR/Content/Content.mgcb"
+  OUT_DIR="$PROJ_DIR/Content/bin/Android"
+  OBJ_DIR="$PROJ_DIR/Content/obj/Android"
+  ASSETS_DIR_SRC="$OUT_DIR/Assets"
+  ASSETS_DIR_DST="$PROJ_DIR/Content/Assets"
+
+  # Compute a simple checksum of mgcb and all assets referenced (fallback to timestamp if no sha tool)
+  HASH_CMD=""
+  if command -v sha256sum >/dev/null 2>&1; then HASH_CMD=sha256sum; elif command -v shasum >/dev/null 2>&1; then HASH_CMD="shasum -a 256"; fi
+  STATE_FILE="$PROJ_DIR/Content/.mgcb_android_state"
+  CURRENT_SIG="nohash"
+  if [ -n "$HASH_CMD" ]; then
+    CURRENT_SIG=$( (echo "MGCB:" && $HASH_CMD "$CONTENT_FILE" 2>/dev/null; echo "ASSETS:" && find "$PROJ_DIR/Content/Assets" -type f -printf '%P\n' 2>/dev/null | LC_ALL=C sort | while read -r f; do $HASH_CMD "$PROJ_DIR/Content/Assets/$f" 2>/dev/null || true; done) | $HASH_CMD | awk '{print $1}')
   else
-    if command -v mgcb &>/dev/null; then
-      mgcb /@:$PROJ_DIR/Content/Content.mgcb /platform:Android /outputDir:$PROJ_DIR/Content/bin/Android /intermediateDir:$PROJ_DIR/Content/obj/Android
+    CURRENT_SIG=$(date -r "$CONTENT_FILE" +%s || stat -f %m "$CONTENT_FILE" 2>/dev/null || echo $RANDOM)
+  fi
+  PREV_SIG=""
+  if [ -f "$STATE_FILE" ]; then PREV_SIG=$(cat "$STATE_FILE" || true); fi
+
+  echo "Content signature (Android):"
+  echo "  prev: $PREV_SIG"
+  echo "  curr: $CURRENT_SIG"
+
+  # Ensure output bin directory exists
+  if [ ! -d "$OUT_DIR/Assets" ]; then
+    echo "Output directory $OUT_DIR/Assets missing; forcing content build."
+    FORCE_BUILD=1
+  else
+    FORCE_BUILD=0
+  fi
+
+  if [ "$CURRENT_SIG" != "$PREV_SIG" ] || [ "$FORCE_BUILD" -eq 1 ]; then
+    echo "Building content (Android platform)..."
+    if ! command -v mgcb-editor &>/dev/null && ! command -v mgcb &>/dev/null; then
+      echo "MGCB CLI not found. Install with: dotnet tool install -g dotnet-mgcb-editor"
     else
-      mgcb-editor --build "$PROJ_DIR/Content/Content.mgcb" --platform Android
+      mkdir -p "$OUT_DIR" "$OBJ_DIR"
+      if command -v mgcb &>/dev/null; then
+        mgcb /@:"$CONTENT_FILE" /platform:Android /outputDir:"$OUT_DIR" /intermediateDir:"$OBJ_DIR"
+      else
+        mgcb-editor --build "$CONTENT_FILE" --platform Android --outputDir "$OUT_DIR" --intermediateDir "$OBJ_DIR"
+      fi
+      # Sync built XNBs into Content/Assets so runtime loads "Assets/..." from RootDirectory=Content
+      if command -v rsync >/dev/null 2>&1; then
+        echo "Syncing built content to $ASSETS_DIR_DST ..."
+        mkdir -p "$ASSETS_DIR_DST"
+        rsync -a --delete "$ASSETS_DIR_SRC/" "$ASSETS_DIR_DST/" || true
+      else
+        echo "rsync not found, using cp -ru"
+        mkdir -p "$ASSETS_DIR_DST"
+        cp -ru "$ASSETS_DIR_SRC/"* "$ASSETS_DIR_DST/" 2>/dev/null || true
+      fi
+      echo "$CURRENT_SIG" > "$STATE_FILE" || true
     fi
+  else
+    echo "No content changes detected and output present; skipping MGCB build."
   fi
 fi
 
