@@ -23,6 +23,7 @@
     <MonoGamePlatform>Android</MonoGamePlatform>
     <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
     <AndroidLinkMode>None</AndroidLinkMode>
+    <UseMonoGamePipeline>true</UseMonoGamePipeline>
   </PropertyGroup>
   
   <ItemGroup>
@@ -38,10 +39,10 @@
     <AndroidSdkBuildToolsVersion>34.0.0</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
   
-  <!-- Disable MGCB build for Android: rely on prebuilt assets in Content/Assets -->
-  <!-- <ItemGroup>
+  <!-- Re-enable MGCB build for Android: build content from Content/Content.mgcb -->
+  <ItemGroup>
     <MonoGameContentReference Include="Content/Content.mgcb" />
-  </ItemGroup> -->
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
@@ -62,13 +63,8 @@
     </AndroidAsset>
   </ItemGroup>
 
-  <!-- Ensure all Content (including XNBs) is packaged into the APK -->
+  <!-- Ensure raw content is packaged only when not using MGCB -->
   <ItemGroup>
-    <AndroidAsset Include="Content\**\*.*" />
-  </ItemGroup>
-  <!-- Explicitly include critical model XNBs -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\Assets\lightcyclehigh.xnb" />
-    <AndroidAsset Include="Content\Assets\recognizerhigh.xnb" />
+    <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
   </ItemGroup>
 </Project>
