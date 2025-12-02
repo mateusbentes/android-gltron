@@ -46,7 +46,17 @@
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
-  
+
+  <!-- Ensure top-level XNBs under Content/Assets are packaged into the APK -->
+  <ItemGroup>
+    <AndroidAsset Include="Content\Assets\lightcyclehigh.xnb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AndroidAsset>
+    <AndroidAsset Include="Content\Assets\recognizerhigh.xnb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AndroidAsset>
+  </ItemGroup>
+
   <!-- Ensure .obj/.mtl files are packaged as Android assets for runtime loading -->
   <ItemGroup>
     <AndroidAsset Include="Content\Assets\lightcyclehigh.obj">
@@ -59,13 +69,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
     <AndroidAsset Include="Content\Assets\recognizer.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-  </ItemGroup>
-
-  <!-- Ensure top-level XNBs under Content/Assets are packaged into the APK -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\Assets\*.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
   </ItemGroup>

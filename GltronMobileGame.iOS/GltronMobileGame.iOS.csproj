@@ -46,9 +46,12 @@
 
   <!-- Ensure top-level XNBs under Content/Assets are bundled into the iOS app -->
   <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\*.xnb" Link="Content\Assets\%(Filename)%(Extension)">
+    <AndroidAsset Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
+    </AndroidAsset>
+    <AndroidAsset Include="..\GltronMobileGame\Content\Assets\recognizerhigh.xnb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AndroidAsset>
   </ItemGroup>
 
   <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as iOS bundle resources for runtime loading -->
@@ -65,5 +68,10 @@
     <BundleResource Include="..\GltronMobileGame\Content\Assets\recognizer.mtl" Link="Content\Assets\recognizer.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </BundleResource>
+  </ItemGroup>
+
+  <!-- Ensure raw content is packaged only when not using MGCB -->
+  <ItemGroup>
+    <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
   </ItemGroup>
 </Project>
