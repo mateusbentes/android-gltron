@@ -207,28 +207,19 @@ public class Game1 : Game
             // Load menu background image (like original Java version)
             try
             {
-                // Try XNB first
+                // Load XNB only
                 _menuBackground = Content.Load<Texture2D>("Assets/gltron_bitmap");
-                System.Diagnostics.Debug.WriteLine("GLTRON: Menu background loaded successfully (XNB)");
             }
-            catch
-            {
-                try
-                {
-                    // Fallback to raw PNG from Android assets
-                    using (var stream = TitleContainer.OpenStream("Content/Assets/gltron_bitmap.png"))
-                    {
-                        _menuBackground = Texture2D.FromStream(GraphicsDevice, stream);
-                        System.Diagnostics.Debug.WriteLine("GLTRON: Menu background loaded successfully (PNG fallback)");
-                    }
-                }
-                catch (System.Exception ex2)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Menu background load failed: {ex2.Message}");
-                    _menuBackground = null;
-                }
+            catch { System.Diagnostics.Debug.WriteLine("GLTRON: Failed to load menu XNB: {ex.Message}"); 
+                #if ANDROID 
+                try {
+                    Android.Util.Log.Error("GLTRON", "Failed to load menu XNB: {ex}");  
+                } 
+                catch {}
+                #endif
+                _menuBackground = null; // or generate a simple placeholder texture if desired
             }
-
+            
             // Try to load font (non-critical)
             try
             {
