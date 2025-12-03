@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <XnaContent xmlns:ns="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
   <Asset Type="ns:FontDescription">
-    <FontName>Arial</FontName>
-    <Size>14</Size>
+    <FontName>Roboto-Regular.ttf</FontName>
+    <Size>20</Size>
     <Spacing>2</Spacing>
     <UseKerning>true</UseKerning>
     <Style>Regular</Style>

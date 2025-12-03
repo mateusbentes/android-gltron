@@ -224,11 +224,13 @@ public class Game1 : Game
             try
             {
                 _font = Content.Load<SpriteFont>("Fonts/Default");
-                Android.Util.Log.Info("GLTRON", "SpriteFont loaded");
+                System.Diagnostics.Debug.WriteLine("GLTRON", "SpriteFont loaded");
             }
             catch (System.Exception ex)
             {
-                try { Android.Util.Log.Error("GLTRON", $"SpriteFont load failed: {ex}"); } catch { }
+                try {
+                    System.Diagnostics.Debug.WriteLine("GLTRON", $"SpriteFont load failed: {ex}"); 
+                    } catch { }
                 _font = null; // Continue without font
             }
 
@@ -237,11 +239,11 @@ public class Game1 : Game
             {
                 _hud = new GltronMobileEngine.Video.HUD(_spriteBatch, _font);
                 _glTronGame.tronHUD = _hud;
-                Android.Util.Log.Info("GLTRON", "HUD initialized");
+                System.Diagnostics.Debug.WriteLine("GLTRON", "HUD initialized");
             }
             else
             {
-                Android.Util.Log.Warn("GLTRON", "Running without HUD due to font loading failure");
+                System.Diagnostics.Debug.WriteLine("GLTRON", "Running without HUD due to font loading failure");
             }
 
             // Initialize 3D graphics components (non-critical)
