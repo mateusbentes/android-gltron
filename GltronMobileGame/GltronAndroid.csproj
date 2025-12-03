@@ -47,12 +47,12 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
 
-  <!-- Ensure top-level XNBs under Content/Assets are packaged into the APK -->
+  <!-- Package platform-specific XNBs directly from bin output path -->
   <ItemGroup>
-    <AndroidAsset Include="Content\Assets\lightcyclehigh.xnb">
+    <AndroidAsset Include="Content\bin\Android\Content\Assets\lightcyclehigh.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
-    <AndroidAsset Include="Content\Assets\recognizerhigh.xnb">
+    <AndroidAsset Include="Content\bin\Android\Content\Assets\recognizerhigh.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
   </ItemGroup>

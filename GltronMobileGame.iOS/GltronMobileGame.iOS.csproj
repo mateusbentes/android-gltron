@@ -2,76 +2,61 @@
   <PropertyGroup>
     <TargetFramework>net8.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
+
     <RootNamespace>GltronMobileGame</RootNamespace>
     <AssemblyName>GltronMobileGame.iOS</AssemblyName>
-    
+
     <!-- iOS app metadata -->
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
     <ApplicationId>gltron.org.gltronmobile.ios</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
-    
-    <!-- MonoGame Content Pipeline Configuration -->
+
+    <!-- MonoGame -->
     <MonoGamePlatform>iOS</MonoGamePlatform>
-    <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
   </PropertyGroup>
-  
+
+  <!-- MonoGame packages -->
   <ItemGroup>
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
   </ItemGroup>
-  
-  <!-- Use shared MonoGame content -->
-  <ItemGroup>
-    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.iOS.mgcb" />
-  </ItemGroup>
-  
-  <!-- Reference shared engine -->
+
+  <!-- Shared Engine -->
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
-  
-  <!-- Link shared game source files -->
+
+  <!-- Share all .cs of the game -->
   <ItemGroup>
-    <Compile Include="..\GltronMobileGame\Game1.cs" Link="Game1.cs" />
-    <Compile Include="..\GltronMobileGame\GLTronGame.cs" Link="GLTronGame.cs" />
-    <Compile Include="..\GltronMobileGame\Player.cs" Link="Player.cs" />
-    <Compile Include="..\GltronMobileGame\Segment.cs" Link="Segment.cs" />
-    <Compile Include="..\GltronMobileGame\Vec.cs" Link="Vec.cs" />
-    <Compile Include="..\GltronMobileGame\GameState.cs" Link="GameState.cs" />
-    <Compile Include="..\GltronMobileGame\Video\**\*.cs" Link="Video\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="..\GltronMobileGame\Sound\SoundManager.cs" Link="Sound\SoundManager.cs" />
+    <Compile Include="..\GltronMobileGame\**\*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Ensure top-level XNBs under Content/Assets are bundled into the iOS app -->
+  <!-- Use default MGCB pipeline -->
   <ItemGroup>
-    <AndroidAsset Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="..\GltronMobileGame\Content\Assets\recognizerhigh.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
+    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.mgcb" />
   </ItemGroup>
 
-  <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as iOS bundle resources for runtime loading -->
+  <!-- XNBs generated for iOS -->
   <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.obj" Link="Content\Assets\lightcyclehigh.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\lightcycle.mtl" Link="Content\Assets\lightcycle.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\recognizerhigh.obj" Link="Content\Assets\recognizerhigh.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\recognizer.mtl" Link="Content\Assets\recognizer.mtl">
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.xnb"
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </BundleResource>
   </ItemGroup>
 
-  <!-- Ensure raw content is packaged only when not using MGCB -->
+  <!-- OBJ and MTL to Assets folder -->
   <ItemGroup>
-    <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.obj" 
+                    Link="Content\Assets\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </BundleResource>
+
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.mtl" 
+                    Link="Content\Assets\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </BundleResource>
   </ItemGroup>
+
 </Project>

@@ -6,7 +6,7 @@ PROJECT="GltronMobileGame/GltronAndroid.csproj"
 echo "Building Android content via MSBuild (MonoGame.Content.Builder.Task)"
 dotnet build "$PROJECT" -c Debug
 
-CONTENT_OUT="GltronMobileGame/Content/bin/Android"
+CONTENT_OUT="GltronMobileGame/Content/bin/Android/Content"
 
 if [ ! -d "$CONTENT_OUT" ]; then
   echo "ERROR: Expected content output not found: $CONTENT_OUT"

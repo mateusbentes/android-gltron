@@ -53,8 +53,7 @@ echo "  Project: $PROJ_DIR"
 # Use full solution that includes iOS project
 SOLUTION_FILE="GltronMobile.Full.sln"
 if [ ! -f "$SOLUTION_FILE" ]; then
-  echo "Error: Full solution file '$SOLUTION_FILE' not found."
-  echo "This file should include both Android and iOS projects."
+  echo "Error: Solution '$SOLUTION_FILE' not found."
   exit 1
 fi
 
@@ -62,71 +61,21 @@ fi
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
 
-# Build content if MGCB present, with change guard and sync to Content/Assets
-CONTENT_DIR="GltronMobileGame/Content"
-if [ -f "$CONTENT_DIR/Content.mgcb" ]; then
-  echo "Checking content changes for iOS..."
-  CONTENT_FILE="$CONTENT_DIR/Content.mgcb"
-  OUT_DIR="$CONTENT_DIR/bin/iOS"
-  OBJ_DIR="$CONTENT_DIR/obj/iOS"
-  ASSETS_DIR_SRC="$OUT_DIR/Assets"
-  ASSETS_DIR_DST="$CONTENT_DIR/Assets"
+# Build content
+if [ -f "$PROJ_DIR/Content/Content.mgcb" ]; then
+  echo "Building content (iOS platform)..."
 
-  # Compute checksum of mgcb and assets; fallback to timestamp if sha not available
-  HASH_CMD=""
-  if command -v sha256sum >/dev/null 2>&1; then HASH_CMD=sha256sum; elif command -v shasum >/dev/null 2>&1; then HASH_CMD="shasum -a 256"; fi
-  STATE_FILE="$CONTENT_DIR/.mgcb_ios_state"
-  CURRENT_SIG="nohash"
-  if [ -n "$HASH_CMD" ]; then
-    CURRENT_SIG=$( (echo "MGCB:" && $HASH_CMD "$CONTENT_FILE" 2>/dev/null; echo "ASSETS:" && find "$CONTENT_DIR/Assets" -type f -printf '%P\n' 2>/dev/null | LC_ALL=C sort | while read -r f; do $HASH_CMD "$CONTENT_DIR/Assets/$f" 2>/dev/null || true; done) | $HASH_CMD | awk '{print $1}')
-  else
-    CURRENT_SIG=$(date -r "$CONTENT_FILE" +%s 2>/dev/null || stat -f %m "$CONTENT_FILE" 2>/dev/null || echo $RANDOM)
-  fi
-  PREV_SIG=""
-  if [ -f "$STATE_FILE" ]; then PREV_SIG=$(cat "$STATE_FILE" || true); fi
+  CONTENT_FILE="$PROJ_DIR/Content/Content.mgcb"
+  OUT_DIR="$PROJ_DIR/Content/bin/iOS/Content"
+  OBJ_DIR="$PROJ_DIR/Content/obj/iOS"
 
-  echo "Content signature (iOS):"
-  echo "  prev: $PREV_SIG"
-  echo "  curr: $CURRENT_SIG"
+  mkdir -p "$OUT_DIR" "$OBJ_DIR"
 
-  # Ensure output bin directory exists
-  if [ ! -d "$OUT_DIR/Assets" ]; then
-    echo "Output directory $OUT_DIR/Assets missing; forcing iOS content build."
-    FORCE_BUILD=1
-  else
-    FORCE_BUILD=0
-  fi
+  mgcb -r /@:"$CONTENT_FILE" /platform:iOS /outputDir:"$OUT_DIR" /intermediateDir:"$OBJ_DIR"
 
-  if [ "$CURRENT_SIG" != "$PREV_SIG" ] || [ "$FORCE_BUILD" -eq 1 ]; then
-    echo "Building content (iOS platform)..."
-    if ! command -v mgcb-editor &>/dev/null && ! command -v mgcb &>/dev/null; then
-      echo "Warning: MGCB CLI not found. Install with: dotnet tool install -g dotnet-mgcb-editor"
-      echo "Attempting to build without explicit content build..."
-    else
-      mkdir -p "$OUT_DIR" "$OBJ_DIR"
-      if command -v mgcb &>/dev/null; then
-        mgcb /@:"$CONTENT_FILE" /platform:iOS /outputDir:"$OUT_DIR" /intermediateDir:"$OBJ_DIR"
-      else
-        mgcb-editor --build "$CONTENT_FILE" --platform iOS --outputDir "$OUT_DIR" --intermediateDir "$OBJ_DIR"
-      fi
-      # Sync built XNBs into Content/Assets so runtime loads "Assets/..." from RootDirectory=Content
-      if command -v rsync >/dev/null 2>&1; then
-        echo "Syncing built iOS content to $ASSETS_DIR_DST ..."
-        mkdir -p "$ASSETS_DIR_DST"
-        rsync -a --delete "$ASSETS_DIR_SRC/" "$ASSETS_DIR_DST/" || true
-      else
-        echo "rsync not found, using cp -ru"
-        mkdir -p "$ASSETS_DIR_DST"
-        cp -ru "$ASSETS_DIR_SRC/"* "$ASSETS_DIR_DST/" 2>/dev/null || true
-      fi
-      echo "$CURRENT_SIG" > "$STATE_FILE" || true
-    fi
-  else
-    echo "No iOS content changes detected and output present; skipping MGCB build."
-  fi
+  echo "Content built. (not synchronizing Assets)"
 fi
 
-# Build via solution first (engine + shared dependencies)
 echo "Building solution..."
 dotnet build "$SOLUTION_FILE" -c "$CONFIG"
 

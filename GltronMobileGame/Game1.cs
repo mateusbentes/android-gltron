@@ -40,8 +40,14 @@ public class Game1 : Game
                 throw new System.InvalidOperationException("Failed to create GraphicsDeviceManager");
             }
             
-            // CRITICAL: Set Content.RootDirectory before any content operations
+            // Set platform-specific content root so XNBs load from bin output
+#if ANDROID
+            Content.RootDirectory = "Content/bin/Android/Content";
+#elif IOS
+            Content.RootDirectory = "Content/bin/Android/Content.iOS";
+#else
             Content.RootDirectory = "Content";
+#endif
             
             // Set up graphics for mobile landscape (multiplatform compatible)
             _graphics.IsFullScreen = true;

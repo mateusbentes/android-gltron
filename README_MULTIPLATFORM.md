@@ -32,11 +32,19 @@ Prerequisites for Android
    - Install Android workload for .NET (required for net8.0-android):
      dotnet workload install android
 
-3) Install MonoGame templates and MGCB tool
-   dotnet new --install MonoGame.Templates.CSharp
-   dotnet tool install -g dotnet-mgcb-editor
-   # ensure global tools are on PATH
-   export PATH="$HOME/.dotnet/tools:$PATH"
+3) Install MGCB command-line tool and MonoGame templates
+
+    # Install MGCB first so scripts can call `mgcb`
+    dotnet tool install -g dotnet-mgcb
+    # Ensure .NET global tools (like dotnet-mgcb) are available
+    export PATH="$PATH:/home/mateus/.dotnet/tools"
+    # Optional: MGCB Editor UI and MonoGame templates
+    dotnet tool install -g dotnet-mgcb-editor
+    dotnet new --install MonoGame.Templates.CSharp
+    # ensure global tools are on PATH (add to your shell profile)
+    export PATH="$HOME/.dotnet/tools:$PATH"
+    # verify MGCB is available
+    mgcb --version
 
 Android Build Steps
 ===================
