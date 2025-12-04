@@ -648,27 +648,29 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
                 try
                 {
 #if ANDROID
-                    Android.Util.Log.Debug("GLTRON", "Drawing FBX recognizer");
+                    Android.Util.Log.Debug("GLTRON", "Drawing FBX recognizer (forced above placement)");
 #endif
                 }
                 catch { }
                 
-                // CRITICAL FIX: Use a reasonable size for recognizer positioning
-                Vector3 modelSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
-                Vector3 position = recognizer.GetPosition(modelSize);
-                float angle = recognizer.GetAngle();
+                // Force ABOVE placement at arena center with gentle bobbing
+                float rg_gridSize = _gridSize;
+                float rg_center = rg_gridSize * 0.5f;
+                float rg_baseHeight = Math.Max(12.0f, rg_gridSize * 0.22f);
+                float rg_bob = (float)Math.Sin((double)Environment.TickCount * 0.001 * 0.8) * 1.5f; // subtle bob using time
+                Vector3 position = new Vector3(rg_center, rg_baseHeight + rg_bob, rg_center);
+                float rg_angle = recognizer.GetAngle();
                 
-                // CRITICAL FIX: Proper scaling and positioning for FBX recognizer
-                const float FBX_RECOGNIZER_SCALE = 0.3f; // FBX models might be larger
+                const float FBX_RECOGNIZER_SCALE = 0.15f; // Smaller, subtle recognizer above arena
                 Matrix fbxWorldMatrix = Matrix.CreateScale(FBX_RECOGNIZER_SCALE) *
-                                       Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
+                                       Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle)) *
                                        Matrix.CreateTranslation(position);
                 
                 // Draw the FBX recognizer
                 DrawFbxModel(_recognizerModel, _recognizerBoneTransforms, fbxWorldMatrix, color);
                 
-                // Draw shadow
-                DrawRecognizerShadowWithFbx(recognizer, modelSize);
+                // Draw shadow directly under center position (small and faint)
+                DrawRecognizerShadowFlatAt(position);
                 return;
             }
             
@@ -681,8 +683,15 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             }
             catch { }
             
-            Vector3 recognizerSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
-            Matrix worldMatrix = recognizer.GetWorldMatrix(recognizerSize);
+            // Force ABOVE placement at arena center with gentle bobbing for procedural as well
+            float rg_gridSize2 = _gridSize;
+            float rg_center2 = rg_gridSize2 * 0.5f;
+            float rg_baseHeight2 = Math.Max(12.0f, rg_gridSize2 * 0.22f);
+            float rg_bob2 = (float)Math.Sin((double)Environment.TickCount * 0.001 * 0.8) * 1.5f;
+            float rg_angle2 = recognizer.GetAngle();
+            Matrix worldMatrix = Matrix.CreateScale(RECOGNIZER_SIZE * 0.5f) *
+                                 Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle2)) *
+                                 Matrix.CreateTranslation(new Vector3(rg_center2, rg_baseHeight2 + rg_bob2, rg_center2));
             fx.World = worldMatrix;
             
             fx.DiffuseColor = color;
@@ -1305,62 +1314,55 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
     /// </summary>
     private void DrawRecognizerShadowWithFbx(Recognizer recognizer, Vector3 modelSize)
     {
+        // kept for compatibility; we now prefer flat center shadow
         if (_recognizerModel == null || _recognizerBoneTransforms == null) return;
-        
+        Vector3 pos = new Vector3(_gridSize * 0.5f, 0f, _gridSize * 0.5f);
+        DrawRecognizerShadowFlatAt(pos);
+    }
+
+    private void DrawRecognizerShadowFlatAt(Vector3 centerPos)
+    {
         try
         {
-            // CRITICAL FIX: Save and set proper render states for shadow
             var oldBlend = _gd.BlendState;
             var oldDepth = _gd.DepthStencilState;
-            var oldRasterizer = _gd.RasterizerState;
-            
+            var oldRaster = _gd.RasterizerState;
+
             _gd.BlendState = BlendState.AlphaBlend;
-            _gd.DepthStencilState = DepthStencilState.DepthRead; // Don't write depth for shadows
-            _gd.RasterizerState = RasterizerState.CullNone; // Draw both sides of shadow
-            
-            // Get recognizer position and angle
-            Vector3 position = recognizer.GetPosition(modelSize);
-            float angle = recognizer.GetAngle();
-            
-            // CRITICAL FIX: Create proper shadow matrix
-            const float SHADOW_SCALE = 0.2f; // Smaller shadow
-            Matrix shadowWorld = Matrix.CreateScale(SHADOW_SCALE, 0.01f, SHADOW_SCALE) * // Very flat shadow
-                                Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
-                                Matrix.CreateTranslation(position.X, 0.1f, position.Z); // Slightly above ground
-            
-            var view = Effect.View;
-            var proj = Effect.Projection;
-            
-            foreach (var mesh in _recognizerModel.Meshes)
+            _gd.DepthStencilState = DepthStencilState.DepthRead;
+            _gd.RasterizerState = RasterizerState.CullNone;
+
+            // Render a tiny flat quad as shadow under the recognizer center
+            float r = Math.Max(0.8f, _gridSize * 0.02f);
+            var verts = new VertexPositionTexture[4];
+            verts[0] = new VertexPositionTexture(new Vector3(centerPos.X - r, 0.1f, centerPos.Z - r), new Vector2(0, 0));
+            verts[1] = new VertexPositionTexture(new Vector3(centerPos.X + r, 0.1f, centerPos.Z - r), new Vector2(1, 0));
+            verts[2] = new VertexPositionTexture(new Vector3(centerPos.X - r, 0.1f, centerPos.Z + r), new Vector2(0, 1));
+            verts[3] = new VertexPositionTexture(new Vector3(centerPos.X + r, 0.1f, centerPos.Z + r), new Vector2(1, 1));
+
+            // Use Effect with black color, no texture
+            var prevTexEnabled = Effect.TextureEnabled;
+            var prevDiffuse = Effect.DiffuseColor;
+            var prevAlpha = Effect.Alpha;
+            Effect.TextureEnabled = false;
+            Effect.DiffuseColor = Vector3.Zero;
+            Effect.Alpha = 0.18f;
+
+            foreach (var pass in Effect.CurrentTechnique.Passes)
             {
-                Matrix meshWorld = _recognizerBoneTransforms[mesh.ParentBone.Index] * shadowWorld;
-                
-                foreach (var effect in mesh.Effects)
-                {
-                    if (effect is BasicEffect basicEffect)
-                    {
-                        basicEffect.World = meshWorld;
-                        basicEffect.View = view;
-                        basicEffect.Projection = proj;
-                        basicEffect.LightingEnabled = false;
-                        basicEffect.DiffuseColor = Vector3.Zero; // Black shadow
-                        basicEffect.Alpha = 0.2f; // More transparent
-                        basicEffect.TextureEnabled = false;
-                        basicEffect.VertexColorEnabled = false;
-                    }
-                }
-                mesh.Draw();
+                pass.Apply();
+                DrawQuad(verts);
             }
-            
-            // CRITICAL FIX: Restore all render states
+
+            Effect.TextureEnabled = prevTexEnabled;
+            Effect.DiffuseColor = prevDiffuse;
+            Effect.Alpha = prevAlpha;
+
             _gd.BlendState = oldBlend;
             _gd.DepthStencilState = oldDepth;
-            _gd.RasterizerState = oldRasterizer;
+            _gd.RasterizerState = oldRaster;
         }
-        catch (System.Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawRecognizerShadowWithFbx error: {ex.Message}");
-        }
+        catch { }
     }
     
     /// <summary>

@@ -52,7 +52,7 @@ public class SoundManager
             MediaPlayer.Stop();
     }
 
-    public void PlayEngine(float volume = 0.3f, bool loop = true)
+    public void PlayEngine(float volume = 0.4f, bool loop = true)
     {
         if (_engine == null) return;
         _engineInstance ??= _engine.CreateInstance();
@@ -73,7 +73,7 @@ public class SoundManager
         _crash?.Play(volume, 0f, 0f);
     }
 
-    public void PlayRecognizer(float volume = 0.3f, bool loop = true)
+    public void PlayRecognizer(float volume = 0.4f, bool loop = true)
     {
         if (_recognizer == null) return;
         _recognizerInstance ??= _recognizer.CreateInstance();

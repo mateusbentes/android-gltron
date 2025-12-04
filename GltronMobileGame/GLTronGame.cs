@@ -562,7 +562,7 @@ namespace GltronMobileGame
                 }
                 else
                 {
-                    // Stop recognizer sound if recognizer is disabled
+                    // Stop recognizer sound if recognizer is disabled or in menu
                     try
                     {
                         SoundManager.Instance.StopRecognizer();
@@ -742,7 +742,7 @@ namespace GltronMobileGame
                         {
                             if ((TimeCurrent + 1000) > mEngineStartTime)
                             {
-                                mEngineSoundModifier += 0.01f;
+                                mEngineSoundModifier += 0.008f;
                                 SoundManager.Instance.PlayEngine(mEngineSoundModifier, true);
                             }
                         }

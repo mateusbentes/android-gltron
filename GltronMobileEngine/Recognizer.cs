@@ -49,8 +49,14 @@ namespace GltronMobileEngine
             0.0f, 0.0f, 0.0f, 4.0f
         );
         
-        private const float SCALE_FACTOR = 1.0f;  // Increased from 0.4f to make recognizer more visible
-        private const float HEIGHT = 25.0f;      // Lower but still floating
+        private const float SCALE_FACTOR = 0.6f;  // Smaller, so recognizer is subtle
+        private const float BASE_HEIGHT = -20.0f;   // if < 0, compute from grid size
+        private const float BOB_AMPLITUDE = 1.5f;  // Smaller, subtle bobbing
+        private const float BOB_SPEED = 0.8f;      // Bobbing speed multiplier
+
+        // Placement mode: above the arena center
+        private bool _aboveMode = true;
+        public void SetAboveMode(bool above) => _aboveMode = above;
         
         public Recognizer(float gridSize)
         {
@@ -83,12 +89,21 @@ namespace GltronMobileEngine
         public Vector3 GetPosition(Vector3 modelBoundingBoxSize)
         {
             float max = modelBoundingBoxSize.X * SCALE_FACTOR;
+
+            if (_aboveMode)
+            {
+                // Center recognizer above arena with a gentle bob, minimal lateral sweep
+                float center = _gridSize * 0.5f;
+                float baseHeight = (BASE_HEIGHT > 0.0f) ? BASE_HEIGHT : Math.Max(10.0f, _gridSize * 0.12f);
+                float bob = (float)Math.Sin(_alpha * BOB_SPEED) * BOB_AMPLITUDE;
+                return new Vector3(center, baseHeight + bob, center);
+            }
+
+            // Legacy animated placement inside arena (not used in above mode)
             float boundary = _gridSize - max;
-            
             float x = (max + (GetX() + 1.0f) * boundary) / 2.0f;
             float y = (max + (GetY() + 1.0f) * boundary) / 2.0f;
-            
-            return new Vector3(x, HEIGHT, y); // Note: Y is height in MonoGame coordinate system
+            return new Vector3(x, BASE_HEIGHT, y);
         }
         
         /// <summary>

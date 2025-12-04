@@ -20,10 +20,10 @@ namespace GltronMobileEngine
         private static long[]? _lastTurnTime;
         
         // AI constants tuned for better pathfinding
-        private const float AI_LOOKAHEAD_DISTANCE = 28.0f; // longer lookahead
+        private const float AI_LOOKAHEAD_DISTANCE = 36.0f; // longer lookahead (more competitive)
         private const float AI_TURN_PROBABILITY = 0.18f;   // less random jitter
         private const float AI_AGGRESSIVE_DISTANCE = 30.0f;
-        private const float AI_EVASIVE_DISTANCE = 12.0f;   // react sooner
+        private const float AI_EVASIVE_DISTANCE = 14.0f;   // react sooner
         
         // AI timing
         private static readonly Random _random = new Random();
@@ -67,7 +67,7 @@ namespace GltronMobileEngine
             if (_lastTurnTime != null)
             {
                 long last = _lastTurnTime[playerIndex];
-                const long TURN_COOLDOWN_MS = 250;
+                const long TURN_COOLDOWN_MS = 180;
                 if (last != 0 && (_currentTime - last) < TURN_COOLDOWN_MS)
                 {
                     return; // skip decision this frame
@@ -119,7 +119,7 @@ namespace GltronMobileEngine
         private static float CalculateDistanceInDirection(float startX, float startY, int direction, float[] dirX, float[] dirY)
         {
             float distance = 0.0f;
-            float step = 1.0f; // finer sampling for better precision
+            float step = 0.8f; // denser sampling for earlier detection
             float maxDistance = AI_LOOKAHEAD_DISTANCE;
             
             float dx = dirX[direction];
@@ -133,13 +133,13 @@ namespace GltronMobileEngine
                 // Check wall collision first (more important)
                 if (CheckWallCollision(checkX, checkY))
                 {
-                    return d - 0.5f; // small bias to consider collision slightly earlier
+                    return d - 0.8f; // larger bias: treat obstacles as closer to consider collision slightly earlier
                 }
                 
                 // Check trail collision
                 if (CheckTrailCollision(checkX, checkY))
                 {
-                    return d - 0.5f; // small bias
+                    return d - 0.8f; // larger bias: treat obstacles as closer
                 }
                 
                 distance = d;
@@ -195,8 +195,8 @@ namespace GltronMobileEngine
         private static int DetermineAIAction(IPlayer player, float[] distances, int ownPlayerIndex)
         {
             // Tron-style: prefer straight, turn decisively when needed
-            const float SAFE_STRAIGHT = 20.0f;  // if we have this much free space, keep straight
-            const float MIN_WIDTH = 3.0f;       // minimal comfortable corridor width
+            const float SAFE_STRAIGHT = 24.0f;  // if we have this much free space, keep straight
+            const float MIN_WIDTH = 3.5f;       // minimal comfortable corridor width
             const float TURN_CLEAR_MARGIN = 2.0f; // require this much better score to turn
 
             float forwardDist = DistanceUntilCollision(player, 0);
@@ -322,7 +322,7 @@ namespace GltronMobileEngine
 
             // Coarse exploration grid
             float step = 2.0f;
-            int maxNodes = 40; // bounded search
+            int maxNodes = 60; // bounded search
             int explored = 0;
             // simple FIFO queue using arrays
             int qh = 0, qt = 0;
@@ -363,7 +363,7 @@ namespace GltronMobileEngine
 
             // If few nodes are reachable, it's enclosed: return higher penalty
             float openness = explored; // proportional to reachable area estimate
-            float penalty = Math.Max(0.0f, 40 - openness) * 0.2f; // 0..~8
+            float penalty = Math.Max(0.0f, 60 - openness) * 0.25f; // 0..~8
             return penalty;
         }
         
