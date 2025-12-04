@@ -154,7 +154,7 @@ namespace GltronMobileGame
             }
             catch (System.Exception ex)
             {
-                LogError($"GLTronGame constructor failed: {ex}");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - GLTronGame constructor failed: {ex}");
                 throw;
             }
         }
@@ -457,7 +457,7 @@ namespace GltronMobileGame
         {
             try
             {
-                Android.Util.Log.Info("GLTRON", $"addTouchEvent: x={x}, y={y}, screen={screenWidth}x{screenHeight}");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: addTouchEvent: x={x}, y={y}, screen={screenWidth}x{screenHeight}");
                 
                 if (boLoading)
                 {
@@ -468,13 +468,17 @@ namespace GltronMobileGame
                 // Handle menu state
                 if (boShowMenu)
                 {
-                    Android.Util.Log.Info("GLTRON", "addTouchEvent: Menu tap detected, starting game");
+                    System.Diagnostics.Debug.WriteLine("GLTRON: addTouchEvent: Menu tap detected, starting game");
                     boShowMenu = false;
                     tronHUD?.AddLineToConsole("Game Started!");
                     // Auto-start round immediately (skip initial idle state)
                     boInitialState = false;
                     tronHUD?.DisplayInstr(false);
-                    try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
+                    try {
+                        // Load gameplay SFX only now (not during menu)
+                        Sound.SoundManager.Instance.EnsureGameplaySfxLoaded();
+                        Sound.SoundManager.Instance.PlayEngine(0.3f, true);
+                    } catch { }
                     return;
                 }
 
