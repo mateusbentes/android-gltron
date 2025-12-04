@@ -29,11 +29,11 @@ public class SoundManager
             _engine = _content.Load<SoundEffect>("Assets/game_engine");
             _crash = _content.Load<SoundEffect>("Assets/game_crash");
             _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
-            try { Android.Util.Log.Info("GLTRON", "Sound content loaded (including recognizer and music as SFX)"); } catch { }
+            System.Diagnostics.Debug.WriteLine("GLTRON: Initialize: Loaded audio assets: music, engine, crash, recognizer");
         }
         catch (System.Exception ex)
         {
-            try { Android.Util.Log.Error("GLTRON", $"Sound content load failed: {ex}"); } catch { }
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Sound content load failed: {ex}");
             throw;
         }
     }
@@ -42,7 +42,7 @@ public class SoundManager
 
     public void PlayMusic(bool loop = true, float volume = 0.6f)
     {
-        if (_music == null) { try { Android.Util.Log.Warn("GLTRON", "PlayMusic: _music is null"); } catch {} return; }
+        if (_music == null) { System.Diagnostics.Debug.WriteLine("GLTRON: PlayMusic: _music is null"); return; }
         _musicInstance ??= _music.CreateInstance();
         _musicInstance.IsLooped = loop;
         _musicInstance.Volume = volume;
@@ -50,7 +50,7 @@ public class SoundManager
         {
             _musicInstance.Play();
         }
-        try { Android.Util.Log.Info("GLTRON", $"PlayMusic called: state={_musicInstance.State}, vol={_musicInstance.Volume}, loop={_musicInstance.IsLooped}"); } catch {}
+        System.Diagnostics.Debug.WriteLine($"GLTRON: PlayMusic called: state={_musicInstance.State}, vol={_musicInstance.Volume}, loop={_musicInstance.IsLooped}");
     }
 
     public void StopMusic()
@@ -58,7 +58,7 @@ public class SoundManager
         if (_musicInstance != null && _musicInstance.State == SoundState.Playing)
         {
             _musicInstance.Stop();
-            try { Android.Util.Log.Info("GLTRON", "StopMusic called: music stopped"); } catch {}
+            System.Diagnostics.Debug.WriteLine("GLTRON: StopMusic called: music stopped");
         }
     }
 
@@ -70,6 +70,7 @@ public class SoundManager
         _engineInstance.IsLooped = loop;
         if (_engineInstance.State != SoundState.Playing)
             _engineInstance.Play();
+        System.Diagnostics.Debug.WriteLine($"GLTRON: PlayEngine: state={_engineInstance.State}, vol={_engineInstance.Volume}, loop={_engineInstance.IsLooped}");
     }
 
     public void StopEngine()
@@ -91,6 +92,7 @@ public class SoundManager
         _recognizerInstance.IsLooped = loop;
         if (_recognizerInstance.State != SoundState.Playing)
             _recognizerInstance.Play();
+        System.Diagnostics.Debug.WriteLine($"GLTRON: PlayRecognizer: state={_recognizerInstance.State}, vol={_recognizerInstance.Volume}, loop={_recognizerInstance.IsLooped}");
     }
 
     public void StopRecognizer()
