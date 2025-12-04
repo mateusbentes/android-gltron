@@ -25,11 +25,9 @@ public class SoundManager
         _content = content;
         try
         {
+            // Load only background music for menu
             _music = _content.Load<Song>("Assets/song_revenge_of_cats");
-            _engine = _content.Load<SoundEffect>("Assets/game_engine");
-            _crash = _content.Load<SoundEffect>("Assets/game_crash");
-            _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
-            System.Diagnostics.Debug.WriteLine("GLTRON: Initialize: Loaded audio assets: music, engine, crash, recognizer");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Initialize: Loaded music for menu");
         }
         catch (System.Exception ex)
         {
@@ -59,8 +57,20 @@ public class SoundManager
         }
     }
 
+    private bool _gameplaySfxLoaded = false;
+    public void EnsureGameplaySfxLoaded()
+    {
+        if (_gameplaySfxLoaded) return;
+        _engine = _content.Load<SoundEffect>("Assets/game_engine");
+        _crash = _content.Load<SoundEffect>("Assets/game_crash");
+        _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
+        _gameplaySfxLoaded = true;
+        System.Diagnostics.Debug.WriteLine("GLTRON: Gameplay SFX loaded (engine, crash, recognizer)");
+    }
+
     public void PlayEngine(float volume = 0.4f, bool loop = true)
     {
+        EnsureGameplaySfxLoaded();
         if (_engine == null) return;
         _engineInstance ??= _engine.CreateInstance();
         _engineInstance.Volume = volume;
@@ -78,11 +88,13 @@ public class SoundManager
 
     public void PlayCrash(float volume = 0.8f)
     {
+        EnsureGameplaySfxLoaded();
         _crash?.Play(volume, 0f, 0f);
     }
 
     public void PlayRecognizer(float volume = 0.4f, bool loop = true)
     {
+        EnsureGameplaySfxLoaded();
         if (_recognizer == null) return;
         _recognizerInstance ??= _recognizer.CreateInstance();
         _recognizerInstance.Volume = volume;
