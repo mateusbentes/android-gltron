@@ -145,7 +145,7 @@ public class SoundManager
                     StopEngine();
                     break;
                 case 3: // MUSIC_SOUND
-                    StopMusic();
+                    // No-op: keep background music running; do not stop via legacy StopSound
                     break;
                 case 4: // RECOGNIZER_SOUND
                     StopRecognizer();

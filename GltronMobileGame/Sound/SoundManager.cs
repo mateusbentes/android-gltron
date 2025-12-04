@@ -122,7 +122,7 @@ public class SoundManager
                 StopEngine();
                 break;
             case 3: // MUSIC_SOUND
-                StopMusic();
+                // No-op: do not stop music via legacy StopSound to keep BGM across menu/gameplay
                 break;
             case 4: // RECOGNIZER_SOUND
                 StopRecognizer();
