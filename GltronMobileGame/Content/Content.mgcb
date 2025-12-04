@@ -20,11 +20,10 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/Default.spritefont
 
-#begin Assets/song_revenge_of_cats.ogg
-/importer:OggImporter
-/processor:SoundEffectProcessor
-/processorParam:Platform=Android
-/build:Assets/song_revenge_of_cats.ogg
+#begin Assets/song_revenge_of_cats.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Assets/song_revenge_of_cats.mp3
 
 #begin Assets/game_crash.ogg
 /importer:OggImporter

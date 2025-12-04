@@ -11,7 +11,7 @@ public class SoundManager
     public static SoundManager Instance => _instance ??= new SoundManager();
 
     private ContentManager _content;
-    private SoundEffect _music;
+    private Song _music;
     private SoundEffect _engine;
     private SoundEffect _crash;
     private SoundEffect _recognizer;
@@ -25,7 +25,7 @@ public class SoundManager
         _content = content;
         try
         {
-            _music = _content.Load<SoundEffect>("Assets/song_revenge_of_cats");
+            _music = _content.Load<Song>("Assets/song_revenge_of_cats");
             _engine = _content.Load<SoundEffect>("Assets/game_engine");
             _crash = _content.Load<SoundEffect>("Assets/game_crash");
             _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
@@ -38,26 +38,23 @@ public class SoundManager
         }
     }
 
-    private SoundEffectInstance _musicInstance;
-
     public void PlayMusic(bool loop = true, float volume = 0.6f)
     {
         if (_music == null) { System.Diagnostics.Debug.WriteLine("GLTRON: PlayMusic: _music is null"); return; }
-        _musicInstance ??= _music.CreateInstance();
-        _musicInstance.IsLooped = loop;
-        _musicInstance.Volume = volume;
-        if (_musicInstance.State != SoundState.Playing)
+        MediaPlayer.IsRepeating = loop;
+        MediaPlayer.Volume = volume;
+        if (MediaPlayer.State != MediaState.Playing)
         {
-            _musicInstance.Play();
+            MediaPlayer.Play(_music);
         }
-        System.Diagnostics.Debug.WriteLine($"GLTRON: PlayMusic called: state={_musicInstance.State}, vol={_musicInstance.Volume}, loop={_musicInstance.IsLooped}");
+        System.Diagnostics.Debug.WriteLine($"GLTRON: PlayMusic called: state={MediaPlayer.State}, vol={MediaPlayer.Volume}, loop={MediaPlayer.IsRepeating}");
     }
 
     public void StopMusic()
     {
-        if (_musicInstance != null && _musicInstance.State == SoundState.Playing)
+        if (MediaPlayer.State == MediaState.Playing)
         {
-            _musicInstance.Stop();
+            MediaPlayer.Stop();
             System.Diagnostics.Debug.WriteLine("GLTRON: StopMusic called: music stopped");
         }
     }
