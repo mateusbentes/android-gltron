@@ -232,18 +232,18 @@ namespace GltronMobileEngine
             float dx = x2 - x1;
             float dy = y2 - y1;
             float lengthSq = dx * dx + dy * dy;
-            
+
             if (lengthSq < 0.001f)
             {
                 // Point to point distance
                 float pointDist = (float)Math.Sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
                 return pointDist < threshold;
             }
-            
+
             float t = Math.Max(0, Math.Min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSq));
             float projX = x1 + t * dx;
             float projY = y1 + t * dy;
-            
+
             float segmentDist = (float)Math.Sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
             return segmentDist < threshold;
         }
@@ -256,24 +256,24 @@ namespace GltronMobileEngine
             float left = distances[0];
             float forward = distances[1];
             float right = distances[2];
-            
+
             // Adjust safety margins based on difficulty
             float safetyMargin = SAFETY_MARGIN[_aiLevel];
             float criticalDist = CRITICAL_DISTANCE[_aiLevel] * _gridSize;
-            float emergencyDist = 5.0f; // Absolute minimum distance
-            
+            float emergencyDist = 7.0f; // Increased absolute minimum distance
+
             // CRITICAL: Prevent immediate collision
             if (forward < emergencyDist)
             {
                 // Emergency evasion - turn to side with most space
                 if (left > right && left > emergencyDist)
                 {
-                    memory.DangerMemory[0] = 10f; // Remember forward was dangerous
+                    memory.DangerMemory[0] = Math.Min(10f, memory.DangerMemory[0] + 10f); // Remember forward was dangerous
                     return Player.TURN_LEFT;
                 }
                 else if (right > emergencyDist)
                 {
-                    memory.DangerMemory[0] = 10f; // Remember forward was dangerous
+                    memory.DangerMemory[0] = Math.Min(10f, memory.DangerMemory[0] + 10f); // Remember forward was dangerous
                     return Player.TURN_RIGHT;
                 }
                 else if (left > right)
@@ -282,49 +282,49 @@ namespace GltronMobileEngine
                 }
                 else
                 {
-                    return Player.TURN_RIGHT;
+                    return Player.TURN_RIGHT; // Turn to better side even if both are bad
                 }
             }
             
             // Update danger memory based on close calls (learning)
-            if (forward < safetyMargin) 
+            if (forward < safetyMargin)
             {
                 float danger = (safetyMargin - forward) / safetyMargin;
-                memory.DangerMemory[0] = Math.Min(memory.DangerMemory[0] + danger * 0.5f, 5f);
+        memory.DangerMemory[0] = Math.Min(5f, memory.DangerMemory[0] + danger * 0.5f);
             }
-            if (left < safetyMargin) 
+            if (left < safetyMargin)
             {
                 float danger = (safetyMargin - left) / safetyMargin;
-                memory.DangerMemory[1] = Math.Min(memory.DangerMemory[1] + danger * 0.5f, 5f);
+        memory.DangerMemory[1] = Math.Min(5f, memory.DangerMemory[1] + danger * 0.5f);
             }
-            if (right < safetyMargin) 
+            if (right < safetyMargin)
             {
                 float danger = (safetyMargin - right) / safetyMargin;
-                memory.DangerMemory[2] = Math.Min(memory.DangerMemory[2] + danger * 0.5f, 5f);
+        memory.DangerMemory[2] = Math.Min(5f, memory.DangerMemory[2] + danger * 0.5f);
             }
-            
+
             // Calculate scores (higher is better) with memory influence
             float forwardScore = forward - memory.DangerMemory[0] * 5f;
             float leftScore = left - memory.DangerMemory[1] * 5f;
             float rightScore = right - memory.DangerMemory[2] * 5f;
-            
+
             // Strong anti-spiral logic to prevent self-destruction
-            if (Math.Abs(memory.SpiralCounter) > 3)
+            if (Math.Abs(memory.SpiralCounter) > 5) // Increased threshold
             {
-                if (memory.SpiralCounter > 3)
+                if (memory.SpiralCounter > 5)
                 {
                     // Been turning left too much - strongly prefer right
                     rightScore += 30f;
                     leftScore -= 10f;
                 }
-                else if (memory.SpiralCounter < -3)
+                else if (memory.SpiralCounter < -5)
                 {
                     // Been turning right too much - strongly prefer left
                     leftScore += 30f;
                     rightScore -= 10f;
                 }
             }
-            
+
             // Decision logic based on situation
             if (forward > criticalDist && forward > safetyMargin)
             {
@@ -333,14 +333,14 @@ namespace GltronMobileEngine
                     return Player.TURN_LEFT;
                 if (rightScore > forwardScore + 15f && right > safetyMargin)
                     return Player.TURN_RIGHT;
-                    
+
                 // Reset spiral counter when going straight
                 if (memory.SpiralCounter > 0) memory.SpiralCounter--;
                 else if (memory.SpiralCounter < 0) memory.SpiralCounter++;
-                
+
                 return 0; // Continue straight
             }
-            
+
             // Need to turn - choose best direction
             if (forward < safetyMargin || forward < criticalDist)
             {
