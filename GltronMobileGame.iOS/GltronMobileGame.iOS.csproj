@@ -44,4 +44,12 @@
                     Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- Also bundle original compressed music files for MediaPlayer (mp3/m4a) -->
+  <ItemGroup>
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.mp3"
+                    Link="Content\Assets\%(RecursiveDir)%(Filename)%(Extension)" />
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.m4a"
+                    Link="Content\Assets\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
