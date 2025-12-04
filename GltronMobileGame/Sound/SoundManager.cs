@@ -11,7 +11,7 @@ public class SoundManager
     public static SoundManager Instance => _instance ??= new SoundManager();
 
     private ContentManager _content;
-    private Song _music;
+    private SoundEffect _music;
     private SoundEffect _engine;
     private SoundEffect _crash;
     private SoundEffect _recognizer;
@@ -25,11 +25,11 @@ public class SoundManager
         _content = content;
         try
         {
-            _music = _content.Load<Song>("Assets/song_revenge_of_cats");
+            _music = _content.Load<SoundEffect>("Assets/song_revenge_of_cats");
             _engine = _content.Load<SoundEffect>("Assets/game_engine");
             _crash = _content.Load<SoundEffect>("Assets/game_crash");
             _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
-            try { Android.Util.Log.Info("GLTRON", "Sound content loaded (including recognizer)"); } catch { }
+            try { Android.Util.Log.Info("GLTRON", "Sound content loaded (including recognizer and music as SFX)"); } catch { }
         }
         catch (System.Exception ex)
         {
@@ -38,18 +38,28 @@ public class SoundManager
         }
     }
 
-    public void PlayMusic(bool loop = true, float volume = 0.5f)
+    private SoundEffectInstance _musicInstance;
+
+    public void PlayMusic(bool loop = true, float volume = 0.6f)
     {
-        if (_music == null) return;
-        MediaPlayer.IsRepeating = loop;
-        MediaPlayer.Volume = volume;
-        MediaPlayer.Play(_music);
+        if (_music == null) { try { Android.Util.Log.Warn("GLTRON", "PlayMusic: _music is null"); } catch {} return; }
+        _musicInstance ??= _music.CreateInstance();
+        _musicInstance.IsLooped = loop;
+        _musicInstance.Volume = volume;
+        if (_musicInstance.State != SoundState.Playing)
+        {
+            _musicInstance.Play();
+        }
+        try { Android.Util.Log.Info("GLTRON", $"PlayMusic called: state={_musicInstance.State}, vol={_musicInstance.Volume}, loop={_musicInstance.IsLooped}"); } catch {}
     }
 
     public void StopMusic()
     {
-        if (MediaPlayer.State == MediaState.Playing)
-            MediaPlayer.Stop();
+        if (_musicInstance != null && _musicInstance.State == SoundState.Playing)
+        {
+            _musicInstance.Stop();
+            try { Android.Util.Log.Info("GLTRON", "StopMusic called: music stopped"); } catch {}
+        }
     }
 
     public void PlayEngine(float volume = 0.4f, bool loop = true)
