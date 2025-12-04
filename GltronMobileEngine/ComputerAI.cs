@@ -222,9 +222,9 @@ namespace GltronMobileEngine
             }
             
             // Debug: Log distances if any are critically low
-            if (_distances[E_FRONT] < 5.0f || _distances[E_LEFT] < 5.0f || _distances[E_RIGHT] < 5.0f)
+            if (_distances[E_FRONT] < 8.0f || _distances[E_LEFT] < 8.0f || _distances[E_RIGHT] < 8.0f)
             {
-                System.Diagnostics.Debug.WriteLine($"AI {playerIndex} distances: F={_distances[E_FRONT]:F1} L={_distances[E_LEFT]:F1} R={_distances[E_RIGHT]:F1} at ({x:F1},{y:F1}) dir={currDir}");
+                System.Diagnostics.Debug.WriteLine($"AI {playerIndex} ALERT: F={_distances[E_FRONT]:F1} L={_distances[E_LEFT]:F1} R={_distances[E_RIGHT]:F1} at ({x:F1},{y:F1}) dir={currDir} speed={player.getSpeed():F1}");
             }
         }
         
@@ -364,66 +364,156 @@ namespace GltronMobileEngine
             float right = _distances[E_RIGHT];
             float backleft = _distances[E_BACKLEFT];
             
+            // Tron-style aggressive but smart gameplay
+            // Look for opportunities to cut off opponents while staying safe
+            bool shouldBeAggressive = ShouldBeAggressive(playerIndex, front, left, right);
+            
             // Check if we need to turn based on critical distance and segment length
             float criticalDist = CRITICAL[_aiLevel] * _gridSize;
             float maxSegLength = MAX_SEG_LENGTH[_aiLevel] * _gridSize;
             float segmentLength = GetSegmentLength(trail);
             
-            // Add safety margin to prevent wall collisions
-            float safetyMargin = 2.0f + player.getSpeed() * 0.1f; // Dynamic margin based on speed
+            // Enhanced safety calculations for better wall avoidance
+            float speed = player.getSpeed();
+            float reactionTime = MIN_TURN_TIME[_aiLevel] / 1000.0f; // Convert ms to seconds
+            float stoppingDistance = speed * reactionTime; // Distance covered during reaction time
+            float safetyBuffer = 3.0f; // Minimum buffer distance
+            float dynamicSafetyMargin = stoppingDistance + safetyBuffer;
             
-            // Turn if getting too close to wall or segment too long
-            if (front > criticalDist && segmentLength < maxSegLength && front > safetyMargin)
-                return; // Safe to continue straight
-            
-            // Decide where to turn
-            if (front > right && front > left)
-                return; // No way out, continue straight (will crash)
-            
-            float rlDelta = RL_DELTA[_aiLevel];
-            int tdiff = _tdiff[playerIndex];
-            
-            // Safety threshold - minimum distance required to make a turn
-            float minTurnDistance = 3.0f + player.getSpeed() * 0.15f;
-            
-            // Anti-spiral logic with backleft check
-            if (left > minTurnDistance && left > rlDelta && 
-                Math.Abs(right - left) < rlDelta && 
-                backleft > left && 
-                tdiff < SPIRAL[_aiLevel])
+            // Emergency turn if too close to wall
+            if (front < dynamicSafetyMargin)
             {
-                player.doTurn(Player.TURN_LEFT, _currentTime);
-                _tdiff[playerIndex]++;
-                _aiTime[playerIndex] = _currentTime;
-            }
-            else if (right > minTurnDistance && right > left && tdiff > -SPIRAL[_aiLevel])
-            {
-                player.doTurn(Player.TURN_RIGHT, _currentTime);
-                _tdiff[playerIndex]--;
-                _aiTime[playerIndex] = _currentTime;
-            }
-            else if (left > minTurnDistance && right < left && tdiff < SPIRAL[_aiLevel])
-            {
-                player.doTurn(Player.TURN_LEFT, _currentTime);
-                _tdiff[playerIndex]++;
-                _aiTime[playerIndex] = _currentTime;
-            }
-            else
-            {
-                // Balance turns based on tdiff, but only if safe
-                if (tdiff > 0 && right > minTurnDistance)
+                // Emergency evasion - turn immediately to the side with more space
+                if (left > right && left > dynamicSafetyMargin)
+                {
+                    player.doTurn(Player.TURN_LEFT, _currentTime);
+                    _tdiff[playerIndex]++;
+                    _aiTime[playerIndex] = _currentTime;
+                    return;
+                }
+                else if (right > dynamicSafetyMargin)
                 {
                     player.doTurn(Player.TURN_RIGHT, _currentTime);
                     _tdiff[playerIndex]--;
                     _aiTime[playerIndex] = _currentTime;
+                    return;
                 }
-                else if (left > minTurnDistance)
+                // If both sides are bad, pick the better one
+            }
+            
+            // Normal decision: Turn if getting close to critical distance or segment too long
+            if (front > criticalDist && segmentLength < maxSegLength && front > dynamicSafetyMargin * 2)
+                return; // Safe to continue straight
+            
+            // Decide where to turn with enhanced logic
+            if (front > right && front > left)
+            {
+                // Front is best - but check if we should turn anyway for strategy
+                if (front < criticalDist * 0.5f)
+                {
+                    // Getting tight, turn to best side even if front is better
+                    if (left > right && left > dynamicSafetyMargin)
+                    {
+                        player.doTurn(Player.TURN_LEFT, _currentTime);
+                        _tdiff[playerIndex]++;
+                        _aiTime[playerIndex] = _currentTime;
+                        return;
+                    }
+                    else if (right > dynamicSafetyMargin)
+                    {
+                        player.doTurn(Player.TURN_RIGHT, _currentTime);
+                        _tdiff[playerIndex]--;
+                        _aiTime[playerIndex] = _currentTime;
+                        return;
+                    }
+                }
+                return; // Continue straight if safe
+            }
+            
+            float rlDelta = RL_DELTA[_aiLevel];
+            int tdiff = _tdiff[playerIndex];
+            
+            // Enhanced safety threshold based on speed and reaction time
+            float minTurnDistance = Math.Max(dynamicSafetyMargin, 5.0f);
+            
+            // Tron-style intelligent turning decisions
+            float leftScore = EvaluateTurnOption(playerIndex, Player.TURN_LEFT);
+            float rightScore = EvaluateTurnOption(playerIndex, Player.TURN_RIGHT);
+            
+            // Anti-spiral logic with enhanced decision making
+            bool preferLeft = false;
+            bool preferRight = false;
+            
+            // Check for spiral pattern and break it
+            if (tdiff > SPIRAL[_aiLevel] / 2)
+            {
+                preferLeft = true; // Been turning right too much
+            }
+            else if (tdiff < -SPIRAL[_aiLevel] / 2)
+            {
+                preferRight = true; // Been turning left too much
+            }
+            
+            // Make the turn decision based on scores and preferences
+            if (left > minTurnDistance && right > minTurnDistance)
+            {
+                // Both directions are safe, choose the better one
+                if (shouldBeAggressive && Math.Abs(leftScore - rightScore) < 5.0f)
+                {
+                    // Aggressive mode: alternate turns for unpredictability
+                    if (tdiff >= 0)
+                    {
+                        player.doTurn(Player.TURN_LEFT, _currentTime);
+                        _tdiff[playerIndex]++;
+                    }
+                    else
+                    {
+                        player.doTurn(Player.TURN_RIGHT, _currentTime);
+                        _tdiff[playerIndex]--;
+                    }
+                }
+                else if (leftScore > rightScore || (leftScore == rightScore && preferLeft))
+                {
+                    player.doTurn(Player.TURN_LEFT, _currentTime);
+                    _tdiff[playerIndex]++;
+                }
+                else
+                {
+                    player.doTurn(Player.TURN_RIGHT, _currentTime);
+                    _tdiff[playerIndex]--;
+                }
+                _aiTime[playerIndex] = _currentTime;
+            }
+            else if (left > minTurnDistance)
+            {
+                // Only left is safe
+                player.doTurn(Player.TURN_LEFT, _currentTime);
+                _tdiff[playerIndex]++;
+                _aiTime[playerIndex] = _currentTime;
+            }
+            else if (right > minTurnDistance)
+            {
+                // Only right is safe
+                player.doTurn(Player.TURN_RIGHT, _currentTime);
+                _tdiff[playerIndex]--;
+                _aiTime[playerIndex] = _currentTime;
+            }
+            else
+            {
+                // No safe direction - try to pick the least bad option
+                if (left > right && left > 0)
                 {
                     player.doTurn(Player.TURN_LEFT, _currentTime);
                     _tdiff[playerIndex]++;
                     _aiTime[playerIndex] = _currentTime;
                 }
-                // If neither direction is safe, don't turn (will crash, but no choice)
+                else if (right > 0)
+                {
+                    player.doTurn(Player.TURN_RIGHT, _currentTime);
+                    _tdiff[playerIndex]--;
+                    _aiTime[playerIndex] = _currentTime;
+                }
+                // Otherwise don't turn - will crash but no choice
             }
         }
 
@@ -657,6 +747,55 @@ namespace GltronMobileEngine
             float dx = segment.vDirection.v[0];
             float dy = segment.vDirection.v[1];
             return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+        
+        private static bool ShouldBeAggressive(int playerIndex, float front, float left, float right)
+        {
+            if (_players == null) return false;
+            
+            // Be aggressive if we have enough space
+            float minSafeDistance = 15.0f;
+            if (front < minSafeDistance && left < minSafeDistance && right < minSafeDistance)
+                return false; // Too dangerous to be aggressive
+            
+            // Check if any opponent is nearby
+            var player = _players[playerIndex];
+            for (int i = 0; i < _players.Length; i++)
+            {
+                if (i == playerIndex || _players[i] == null || _players[i].getSpeed() <= 0.0f)
+                    continue;
+                
+                float dx = _players[i].getXpos() - player.getXpos();
+                float dy = _players[i].getYpos() - player.getYpos();
+                float dist = (float)Math.Sqrt(dx * dx + dy * dy);
+                
+                // If opponent is close and we have space, be aggressive
+                if (dist < 30.0f && Math.Max(front, Math.Max(left, right)) > 20.0f)
+                    return true;
+            }
+            
+            return false;
+        }
+        
+        private static float EvaluateTurnOption(int playerIndex, int turnDirection)
+        {
+            if (_players == null || _distances == null) return 0.0f;
+            
+            // Evaluate how good a turn option is
+            float distance = (turnDirection == Player.TURN_LEFT) ? _distances[E_LEFT] : _distances[E_RIGHT];
+            
+            // Base score is the distance available
+            float score = distance;
+            
+            // Bonus for avoiding walls
+            if (distance > 30.0f) score += 10.0f;
+            if (distance > 50.0f) score += 20.0f;
+            
+            // Penalty for getting too close to walls
+            if (distance < 10.0f) score -= 50.0f;
+            if (distance < 5.0f) score -= 100.0f;
+            
+            return score;
         }
         
         public static IPlayer? GetClosestOpponent(IPlayer player, int ownPlayerIndex)
