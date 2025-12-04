@@ -661,7 +661,7 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
                 Vector3 position = new Vector3(rg_center, rg_baseHeight + rg_bob, rg_center);
                 float rg_angle = recognizer.GetAngle();
                 
-                const float FBX_RECOGNIZER_SCALE = 0.15f; // Smaller, subtle recognizer above arena
+                const float FBX_RECOGNIZER_SCALE = 0.10f; // Smaller, recognizer is more subtle above arena
                 Matrix fbxWorldMatrix = Matrix.CreateScale(FBX_RECOGNIZER_SCALE) *
                                        Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle)) *
                                        Matrix.CreateTranslation(position);
@@ -689,7 +689,7 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             float rg_baseHeight2 = Math.Max(12.0f, rg_gridSize2 * 0.22f);
             float rg_bob2 = (float)Math.Sin((double)Environment.TickCount * 0.001 * 0.8) * 1.5f;
             float rg_angle2 = recognizer.GetAngle();
-            Matrix worldMatrix = Matrix.CreateScale(RECOGNIZER_SIZE * 0.5f) *
+            Matrix worldMatrix = Matrix.CreateScale(RECOGNIZER_SIZE * 0.35f) *
                                  Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle2)) *
                                  Matrix.CreateTranslation(new Vector3(rg_center2, rg_baseHeight2 + rg_bob2, rg_center2));
             fx.World = worldMatrix;

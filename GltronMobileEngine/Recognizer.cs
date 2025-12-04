@@ -49,7 +49,7 @@ namespace GltronMobileEngine
             0.0f, 0.0f, 0.0f, 4.0f
         );
         
-        private const float SCALE_FACTOR = 0.6f;  // Smaller, so recognizer is subtle
+        private const float SCALE_FACTOR = 0.45f;  // Smaller, recognizer is more subtle
         private const float BASE_HEIGHT = -20.0f;   // if < 0, compute from grid size
         private const float BOB_AMPLITUDE = 1.5f;  // Smaller, subtle bobbing
         private const float BOB_SPEED = 0.8f;      // Bobbing speed multiplier
@@ -102,8 +102,13 @@ namespace GltronMobileEngine
             // Legacy animated placement inside arena (not used in above mode)
             float boundary = _gridSize - max;
             float x = (max + (GetX() + 1.0f) * boundary) / 2.0f;
-            float y = (max + (GetY() + 1.0f) * boundary) / 2.0f;
-            return new Vector3(x, BASE_HEIGHT, y);
+            float z = (max + (GetY() + 1.0f) * boundary) / 2.0f;
+
+            // Clamp within arena bounds so it never leaves
+            float margin = 2.0f;
+            x = MathHelper.Clamp(x, margin, _gridSize - margin);
+            z = MathHelper.Clamp(z, margin, _gridSize - margin);
+            return new Vector3(x, BASE_HEIGHT, z);
         }
         
         /// <summary>
