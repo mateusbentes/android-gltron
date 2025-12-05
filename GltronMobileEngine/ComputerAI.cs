@@ -138,34 +138,29 @@ namespace GltronMobileEngine
             float y = player.getYpos();
             int direction = player.getDirection();
 
-            // DIRS_X: 0=Up, 1=Left, 2=Down, 3=Right (based on Player.cs DIRS_X/Y)
-            // Player.cs DIRS_X: { 0.0f, -1.0f, 0.0f, 1.0f } (Up, Left, Down, Right)
-            // Player.cs DIRS_Y: { -1.0f, 0.0f, 1.0f, 0.0f } (Up, Left, Down, Right)
-            // The original Java AI used a different direction mapping (0=Up, 1=Right, 2=Down, 3=Left)
-            // We must use the Player.cs mapping: 0=Up, 1=Left, 2=Down, 3=Right
-            float[] dirX = { player.DIRS_X[0], player.DIRS_X[1], player.DIRS_X[2], player.DIRS_X[3] };
-            float[] dirY = { player.DIRS_Y[0], player.DIRS_Y[1], player.DIRS_Y[2], player.DIRS_Y[3] };
+            // DIRS_X: { 0.0f, -1.0f, 0.0f, 1.0f } (Index 0: Up, 1: Left, 2: Down, 3: Right)
+            // DIRS_Y: { -1.0f, 0.0f, 1.0f, 0.0f } (Index 0: Up, 1: Left, 2: Down, 3: Right)
+            // These are fixed values from the Player class, which is not accessible via IPlayer.
+            float[] dirX = { 0.0f, -1.0f, 0.0f, 1.0f };
+            float[] dirY = { -1.0f, 0.0f, 1.0f, 0.0f };
 
             float[] distances = new float[3];
 
             for (int i = 0; i < 3; i++)
             {
-                // i=0: Left turn (direction + 1) % 4 in Player.cs
-                // i=1: Forward (direction)
-                // i=2: Right turn (direction - 1 + 4) % 4 in Player.cs
-                // Player.cs uses: TURN_LEFT = 3, TURN_RIGHT = 1
-                // The AI decision logic uses: 0=Left, 1=Forward, 2=Right
-                // Let's map the AI index (0, 1, 2) to the actual direction index (0, 1, 2, 3)
+                // i=0: Left probe (turn left from current direction)
+                // i=1: Forward probe (current direction)
+                // i=2: Right probe (turn right from current direction)
                 int checkDir;
                 if (i == 0) // Left probe
                 {
-                    // Player.TURN_LEFT is +3, so (direction + 3) % 4
-                    checkDir = (direction + Player.TURN_LEFT) % 4;
+                    // Left turn is (current direction + 3) % 4
+                    checkDir = (direction + 3) % 4;
                 }
                 else if (i == 2) // Right probe
                 {
-                    // Player.TURN_RIGHT is +1, so (direction + 1) % 4
-                    checkDir = (direction + Player.TURN_RIGHT) % 4;
+                    // Right turn is (current direction + 1) % 4
+                    checkDir = (direction + 1) % 4;
                 }
                 else // Forward probe (i == 1)
                 {
