@@ -19,22 +19,27 @@
 2. Game should pause and show "TAP TO RESTART" message
 3. Game should only restart when player taps screen
 
-### 2. Trail Rendering Near Camera ✅
-**Problem**: Trails sometimes not visible when camera is close to player
+### 2. Trail Rendering Near Camera (ENHANCED FIX) ✅
+**Problem**: Trails not visible from side angles when camera is close to player
 **Solution**:
-- Reduced trail culling threshold from 0.01f to 0.001f
-- Improved minimum trail height from 0.2f to 0.1f for fading trails
-- Optimized camera distances for better trail visibility
-- Adjusted camera elevation for better trail perspective
+- Reduced trail culling threshold from 0.01f to 0.0001f (ultra-low threshold)
+- Increased wall thickness from 0.02f to 0.05f for better side visibility
+- Enhanced minimum trail height from 0.1f to 0.3f for all-angle visibility
+- Added complete 3D trail walls with all faces (left, right, top, front, back)
+- Improved trail colors with higher opacity (0.8f to 0.95f)
+- Enhanced camera positioning for optimal trail viewing from sides
+- Added minimum segment length (0.1f) to ensure side visibility
+- Fixed depth stencil state for better trail rendering
 
 **Files Modified**:
-- `TrailsRenderer.cs`: Fixed trail visibility thresholds
-- `Camera.cs`: Optimized camera positioning for trail visibility
+- `TrailsRenderer.cs`: Complete trail rendering overhaul with 3D walls
+- `Camera.cs`: Optimized camera positioning for side-angle trail visibility
 
 **Test**:
-1. Play game and observe trails near player
-2. Trails should remain visible even when camera is close
-3. Fading trails should still be visible as they disappear
+1. Play game and move camera around player from different angles
+2. Trails should be clearly visible from all sides, especially close up
+3. Trail walls should appear solid and visible from side perspectives
+4. Fading trails should remain visible until completely gone
 
 ## Technical Changes Summary
 

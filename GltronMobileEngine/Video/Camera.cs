@@ -104,9 +104,9 @@ public class Camera
 
     private void InitializeFollowCamera()
     {
-        // CRITICAL FIX: Match Java camera defaults exactly - optimized for trail visibility
-        _movement[0] = CAM_FOLLOW_DIST; // 18.0f - closer for better trail visibility
-        _movement[1] = MathHelper.Pi / 5.0f; // Slightly lower elevation for better trail view
+        // CRITICAL FIX: Optimized camera for trail visibility from all angles
+        _movement[0] = CAM_FOLLOW_DIST; // 18.0f - good distance for trail visibility
+        _movement[1] = MathHelper.Pi / 4.5f; // Balanced elevation for trail view from sides
         _movement[2] = MathHelper.Pi / 72.0f; // Small rotation offset - same as Java
         _movement[3] = 0.0f; // No additional offset
         _phi = 0.0f;
@@ -270,9 +270,9 @@ public class Camera
             // Target slightly ahead of the player in movement direction
             _target = smoothPlayerPos + forwardDir * 3f + new Vector3(0, 1f, 0);
             
-            // Position camera behind the motorcycle - optimized for trail visibility
-            float cameraDistance = 8f;  // Closer for better trail detail
-            float cameraHeight = 5f;    // Lower for better trail perspective
+            // CRITICAL FIX: Position camera for optimal trail visibility from sides
+            float cameraDistance = 12f;  // Further back to see trails from side angles
+            float cameraHeight = 7f;     // Higher for better perspective of trail walls
             
             _camPos = smoothPlayerPos + backwardDir * cameraDistance + new Vector3(0, cameraHeight, 0);
         }

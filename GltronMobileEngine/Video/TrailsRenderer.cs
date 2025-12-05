@@ -28,13 +28,13 @@ public class TrailsRenderer
         int trailOffset = p.getTrailOffset();
         float trailHeight = p.getTrailHeight();
         
-        // CRITICAL FIX: Show trails even when height is very low (fading trails) - improved threshold
-        if (trailOffset <= 0 || trailHeight <= 0.001f) return;
+        // CRITICAL FIX: Always show trails unless completely gone - very low threshold
+        if (trailOffset <= 0 || trailHeight <= 0.0001f) return;
         
         // CRITICAL FIX: Draw trail walls correctly - each segment is a wall from start to start+direction
         var verts = new List<VertexPositionColor>();
-        // minimum wall half-thickness to avoid degenerate long-thin triangles
-        const float halfWidth = 0.02f;
+        // CRITICAL FIX: Increase wall thickness for better side visibility
+        const float halfWidth = 0.05f;
         
         // Get player color (like Java version)
         Color trailColor = GetPlayerTrailColor(p);
@@ -63,17 +63,18 @@ public class TrailsRenderer
                 segStart = lastEnd.Value;
             }
             
-            // If the segment is nearly zero-length, still keep continuity by extending a tiny epsilon towards its nominal end
+            // CRITICAL FIX: Ensure minimum segment length for side visibility
             float segLength = Vector3.Distance(segStart, segEnd);
-            if (segLength < epsilon)
+            const float minVisibleLength = 0.1f; // Minimum length for side visibility
+            if (segLength < minVisibleLength)
             {
-                // Try to get direction from vDirection; normalise and extend minimally
+                // Try to get direction from vDirection; normalise and extend for visibility
                 var dir = new Vector3(segment.vDirection.v[0], 0f, segment.vDirection.v[1]);
                 if (dir.LengthSquared() > 0f)
                 {
                     dir.Normalize();
-                    segEnd = segStart + dir * 0.02f; // tiny visible stub to keep continuity
-                    segLength = 0.02f;
+                    segEnd = segStart + dir * minVisibleLength; // ensure visible length
+                    segLength = minVisibleLength;
                 }
                 else
                 {
@@ -102,7 +103,7 @@ public class TrailsRenderer
             }
             perp *= halfWidth;
 
-            float h = Math.Max(trailHeight, 0.1f); // ensure visible height even when fading
+            float h = Math.Max(trailHeight, 0.3f); // CRITICAL FIX: Ensure good visibility from all angles
 
             // Lift slightly above floor to avoid z-fighting - improved for camera proximity
             const float yLift = 0.002f;
@@ -119,22 +120,45 @@ public class TrailsRenderer
             var topEndL = bottomEndL + new Vector3(0, h, 0);
             var topEndR = bottomEndR + new Vector3(0, h, 0);
 
-            // Two quads (left and right faces) to form a thin wall slab
-            // Face 1
+            // CRITICAL FIX: Create a proper 3D wall with all faces for visibility from all angles
+            
+            // Left face (visible from right side)
             verts.Add(new VertexPositionColor(bottomStartL, trailColor));
             verts.Add(new VertexPositionColor(topStartL, trailColor));
             verts.Add(new VertexPositionColor(bottomEndL, trailColor));
-
             verts.Add(new VertexPositionColor(topStartL, trailColor));
             verts.Add(new VertexPositionColor(topEndL, trailColor));
             verts.Add(new VertexPositionColor(bottomEndL, trailColor));
 
-            // Face 2
+            // Right face (visible from left side)
+            verts.Add(new VertexPositionColor(bottomEndR, trailColor));
+            verts.Add(new VertexPositionColor(topStartR, trailColor));
+            verts.Add(new VertexPositionColor(bottomStartR, trailColor));
+            verts.Add(new VertexPositionColor(bottomEndR, trailColor));
+            verts.Add(new VertexPositionColor(topEndR, trailColor));
+            verts.Add(new VertexPositionColor(topStartR, trailColor));
+
+            // Top face (visible from above)
+            verts.Add(new VertexPositionColor(topStartL, trailColor));
+            verts.Add(new VertexPositionColor(topStartR, trailColor));
+            verts.Add(new VertexPositionColor(topEndL, trailColor));
+            verts.Add(new VertexPositionColor(topStartR, trailColor));
+            verts.Add(new VertexPositionColor(topEndR, trailColor));
+            verts.Add(new VertexPositionColor(topEndL, trailColor));
+
+            // Front face (visible from behind)
+            verts.Add(new VertexPositionColor(bottomStartL, trailColor));
+            verts.Add(new VertexPositionColor(bottomStartR, trailColor));
+            verts.Add(new VertexPositionColor(topStartL, trailColor));
             verts.Add(new VertexPositionColor(bottomStartR, trailColor));
             verts.Add(new VertexPositionColor(topStartR, trailColor));
-            verts.Add(new VertexPositionColor(bottomEndR, trailColor));
+            verts.Add(new VertexPositionColor(topStartL, trailColor));
 
-            verts.Add(new VertexPositionColor(topStartR, trailColor));
+            // Back face (visible from front)
+            verts.Add(new VertexPositionColor(topEndL, trailColor));
+            verts.Add(new VertexPositionColor(bottomEndR, trailColor));
+            verts.Add(new VertexPositionColor(bottomEndL, trailColor));
+            verts.Add(new VertexPositionColor(topEndL, trailColor));
             verts.Add(new VertexPositionColor(topEndR, trailColor));
             verts.Add(new VertexPositionColor(bottomEndR, trailColor));
 
@@ -162,10 +186,10 @@ public class TrailsRenderer
         Vector3 prevDiffuse = world.Effect.DiffuseColor;
         float prevAlpha = world.Effect.Alpha;
 
-        // Configure states
+        // CRITICAL FIX: Configure states for maximum trail visibility from all angles
         _gd.BlendState = BlendState.AlphaBlend;
-        _gd.DepthStencilState = TrailsIgnoreDepth ? DepthStencilState.None : DepthStencilState.DepthRead;
-        _gd.RasterizerState = RasterizerState.CullNone; // draw both sides
+        _gd.DepthStencilState = TrailsIgnoreDepth ? DepthStencilState.None : DepthStencilState.Default;
+        _gd.RasterizerState = RasterizerState.CullNone; // draw both sides - critical for side visibility
 
         // Use world.Effect directly to guarantee matching matrices
         world.Effect.VertexColorEnabled = true;
@@ -206,14 +230,14 @@ public class TrailsRenderer
     
     private Color GetPlayerTrailColor(IPlayer p)
     {
-        // CRITICAL FIX: Match Java player trail colors exactly
+        // CRITICAL FIX: Enhanced trail colors for better visibility from all angles
         Color[] trailColors = {
-            new Color(0.0f, 0.1f, 0.900f, 0.8f),      // Blue - Player 0 (human)
-            new Color(1.00f, 0.550f, 0.140f, 0.8f),   // Orange - Player 1 (AI)
-            new Color(0.750f, 0.020f, 0.020f, 0.8f),  // Red - Player 2 (AI)
-            new Color(0.800f, 0.800f, 0.800f, 0.8f),  // Grey - Player 3 (AI)
-            new Color(0.120f, 0.750f, 0.0f, 0.8f),    // Green - Player 4 (AI)
-            new Color(0.750f, 0.0f, 0.35f, 0.8f)      // Purple - Player 5 (AI)
+            new Color(0.0f, 0.1f, 0.900f, 0.95f),      // Blue - Player 0 (human) - more opaque
+            new Color(1.00f, 0.550f, 0.140f, 0.95f),   // Orange - Player 1 (AI) - more opaque
+            new Color(0.750f, 0.020f, 0.020f, 0.95f),  // Red - Player 2 (AI) - more opaque
+            new Color(0.900f, 0.900f, 0.900f, 0.95f),  // Brighter Grey - Player 3 (AI)
+            new Color(0.120f, 0.850f, 0.0f, 0.95f),    // Brighter Green - Player 4 (AI)
+            new Color(0.850f, 0.0f, 0.45f, 0.95f)      // Brighter Purple - Player 5 (AI)
         };
         
         int colorIndex = p.getPlayerNum();
