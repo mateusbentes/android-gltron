@@ -18,14 +18,14 @@ public class Camera
 {
     public void SetProjection(float gridSize, float aspect)
     {
-        // Robust camera projection suited for arena scale
-        float fov = MathHelper.ToRadians(70f); // narrower FOV for stability
-        float znear = 0.2f; // small but safe
-        float zfar = Math.Max(1000f, gridSize * 10.0f);
+        // Match Java-like perspective: wide FOV, near=1, far depends on grid
+        float fov = MathHelper.ToRadians(105f);
+        float znear = 1.0f;
+        float zfar = gridSize * 6.5f;
+        if (zfar < 200f) zfar = 200f;
         
         Projection = Matrix.CreatePerspectiveFieldOfView(fov, aspect, znear, zfar);
         
-        // Debug logging
         try
         {
 #if ANDROID
@@ -74,12 +74,12 @@ public class Camera
         ViewportWidth = viewport.Width;
         ViewportHeight = viewport.Height;
         
-        // Robust default projection; SetProjection should be called with actual grid later
+        // Default projection similar to Java style until SetProjection is called
         Projection = Matrix.CreatePerspectiveFieldOfView(
-            MathHelper.ToRadians(70f),
+            MathHelper.ToRadians(105f),
             viewport.AspectRatio,
-            0.2f,
-            1000f);
+            1.0f,
+            650f);
         
         // CRITICAL FIX: Start with follow camera that tracks the player (like Java version)
         _cameraType = CameraType.Follow;
@@ -225,9 +225,10 @@ public class Camera
             // Target slightly ahead of the player for better view
             _target = new Vector3(smoothPlayerPos.X, 2f, smoothPlayerPos.Z);
             
-            // Ensure minimum safe camera distance/height to avoid near-plane clipping of trails
-            float cameraDistance = 14f; // a bit farther back
-            float cameraHeight = 10f;   // slightly higher
+            // GLTron-style camera: close behind and slightly above the motorcycle
+            // Distance: 12 units behind, Height: 8 units above ground
+            float cameraDistance = 12f;
+            float cameraHeight = 8f;
             
             _camPos = new Vector3(smoothPlayerPos.X, cameraHeight, smoothPlayerPos.Z + cameraDistance);
         }
@@ -269,9 +270,9 @@ public class Camera
             // Target slightly ahead of the player in movement direction
             _target = smoothPlayerPos + forwardDir * 3f + new Vector3(0, 1f, 0);
             
-            // Position camera behind the motorcycle with safe distance/height
-            float cameraDistance = 14f;
-            float cameraHeight = 10f;
+            // Position camera behind the motorcycle
+            float cameraDistance = 10f;
+            float cameraHeight = 6f;
             
             _camPos = smoothPlayerPos + backwardDir * cameraDistance + new Vector3(0, cameraHeight, 0);
         }

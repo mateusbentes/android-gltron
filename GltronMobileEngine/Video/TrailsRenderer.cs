@@ -9,7 +9,7 @@ public class TrailsRenderer
 {
     private readonly GraphicsDevice _gd;
     // We will use WorldGraphics.Effect directly to guarantee identical matrices/states
-    public bool TrailsIgnoreDepth { get; set; } = true; // default true to validate depth issues
+    public bool TrailsIgnoreDepth { get; set; } = false; // use DepthRead for correct depth interaction
 
     public TrailsRenderer(GraphicsDevice gd)
     {
