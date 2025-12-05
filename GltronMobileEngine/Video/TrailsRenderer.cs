@@ -28,8 +28,8 @@ public class TrailsRenderer
         int trailOffset = p.getTrailOffset();
         float trailHeight = p.getTrailHeight();
         
-        // CRITICAL FIX: Always show trails unless completely gone - very low threshold
-        if (trailOffset <= 0 || trailHeight <= 0.0001f) return;
+        // CRITICAL FIX: Show trails immediately - even tiny segments are visible
+        if (trailOffset < 0) return; // Only check offset, not height - show even starting trails
         
         // CRITICAL FIX: Draw trail walls correctly - each segment is a wall from start to start+direction
         var verts = new List<VertexPositionColor>();
@@ -41,11 +41,11 @@ public class TrailsRenderer
         
         System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing trail for player {p.getPlayerNum()}, offset: {trailOffset}, height: {trailHeight:F2}");
         
-        // CRITICAL FIX: Build trail segments properly - each segment represents a wall
+        // CRITICAL FIX: Build trail segments immediately - show even tiny segments
         int validSegments = 0;
         // Stitch small gaps by ensuring consecutive segments connect exactly
         Vector3? lastEnd = null;
-        const float epsilon = 0.001f;
+        const float epsilon = 0.0001f; // Much smaller epsilon for immediate visibility
         const float snapTolerance = 0.10f;
         for (int i = 0; i <= trailOffset; i++)
         {
@@ -63,9 +63,9 @@ public class TrailsRenderer
                 segStart = lastEnd.Value;
             }
             
-            // CRITICAL FIX: Ensure minimum segment length for side visibility
+            // CRITICAL FIX: Show trails immediately - even tiny segments
             float segLength = Vector3.Distance(segStart, segEnd);
-            const float minVisibleLength = 0.1f; // Minimum length for side visibility
+            const float minVisibleLength = 0.01f; // Very small minimum for immediate visibility
             if (segLength < minVisibleLength)
             {
                 // Try to get direction from vDirection; normalise and extend for visibility
@@ -73,8 +73,14 @@ public class TrailsRenderer
                 if (dir.LengthSquared() > 0f)
                 {
                     dir.Normalize();
-                    segEnd = segStart + dir * minVisibleLength; // ensure visible length
+                    segEnd = segStart + dir * minVisibleLength; // tiny but visible segment
                     segLength = minVisibleLength;
+                }
+                else if (i == trailOffset) // Current segment - show even if no direction yet
+                {
+                    // Show a tiny stub for the current position
+                    segEnd = segStart + new Vector3(0.01f, 0f, 0f);
+                    segLength = 0.01f;
                 }
                 else
                 {

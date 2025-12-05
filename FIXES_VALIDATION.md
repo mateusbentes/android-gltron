@@ -74,7 +74,27 @@
 3. **Better User Experience**: Clear visual feedback for game over state and restart instructions
 4. **Improved Trail Rendering**: Smoother trail visibility transitions and better camera positioning
 
-### 3. Camera Delay at Game Start ✅
+### 3. Trail Appearance Delay ✅
+**Problem**: Trails take time to appear/build up when game starts
+**Solution**:
+- Removed trail height threshold check - show trails immediately
+- Start with tiny visible trail segment (0.01f) for instant visibility
+- Force full trail height when player speed is set
+- Maintain trail height at maximum while moving
+- Show even current segment with no direction yet
+- Reduced minimum segment requirements for immediate rendering
+
+**Files Modified**:
+- `Player.cs`: Immediate trail creation and height management
+- `TrailsRenderer.cs`: Removed height-based culling, show tiny segments
+
+**Test**:
+1. Start game and begin moving
+2. Trail should appear immediately on first movement
+3. No delay or build-up time for trail visibility
+4. Trail walls visible from frame 1 of movement
+
+### 4. Camera Delay at Game Start ✅
 **Problem**: Camera has delay when game starts before properly following player
 **Solution**:
 - Added immediate camera positioning on first valid player position

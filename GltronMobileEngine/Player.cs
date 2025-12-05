@@ -90,10 +90,11 @@ namespace GltronMobileEngine
             trailOffset = 0;
             Trails[trailOffset].vStart.v[0] = START_POS[player_number, 0] * gridSize;
             Trails[trailOffset].vStart.v[1] = START_POS[player_number, 1] * gridSize;
-            Trails[trailOffset].vDirection.v[0] = 0.0f;
-            Trails[trailOffset].vDirection.v[1] = 0.0f;
+            // CRITICAL FIX: Start with tiny visible trail segment for immediate visibility
+            Trails[trailOffset].vDirection.v[0] = 0.01f * DIRS_X[Direction];
+            Trails[trailOffset].vDirection.v[1] = 0.01f * DIRS_Y[Direction];
 
-            trailHeight = TRAIL_HEIGHT;
+            trailHeight = TRAIL_HEIGHT; // Start with full trail height immediately
 
             // tronHUD = hud; // Removido por enquanto
 
@@ -226,6 +227,12 @@ namespace GltronMobileEngine
                 Trails[trailOffset].vDirection.v[0] += deltaX;
                 Trails[trailOffset].vDirection.v[1] += deltaY;
                 
+                // CRITICAL FIX: Ensure trail height is always at maximum when player is moving
+                if (trailHeight < TRAIL_HEIGHT)
+                {
+                    trailHeight = TRAIL_HEIGHT; // Instantly restore full trail height
+                }
+                
                 // Debug trail growth
                 if (trailOffset % 10 == 0) // Log every 10th update to avoid spam
                 {
@@ -308,6 +315,24 @@ namespace GltronMobileEngine
         public void setSpeed(float speed)
         {
             Speed = speed;
+            
+            // CRITICAL FIX: When speed is set (game start), ensure trail is immediately visible
+            if (speed > 0.0f && trailHeight < TRAIL_HEIGHT)
+            {
+                trailHeight = TRAIL_HEIGHT; // Instant full trail height
+                
+                // Ensure current trail segment has some length for immediate visibility
+                if (trailOffset >= 0 && Trails[trailOffset] != null)
+                {
+                    float currentLength = Math.Abs(Trails[trailOffset].vDirection.v[0]) + Math.Abs(Trails[trailOffset].vDirection.v[1]);
+                    if (currentLength < 0.01f)
+                    {
+                        // Add tiny visible segment in current direction
+                        Trails[trailOffset].vDirection.v[0] = 0.01f * DIRS_X[Direction];
+                        Trails[trailOffset].vDirection.v[1] = 0.01f * DIRS_Y[Direction];
+                    }
+                }
+            }
         }
 
         public float getTrailHeight()
