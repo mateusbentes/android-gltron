@@ -180,11 +180,14 @@ namespace GltronMobileEngine
             float dy = dirY[direction];
 
             float maxDistance = 100f;
-            // Finer step to improve precision near walls/trails without affecting wall safety
-            float step = 0.25f;
 
-            for (float d = step; d <= maxDistance; d += step)
+            float d = 0f;
+            while (d <= maxDistance)
             {
+                // Adaptive step: finer near origin for first 5 units
+                float step = (d < 5.0f) ? 0.1f : 0.25f;
+                d += step;
+
                 float checkX = startX + dx * d;
                 float checkY = startY + dy * d;
 
@@ -195,8 +198,14 @@ namespace GltronMobileEngine
                 if ((dx < 0 && startX < nearWallThreshold) || (dx > 0 && (_gridSize - startX) < nearWallThreshold) ||
                     (dy < 0 && startY < nearWallThreshold) || (dy > 0 && (_gridSize - startY) < nearWallThreshold))
                 {
-                    wallMargin = 1.0f; // slightly inflate margin when near the arena boundary
+                    wallMargin = 1.5f; // inflate margin when near the arena boundary for earlier detection
                 }
+
+                // Hard early clamp when extremely close in heading direction to avoid late discovery
+                if (dx < 0 && startX <= 6.0f) { if (checkX <= wallMargin) return Math.Max(0.1f, d - step); }
+                if (dx > 0 && (_gridSize - startX) <= 6.0f) { if (checkX >= (_gridSize - wallMargin)) return Math.Max(0.1f, d - step); }
+                if (dy < 0 && startY <= 6.0f) { if (checkY <= wallMargin) return Math.Max(0.1f, d - step); }
+                if (dy > 0 && (_gridSize - startY) <= 6.0f) { if (checkY >= (_gridSize - wallMargin)) return Math.Max(0.1f, d - step); }
 
                 // Boundary check (hard stop for walls)
                 if (checkX <= wallMargin || checkX >= (_gridSize - wallMargin) ||
@@ -235,7 +244,7 @@ namespace GltronMobileEngine
                 if (isOwnPlayer)
                 {
                     // Skip the last few trail segments (current drawing + previous turns)
-                    startIndex = Math.Max(0, trailCount - 6);
+                    startIndex = Math.Max(0, trailCount - 8);
                 }
 
                 for (int i = startIndex; i < trailCount; i++)
@@ -261,7 +270,7 @@ namespace GltronMobileEngine
                     }
 
                     // Use slightly larger threshold for others; slightly smaller for our own very-near checks
-                    float threshold = 1.2f;
+                    float threshold = 1.4f; // others' trails are slightly fatter for safety
                     if (isOwnPlayer && distanceFromAI < 3.0f)
                         threshold = 0.6f;
 
@@ -324,8 +333,9 @@ namespace GltronMobileEngine
             long sinceTurn = _currentTime - memory.LastTurnTime;
             if (sinceTurn > 0 && sinceTurn < (long)(MIN_TURN_TIME[_aiLevel] * 1.5f))
             {
-                recentTurnBias = 8f; // require extra margin to justify a new turn
+                recentTurnBias = 12f; // stronger requirement to justify a new turn
             }
+            bool inCooldown = sinceTurn > 0 && sinceTurn < (long)(MIN_TURN_TIME[_aiLevel] * 2.0f);
 
             // Emergency: must turn
             // If the path ahead is critically short, we must turn.
@@ -338,12 +348,14 @@ namespace GltronMobileEngine
                 if (right > emergency)
                     return Player.TURN_RIGHT;
 
-                // If both sides are also dangerous, choose the one with slightly more space
-                // As a tie-breaker, avoid continuing the same spiral direction
-                if (Math.Abs(memory.SpiralCounter) > 5)
+                // If both sides are also dangerous, choose with side-stickiness to avoid zig-zag
+                // Use SpiralCounter as a rough last-turn bias
+                if (Math.Abs(memory.SpiralCounter) > 0)
                 {
-                    if (memory.SpiralCounter > 5) return Player.TURN_RIGHT;
-                    else return Player.TURN_LEFT;
+                    if (memory.SpiralCounter > 0) // leaning left previously
+                        return (right >= left - 2f) ? Player.TURN_RIGHT : Player.TURN_LEFT;
+                    else // leaning right previously
+                        return (left >= right - 2f) ? Player.TURN_LEFT : Player.TURN_RIGHT;
                 }
                 return (left > right) ? Player.TURN_LEFT : Player.TURN_RIGHT;
             }
@@ -397,9 +409,16 @@ namespace GltronMobileEngine
             // If the path ahead is safe (greater than critical distance and safety margin)
             if (forward > criticalDist && forward > safetyMargin)
             {
-                // Plenty of space ahead - continue straight unless sides are much better
-                // Require a larger advantage to justify a turn, plus recent-turn friction
-                float neededAdvantage = 20f + recentTurnBias;
+                // Strong straight bias: require a much larger advantage to justify a turn
+                // Add extra penalty if we're still in cooldown (only huge advantage can force turn)
+                float neededAdvantage = 30f + recentTurnBias + (inCooldown ? 10f : 0f);
+
+                // Additionally, if forward is well above emergency, avoid turning unless sides are dramatically better
+                if (forward > emergency + 3.0f)
+                {
+                    neededAdvantage += 5f;
+                }
+
                 if (leftScore > forwardScore + neededAdvantage && left > safetyMargin)
                     return Player.TURN_LEFT;
 
