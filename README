@@ -105,7 +105,7 @@ COMPATIBILITY NOTES
 
 MonoGame Framework:
 - Version: 3.8.2.1105 (Latest stable)
-- Android Target: API 34 (Android 14) - full compatibility
+- Android Target: API 36 (Android 16) - full compatibility
 - Minimum Android: API 24 (Android 7.0)
 - Note: Updated MonoGame version supports latest Android APIs
 
