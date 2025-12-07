@@ -36,7 +36,7 @@
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
     <!-- Use latest Android SDK version 34 -->
-    <AndroidSdkBuildToolsVersion>34.0.0</AndroidSdkBuildToolsVersion>
+    <AndroidSdkBuildToolsVersion>36.0.0</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
   
   <!-- Re-enable MGCB build for Android: build content from Content/Content.mgcb -->
