@@ -409,4 +409,7 @@ jobs:
         echo "   • Direct activity management (no AndroidGameActivity)"
         echo "   • Raw content loading (no XNB files)"
         echo "   • Better .NET 9 compatibility"
-        echo "   • Native SDL2/OpenAL integration"
+        echo "   • Native SDL2/OpenAL integration with proper architecture"
+        echo "   • OpenGL ES 2.0/3.0 fallback compatibility"
+        echo "   • Enhanced error handling and diagnostics"
+        echo "   • Automatic native library verification"
