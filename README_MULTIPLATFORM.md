@@ -24,12 +24,12 @@ Prerequisites for Android
    - Alternatively, source the helper script:
      source ./scripts/setup-android-env.sh
 
-2) Install .NET 8 SDK
+2) Install .NET 9 SDK
    - Follow https://learn.microsoft.com/dotnet/core/install/linux
      export DOTNET_ROOT=$HOME/dotnet
      export PATH=$PATH:$HOME/dotnet
    - Verify: dotnet --info
-   - Install Android workload for .NET (required for net8.0-android):
+   - Install Android workload for .NET (required for net9.0-android):
      dotnet workload install android
 
 3) Install MGCB command-line tool and MonoGame templates
