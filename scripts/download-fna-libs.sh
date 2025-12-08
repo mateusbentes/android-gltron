@@ -1,11 +1,13 @@
 #!/bin/bash
-# Setup FNA native libraries for Android
-# Note: Real FNA native libraries are not publicly distributed in recent releases
-# This script creates functional stub libraries that allow FNA to initialize
+# DEPRECATED: This script created stub libraries that caused architecture mismatch errors
+# Use the new script instead for real native libraries
 
-set -e
+echo "⚠️  This script is deprecated!"
+echo "🔄 Redirecting to download-real-fna-libs.sh for proper native libraries..."
+echo ""
 
-echo "🔽 Setting up FNA native libraries for Android..."
+# Run the new script
+exec "$(dirname "$0")/download-real-fna-libs.sh" "$@"
 
 # Change to project root
 cd "$(dirname "$0")/.."

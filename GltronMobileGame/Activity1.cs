@@ -57,6 +57,9 @@ namespace gltron.org.gltronmobile
                 // CRITICAL: Initialize FNA platform for Android
                 InitializeFNAPlatform();
                 
+                // Verify native libraries are working
+                FNAHelper.VerifyNativeLibraries();
+                
                 // Create the game instance
                 FNAHelper.LogInfo("Creating Game1 instance...");
                 _game = new Game1();

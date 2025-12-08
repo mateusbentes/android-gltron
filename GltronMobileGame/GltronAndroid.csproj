@@ -84,6 +84,14 @@
 
   <!-- FNA Native Libraries for Android -->
   <ItemGroup>
+    <!-- Automatically include all native libraries from lib directory -->
+    <AndroidNativeLibrary Include="lib\**\*.so">
+      <Abi>%(RecursiveDir)</Abi>
+    </AndroidNativeLibrary>
+  </ItemGroup>
+  
+  <!-- Explicit native library entries for better control (fallback) -->
+  <ItemGroup Condition="'$(UseExplicitNativeLibs)' == 'true'">
     <!-- ARM64 libraries -->
     <AndroidNativeLibrary Include="lib\arm64-v8a\libSDL2.so" Condition="Exists('lib\arm64-v8a\libSDL2.so')">
       <Abi>arm64-v8a</Abi>

@@ -119,7 +119,7 @@ Option C: Manual steps (advanced)
 1) Clean build artifacts (if needed):
    ./scripts/clean-fna-build.sh
 2) Set up FNA dependencies:
-   ./scripts/setup-fna-deps.sh
+   ./scripts/setup-real-fna-deps.sh
 3) Download FNA native libraries:
    ./scripts/download-fna-libs.sh
 4) Build APK manually:

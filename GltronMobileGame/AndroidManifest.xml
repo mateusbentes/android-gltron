@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="gltron.org.gltronmobile" android:versionCode="2" android:versionName="2.0">
   <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />
   
-  <!-- FNA requires OpenGL ES 3.0 -->
-  <uses-feature android:glEsVersion="0x00030000" android:required="true" />
+  <!-- OpenGL ES support with fallback compatibility -->
+  <!-- Prefer ES 3.0 but allow ES 2.0 fallback for broader device support -->
+  <uses-feature android:glEsVersion="0x00030000" android:required="false" />
+  <uses-feature android:glEsVersion="0x00020000" android:required="true" />
   
   <!-- FNA permissions -->
   <uses-permission android:name="android.permission.WAKE_LOCK" />

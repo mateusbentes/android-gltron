@@ -28,9 +28,11 @@ namespace GltronMobileGame
 #if ANDROID
                 LogInfo("Applying Android-specific FNA settings...");
                 
-                // Android-specific OpenGL settings
-                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_ES3", "1");
+                // Android-specific OpenGL settings with ES2 fallback
+                // Try ES3 first, but allow fallback to ES2 for compatibility
+                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_ES3", "0"); // Allow ES2 fallback
                 System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_COMPATIBILITY_PROFILE", "0");
+                System.Environment.SetEnvironmentVariable("FNA_OPENGL_ES_FALLBACK", "1"); // Enable ES2 fallback
                 
                 // Android touch/mouse settings
                 System.Environment.SetEnvironmentVariable("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1");
@@ -98,12 +100,67 @@ namespace GltronMobileGame
                 LogInfo($"FNA_AUDIO_BACKEND: {System.Environment.GetEnvironmentVariable("FNA_AUDIO_BACKEND")}");
                 LogInfo($"FNA_GRAPHICS_BACKEND: {System.Environment.GetEnvironmentVariable("FNA_GRAPHICS_BACKEND")}");
                 LogInfo($"FNA_OPENGL_FORCE_ES3: {System.Environment.GetEnvironmentVariable("FNA_OPENGL_FORCE_ES3")}");
+                LogInfo($"FNA_OPENGL_ES_FALLBACK: {System.Environment.GetEnvironmentVariable("FNA_OPENGL_ES_FALLBACK")}");
                 LogInfo($"SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH: {System.Environment.GetEnvironmentVariable("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH")}");
+                LogInfo($"SDL_AUDIODRIVER: {System.Environment.GetEnvironmentVariable("SDL_AUDIODRIVER")}");
                 LogInfo("=== End Environment Variables ===");
             }
             catch (System.Exception ex)
             {
                 LogError($"Failed to log environment variables: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Checks if native libraries can be loaded
+        /// </summary>
+        public static void VerifyNativeLibraries()
+        {
+            try
+            {
+                LogInfo("=== Verifying Native Libraries ===");
+                
+                // Check SDL2
+                try
+                {
+                    if (System.Runtime.InteropServices.NativeLibrary.TryLoad("SDL2", out var sdl2Handle))
+                    {
+                        LogInfo("✅ SDL2 library loaded successfully");
+                        System.Runtime.InteropServices.NativeLibrary.Free(sdl2Handle);
+                    }
+                    else
+                    {
+                        LogError("❌ SDL2 library failed to load");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    LogError($"❌ SDL2 library check failed: {ex.Message}");
+                }
+                
+                // Check OpenAL
+                try
+                {
+                    if (System.Runtime.InteropServices.NativeLibrary.TryLoad("openal", out var openalHandle))
+                    {
+                        LogInfo("✅ OpenAL library loaded successfully");
+                        System.Runtime.InteropServices.NativeLibrary.Free(openalHandle);
+                    }
+                    else
+                    {
+                        LogError("❌ OpenAL library failed to load");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    LogError($"❌ OpenAL library check failed: {ex.Message}");
+                }
+                
+                LogInfo("=== End Native Library Verification ===");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"Native library verification failed: {ex.Message}");
             }
         }
 
