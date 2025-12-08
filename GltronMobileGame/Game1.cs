@@ -28,51 +28,59 @@ public class Game1 : Game
 
     public Game1()
     {
+        // IMMEDIATE logging - this should appear if base constructor succeeds
+        System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor ENTRY POINT");
+#if ANDROID
+        try { Android.Util.Log.Info("GLTRON", "Game1 constructor ENTRY POINT"); } catch { }
+#endif
+        
         try
         {
-            // Use platform-agnostic logging for multiplatform support
-            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor start");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor body starting");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "Game1 constructor body starting"); } catch { }
+#endif
             
-            // CRITICAL: Initialize GraphicsDeviceManager first - this must succeed
+            // Minimal constructor - defer everything to Initialize()
+            System.Diagnostics.Debug.WriteLine("GLTRON: Creating GraphicsDeviceManager...");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "Creating GraphicsDeviceManager..."); } catch { }
+#endif
+            
             _graphics = new GraphicsDeviceManager(this);
-            if (_graphics == null)
-            {
-                throw new System.InvalidOperationException("Failed to create GraphicsDeviceManager");
-            }
-
-            // CRITICAL: Set Content root directory for FNA (uses raw files, not XNB)
-            #if ANDROID
-            Content.RootDirectory = "Content";
-            #elif IOS
-            Content.RootDirectory = "Content";
-            #else
-            Content.RootDirectory = "Content";
-            #endif
             
-            // Set up graphics for mobile landscape (multiplatform compatible)
-            _graphics.IsFullScreen = true;
-            _graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+            System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDeviceManager created");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "GraphicsDeviceManager created"); } catch { }
+#endif
             
-            // Set reasonable default resolution for mobile devices
-            // Use more conservative resolution to avoid graphics issues
-            _graphics.PreferredBackBufferWidth = 1024;
-            _graphics.PreferredBackBufferHeight = 576;
+            // Set Content root directory
+            Content.RootDirectory = "Content";
             
-            // CRITICAL: Create GLTronGame in constructor to avoid null reference issues
+            System.Diagnostics.Debug.WriteLine("GLTRON: Content root set");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "Content root set"); } catch { }
+#endif
+            
+            // Create GLTronGame
             _glTronGame = new GLTronGame();
-            if (_glTronGame == null)
-            {
-                throw new System.InvalidOperationException("Failed to create GLTronGame instance");
-            }
             
-            // CRITICAL: Don't access GraphicsDevice here - it doesn't exist yet!
+            System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "GLTronGame created"); } catch { }
+#endif
             
-            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor complete");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor completed successfully");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "Game1 constructor completed successfully"); } catch { }
+#endif
         }
         catch (System.Exception ex)
         {
-            // Platform-agnostic error logging
             System.Diagnostics.Debug.WriteLine($"GLTRON: Game1 constructor failed: {ex}");
+#if ANDROID
+            try { Android.Util.Log.Error("GLTRON", $"Game1 constructor failed: {ex}"); } catch { }
+#endif
             throw;
         }
     }
