@@ -194,8 +194,8 @@ void SDL_GetWindowSize(SDL_Window* window, int* w, int* h) {
 void SDL_SetWindowSize(SDL_Window* window, int w, int h) { }
 uint32_t SDL_GetWindowFlags(SDL_Window* window) { return 0; }
 
-// OpenGL context management
-typedef struct SDL_GLContext SDL_GLContext;
+// OpenGL context management (use void* for opaque types)
+typedef void* SDL_GLContext;
 SDL_GLContext SDL_GL_CreateContext(SDL_Window* window) { return (SDL_GLContext)0x87654321; }
 void SDL_GL_DeleteContext(SDL_GLContext context) { }
 void SDL_GL_SwapWindow(SDL_Window* window) { }
@@ -224,9 +224,9 @@ int SDL_OpenAudio(void* desired, void* obtained) { return 0; }
 void SDL_CloseAudio(void) { }
 void SDL_PauseAudio(int pause_on) { }
 
-// Threading
-typedef struct SDL_Thread SDL_Thread;
-typedef struct SDL_mutex SDL_mutex;
+// Threading (use void* for opaque types)
+typedef void SDL_Thread;
+typedef void SDL_mutex;
 SDL_Thread* SDL_CreateThread(void* fn, const char* name, void* data) { return (SDL_Thread*)0x11111111; }
 int SDL_WaitThread(SDL_Thread* thread, int* status) { return 0; }
 SDL_mutex* SDL_CreateMutex(void) { return (SDL_mutex*)0x22222222; }
@@ -286,9 +286,9 @@ EOF
 int alGetError(void) { return AL_NO_ERROR; }
 const char* alGetString(int param) { return "OpenAL Stub - Limited Functionality"; }
 
-// Context management
-typedef struct ALCdevice ALCdevice;
-typedef struct ALCcontext ALCcontext;
+// Context management (use void for opaque types)
+typedef void ALCdevice;
+typedef void ALCcontext;
 ALCdevice* alcOpenDevice(const char* devicename) { return (ALCdevice*)0x12345678; }
 int alcCloseDevice(ALCdevice* device) { return 1; }
 ALCcontext* alcCreateContext(ALCdevice* device, const int* attrlist) { return (ALCcontext*)0x87654321; }
