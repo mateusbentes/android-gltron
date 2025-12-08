@@ -28,19 +28,46 @@ public class Game1 : Game
 
     public Game1()
     {
-        // ULTRA MINIMAL constructor - defer EVERYTHING to Initialize()
         System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor ENTRY POINT");
 #if ANDROID
         try { Android.Util.Log.Info("GLTRON", "Game1 constructor ENTRY POINT"); } catch { }
 #endif
         
-        // Set Content root directory only - defer GraphicsDeviceManager to Initialize()
-        Content.RootDirectory = "Content";
-        
-        System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor completed - ALL initialization deferred to Initialize()");
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: About to create GraphicsDeviceManager...");
 #if ANDROID
-        try { Android.Util.Log.Info("GLTRON", "Game1 constructor completed - ALL initialization deferred to Initialize()"); } catch { }
+            try { Android.Util.Log.Info("GLTRON", "About to create GraphicsDeviceManager..."); } catch { }
 #endif
+            
+            // FNA requires GraphicsDeviceManager in constructor, but create it with minimal settings
+            _graphics = new GraphicsDeviceManager(this)
+            {
+                // Set minimal graphics settings to prevent hanging
+                GraphicsProfile = GraphicsProfile.Reach,
+                SynchronizeWithVerticalRetrace = false
+            };
+            
+            System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDeviceManager created with minimal settings");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "GraphicsDeviceManager created with minimal settings"); } catch { }
+#endif
+            
+            Content.RootDirectory = "Content";
+            
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor completed successfully");
+#if ANDROID
+            try { Android.Util.Log.Info("GLTRON", "Game1 constructor completed successfully"); } catch { }
+#endif
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Game1 constructor exception: {ex}");
+#if ANDROID
+            try { Android.Util.Log.Error("GLTRON", $"Game1 constructor exception: {ex}"); } catch { }
+#endif
+            throw;
+        }
     }
 
     protected override void Initialize()
@@ -49,30 +76,12 @@ public class Game1 : Game
         {
             System.Diagnostics.Debug.WriteLine("GLTRON: Game1 Initialize start");
             
-            // CRITICAL: Create GraphicsDeviceManager here since we deferred it from constructor
+            // CRITICAL: Check graphics manager exists (created in constructor)
             if (_graphics == null)
             {
-                System.Diagnostics.Debug.WriteLine("GLTRON: Creating GraphicsDeviceManager in Initialize()...");
-#if ANDROID
-                try { Android.Util.Log.Info("GLTRON", "Creating GraphicsDeviceManager in Initialize()..."); } catch { }
-#endif
-                
-                try
-                {
-                    _graphics = new GraphicsDeviceManager(this);
-                    System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDeviceManager created successfully in Initialize()");
-#if ANDROID
-                    try { Android.Util.Log.Info("GLTRON", "GraphicsDeviceManager created successfully in Initialize()"); } catch { }
-#endif
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: GraphicsDeviceManager creation failed in Initialize(): {ex}");
-#if ANDROID
-                    try { Android.Util.Log.Error("GLTRON", $"GraphicsDeviceManager creation failed in Initialize(): {ex}"); } catch { }
-#endif
-                    throw new System.InvalidOperationException($"GraphicsDeviceManager creation failed in Initialize(): {ex.Message}", ex);
-                }
+                var error = "GraphicsDeviceManager is null in Initialize!";
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
+                throw new System.InvalidOperationException(error);
             }
             
             // Apply graphics settings with retry logic and fallback resolution

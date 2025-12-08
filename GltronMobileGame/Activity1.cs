@@ -20,7 +20,7 @@ namespace gltron.org.gltronmobile
     )]
     public class Activity1 : Activity
     {
-        private Game1 _game;
+        private MultiplatformGameRunner _gameRunner;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -64,6 +64,12 @@ namespace gltron.org.gltronmobile
                     System.Environment.SetEnvironmentVariable("FNA_AUDIO_FORCE_AUDIOQUEUE", "1");
                     System.Environment.SetEnvironmentVariable("FNA_GRAPHICS_FORCE_COMPATIBILITY_PROFILE", "1");
                     System.Environment.SetEnvironmentVariable("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1");
+                    
+                    // Additional Android-specific FNA settings
+                    System.Environment.SetEnvironmentVariable("FNA_GRAPHICS_DISABLE_VSYNC", "1");
+                    System.Environment.SetEnvironmentVariable("SDL_HINT_RENDER_DRIVER", "opengles2");
+                    System.Environment.SetEnvironmentVariable("SDL_HINT_RENDER_OPENGL_SHADERS", "0");
+                    
                     FNAHelper.LogInfo("FNA environment variables set");
                     
                     InitializeFNAPlatform();
@@ -127,36 +133,13 @@ namespace gltron.org.gltronmobile
                         FNAHelper.LogError($"SDL preparation failed: {ex}");
                     }
                     
-                    FNAHelper.LogInfo("Creating Game1 instance...");
+                    FNAHelper.LogInfo("Creating MultiplatformGameRunner instance instead of Game1...");
                     
-                    // Try to create Game1 with additional safety measures and timeout detection
+                    // Use custom game runner that bypasses problematic FNA Game constructor
                     try
                     {
-                        // Force garbage collection before creating Game1
-                        System.GC.Collect();
-                        System.GC.WaitForPendingFinalizers();
-                        
-                        FNAHelper.LogInfo("Memory cleaned, creating Game1...");
-                        
-                        // Create a timer to detect hanging
-                        var timer = new System.Timers.Timer(10000); // 10 second timeout
-                        timer.Elapsed += (sender, e) => {
-                            FNAHelper.LogError("Game1 constructor has been running for 10+ seconds - likely hanging in FNA base constructor");
-                            FNAHelper.LogError("This usually indicates SDL2/OpenGL initialization issues on Android");
-                        };
-                        timer.Start();
-                        
-                        try
-                        {
-                            _game = new Game1();
-                            timer.Stop();
-                            FNAHelper.LogInfo("Game1 instance created successfully");
-                        }
-                        finally
-                        {
-                            timer.Stop();
-                            timer.Dispose();
-                        }
+                        _gameRunner = new MultiplatformGameRunner(this);
+                        FNAHelper.LogInfo("MultiplatformGameRunner instance created successfully");
                     }
                     catch (System.TypeInitializationException ex)
                     {
@@ -206,9 +189,9 @@ namespace gltron.org.gltronmobile
                 AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
                 Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += OnAndroidUnhandledException;
                 
-                // Start the game loop
-                FNAHelper.LogInfo("Starting FNA game loop...");
-                _game.Run();
+                // Start the custom game runner
+                FNAHelper.LogInfo("Starting MultiplatformGameRunner...");
+                _gameRunner.Run();
                 
                 FNAHelper.LogInfo("FNA Activity initialized successfully!");
             }
@@ -501,9 +484,9 @@ namespace gltron.org.gltronmobile
             
             try
             {
-                _game?.Dispose();
-                _game = null;
-                FNAHelper.LogInfo("FNA game disposed successfully");
+                _gameRunner?.Dispose();
+                _gameRunner = null;
+                FNAHelper.LogInfo("MultiplatformGameRunner disposed successfully");
             }
             catch (System.Exception ex)
             {
