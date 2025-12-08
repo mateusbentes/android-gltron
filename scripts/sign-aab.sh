@@ -10,7 +10,7 @@ KEYSTORE_NAME="gltron-release.keystore"
 KEY_ALIAS="gltron-release-key"
 PROJECT_FILE="GltronMobileGame/GltronAndroid.csproj"
 BUILD_CONFIG="Release"
-TARGET_FRAMEWORK="net8.0-android"
+TARGET_FRAMEWORK="net9.0-android"
 
 # Colors for output
 RED='\033[0;31m'

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Build the solution (Engine + Android Game) for the new architecture
 # Usage: ./scripts/build-android.sh [-c Debug|Release] [-p ProjectDir] [-f TargetFramework]
-# Defaults: -c Release, -p GltronMobileGame, -f net8.0-android
+# Defaults: -c Release, -p GltronMobileGame, -f net9.0-android
 
 set -euo pipefail
 
 CONFIG="Release"
 PROJ_DIR="GltronMobileGame"
-TFM="net8.0-android"
+TFM="net9.0-android"
 
 while getopts ":c:p:f:" opt; do
   case $opt in
