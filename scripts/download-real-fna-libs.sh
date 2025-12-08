@@ -22,44 +22,76 @@ echo "📁 Using temporary directory: $TEMP_DIR"
 download_sdl2() {
     echo "📥 Downloading SDL2 for Android..."
     
-    # SDL2 version to download
-    SDL2_VERSION="2.28.5"
-    SDL2_URL="https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-${SDL2_VERSION}.tar.gz"
+    # Try multiple SDL2 sources for better reliability
+    SDL2_SOURCES=(
+        "https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-VC.zip"
+        "https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.28.5.tar.gz"
+        "https://www.libsdl.org/release/SDL2-2.28.5.tar.gz"
+    )
     
     cd "$TEMP_DIR"
     
-    if wget -q "$SDL2_URL" -O sdl2.tar.gz; then
-        echo "✅ SDL2 downloaded successfully"
-        tar -xzf sdl2.tar.gz
+    for url in "${SDL2_SOURCES[@]}"; do
+        echo "🔄 Trying: $url"
         
-        # Look for Android prebuilt libraries
-        SDL2_DIR="SDL2-${SDL2_VERSION}"
-        if [ -d "$SDL2_DIR/android-project/app/jni/SDL/lib" ]; then
-            echo "📦 Extracting SDL2 Android libraries..."
-            
-            # Copy libraries to our project
-            if [ -f "$SDL2_DIR/android-project/app/jni/SDL/lib/arm64-v8a/libSDL2.so" ]; then
-                cp "$SDL2_DIR/android-project/app/jni/SDL/lib/arm64-v8a/libSDL2.so" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/"
-                echo "✅ SDL2 ARM64 library copied"
-            fi
-            
-            if [ -f "$SDL2_DIR/android-project/app/jni/SDL/lib/armeabi-v7a/libSDL2.so" ]; then
-                cp "$SDL2_DIR/android-project/app/jni/SDL/lib/armeabi-v7a/libSDL2.so" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/"
-                echo "✅ SDL2 ARMv7 library copied"
-            fi
-            
-            if [ -f "$SDL2_DIR/android-project/app/jni/SDL/lib/x86_64/libSDL2.so" ]; then
-                cp "$SDL2_DIR/android-project/app/jni/SDL/lib/x86_64/libSDL2.so" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/"
-                echo "✅ SDL2 x86_64 library copied"
+        if [[ "$url" == *.zip ]]; then
+            if timeout 30 wget -q "$url" -O sdl2.zip; then
+                echo "✅ SDL2 downloaded successfully"
+                unzip -q sdl2.zip
+                
+                # Look for prebuilt Android libraries in various locations
+                for dir in SDL2-* */; do
+                    if [ -d "$dir" ]; then
+                        find "$dir" -name "libSDL2.so" -type f | while read -r lib; do
+                            # Determine ABI from path
+                            if [[ "$lib" == *"arm64-v8a"* ]] || [[ "$lib" == *"aarch64"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libSDL2.so"
+                                echo "✅ SDL2 ARM64 library copied"
+                            elif [[ "$lib" == *"armeabi-v7a"* ]] || [[ "$lib" == *"armv7"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libSDL2.so"
+                                echo "✅ SDL2 ARMv7 library copied"
+                            elif [[ "$lib" == *"x86_64"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libSDL2.so"
+                                echo "✅ SDL2 x86_64 library copied"
+                            fi
+                        done
+                    fi
+                done
+                return 0
             fi
         else
-            echo "⚠️  SDL2 Android prebuilt libraries not found in expected location"
-            return 1
+            if timeout 30 wget -q "$url" -O sdl2.tar.gz; then
+                echo "✅ SDL2 downloaded successfully"
+                tar -xzf sdl2.tar.gz
+                
+                # Look for Android project structure
+                for dir in SDL2-* */; do
+                    if [ -d "$dir/android-project" ]; then
+                        find "$dir" -name "libSDL2.so" -type f | while read -r lib; do
+                            # Determine ABI from path
+                            if [[ "$lib" == *"arm64-v8a"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libSDL2.so"
+                                echo "✅ SDL2 ARM64 library copied"
+                            elif [[ "$lib" == *"armeabi-v7a"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libSDL2.so"
+                                echo "✅ SDL2 ARMv7 library copied"
+                            elif [[ "$lib" == *"x86_64"* ]]; then
+                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libSDL2.so"
+                                echo "✅ SDL2 x86_64 library copied"
+                            fi
+                        done
+                        return 0
+                    fi
+                done
+            fi
         fi
-    else
-        echo "❌ Failed to download SDL2"
-        return 1
-    fi
+        
+        echo "⚠️  Failed to download from $url, trying next source..."
+        rm -f sdl2.* 2>/dev/null || true
+    done
+    
+    echo "❌ All SDL2 download sources failed"
+    return 1
 }
 
 # Function to download OpenAL Soft
@@ -68,40 +100,65 @@ download_openal() {
     
     cd "$TEMP_DIR"
     
-    # Try to download OpenAL Soft prebuilt binaries
-    OPENAL_URL="https://github.com/kcat/openal-soft/releases/download/1.23.1/openal-soft-1.23.1-bin.zip"
+    # Try multiple OpenAL sources
+    OPENAL_SOURCES=(
+        "https://github.com/kcat/openal-soft/releases/download/1.23.1/openal-soft-1.23.1-bin.zip"
+        "https://github.com/kcat/openal-soft/archive/refs/tags/1.23.1.tar.gz"
+    )
     
-    if wget -q "$OPENAL_URL" -O openal.zip; then
-        echo "✅ OpenAL Soft downloaded successfully"
-        unzip -q openal.zip
+    for url in "${OPENAL_SOURCES[@]}"; do
+        echo "🔄 Trying: $url"
         
-        # Look for Android libraries
-        OPENAL_DIR="openal-soft-1.23.1-bin"
-        if [ -d "$OPENAL_DIR/libs" ]; then
-            echo "📦 Extracting OpenAL Android libraries..."
-            
-            # Copy libraries if they exist
-            find "$OPENAL_DIR" -name "libopenal.so" -type f | while read -r lib; do
-                # Determine ABI from path
-                if [[ "$lib" == *"arm64-v8a"* ]]; then
-                    cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/"
-                    echo "✅ OpenAL ARM64 library copied"
-                elif [[ "$lib" == *"armeabi-v7a"* ]]; then
-                    cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/"
-                    echo "✅ OpenAL ARMv7 library copied"
-                elif [[ "$lib" == *"x86_64"* ]]; then
-                    cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/"
-                    echo "✅ OpenAL x86_64 library copied"
-                fi
-            done
+        if [[ "$url" == *.zip ]]; then
+            if timeout 20 wget -q "$url" -O openal.zip; then
+                echo "✅ OpenAL Soft downloaded successfully"
+                unzip -q openal.zip
+                
+                # Look for Android libraries in various locations
+                find . -name "libopenal.so" -type f | while read -r lib; do
+                    # Determine ABI from path
+                    if [[ "$lib" == *"arm64-v8a"* ]] || [[ "$lib" == *"aarch64"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libopenal.so"
+                        echo "✅ OpenAL ARM64 library copied"
+                    elif [[ "$lib" == *"armeabi-v7a"* ]] || [[ "$lib" == *"armv7"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libopenal.so"
+                        echo "✅ OpenAL ARMv7 library copied"
+                    elif [[ "$lib" == *"x86_64"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libopenal.so"
+                        echo "✅ OpenAL x86_64 library copied"
+                    fi
+                done
+                return 0
+            fi
         else
-            echo "⚠️  OpenAL Android libraries not found, will create minimal stubs"
-            return 1
+            if timeout 20 wget -q "$url" -O openal.tar.gz; then
+                echo "✅ OpenAL Soft downloaded successfully"
+                tar -xzf openal.tar.gz
+                
+                # Look for prebuilt libraries
+                find . -name "libopenal.so" -type f | while read -r lib; do
+                    # Determine ABI from path
+                    if [[ "$lib" == *"arm64-v8a"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libopenal.so"
+                        echo "✅ OpenAL ARM64 library copied"
+                    elif [[ "$lib" == *"armeabi-v7a"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libopenal.so"
+                        echo "✅ OpenAL ARMv7 library copied"
+                    elif [[ "$lib" == *"x86_64"* ]]; then
+                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libopenal.so"
+                        echo "✅ OpenAL x86_64 library copied"
+                    fi
+                done
+                return 0
+            fi
         fi
-    else
-        echo "❌ Failed to download OpenAL Soft"
-        return 1
-    fi
+        
+        echo "⚠️  Failed to download from $url, trying next source..."
+        rm -f openal.* 2>/dev/null || true
+    done
+    
+    echo "❌ All OpenAL download sources failed"
+    return 1
 }
 
 # Function to create minimal working stubs if downloads fail
