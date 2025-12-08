@@ -125,7 +125,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: GltronMobileGame/lib
-        key: ${{ runner.os }}-fna-natives-v2-${{ hashFiles('scripts/download-real-fna-libs.sh') }}
+        key: ${{ runner.os }}-fna-natives-v2-${{ hashFiles('scripts/compile-fna-libs.sh') }}
         restore-keys: |
           ${{ runner.os }}-fna-natives-v2-
           ${{ runner.os }}-fna-natives-

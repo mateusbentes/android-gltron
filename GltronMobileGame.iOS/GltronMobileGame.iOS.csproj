@@ -71,9 +71,30 @@
   <PropertyGroup>
     <MtouchArch>ARM64</MtouchArch>
     <MtouchLink>SdkOnly</MtouchLink>
-    <MtouchDebug>true</MtouchDebug>
+    <MtouchDebug Condition="'$(Configuration)' == 'Debug'">true</MtouchDebug>
+    <MtouchDebug Condition="'$(Configuration)' == 'Release'">false</MtouchDebug>
     <CodesignKey>iPhone Developer</CodesignKey>
     <IOSDebuggerPort>10000</IOSDebuggerPort>
+    
+    <!-- FNA iOS-specific settings -->
+    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <MtouchUseLlvm>true</MtouchUseLlvm>
+    <MtouchFloat32>true</MtouchFloat32>
+    
+    <!-- Enable bitcode for App Store -->
+    <MtouchEnableBitcode Condition="'$(Configuration)' == 'Release'">true</MtouchEnableBitcode>
+    <MtouchEnableBitcode Condition="'$(Configuration)' == 'Debug'">false</MtouchEnableBitcode>
   </PropertyGroup>
+  
+  <!-- iOS Framework fallbacks for missing FNA frameworks -->
+  <PropertyGroup Condition="!Exists('Frameworks\SDL2.framework') OR !Exists('Frameworks\OpenAL.framework')">
+    <_FNAFrameworksMissing>true</_FNAFrameworksMissing>
+  </PropertyGroup>
+  
+  <!-- Warning for missing frameworks -->
+  <Target Name="WarnMissingFrameworks" BeforeTargets="Build" Condition="'$(_FNAFrameworksMissing)' == 'true'">
+    <Warning Text="⚠️ FNA iOS frameworks missing! Download SDL2.framework and OpenAL.framework to GltronMobileGame.iOS/Frameworks/ for full functionality." />
+    <Message Text="📝 iOS will use system frameworks as fallback, but functionality may be limited." Importance="high" />
+  </Target>
 
 </Project>

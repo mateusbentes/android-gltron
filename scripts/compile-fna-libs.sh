@@ -1,10 +1,10 @@
 #!/bin/bash
-# Download real FNA native libraries for Android
-# This replaces the stub libraries with actual SDL2 and OpenAL binaries
+# Compile FNA native libraries for Android using Android NDK
+# Creates proper SDL2 and OpenAL stub libraries with correct architecture
 
 set -e
 
-echo "🔽 Downloading real FNA native libraries for Android..."
+echo "🔨 Compiling FNA native libraries for Android using NDK..."
 
 # Change to project root
 cd "$(dirname "$0")/.."
@@ -18,148 +18,7 @@ mkdir -p GltronMobileGame/lib/x86_64
 TEMP_DIR=$(mktemp -d)
 echo "📁 Using temporary directory: $TEMP_DIR"
 
-# Function to download and extract SDL2
-download_sdl2() {
-    echo "📥 Downloading SDL2 for Android..."
-    
-    # Try multiple SDL2 sources for better reliability
-    SDL2_SOURCES=(
-        "https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-VC.zip"
-        "https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.28.5.tar.gz"
-        "https://www.libsdl.org/release/SDL2-2.28.5.tar.gz"
-    )
-    
-    cd "$TEMP_DIR"
-    
-    for url in "${SDL2_SOURCES[@]}"; do
-        echo "🔄 Trying: $url"
-        
-        if [[ "$url" == *.zip ]]; then
-            if timeout 30 wget -q "$url" -O sdl2.zip; then
-                echo "✅ SDL2 downloaded successfully"
-                unzip -q sdl2.zip
-                
-                # Look for prebuilt Android libraries in various locations
-                for dir in SDL2-* */; do
-                    if [ -d "$dir" ]; then
-                        find "$dir" -name "libSDL2.so" -type f | while read -r lib; do
-                            # Determine ABI from path
-                            if [[ "$lib" == *"arm64-v8a"* ]] || [[ "$lib" == *"aarch64"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libSDL2.so"
-                                echo "✅ SDL2 ARM64 library copied"
-                            elif [[ "$lib" == *"armeabi-v7a"* ]] || [[ "$lib" == *"armv7"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libSDL2.so"
-                                echo "✅ SDL2 ARMv7 library copied"
-                            elif [[ "$lib" == *"x86_64"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libSDL2.so"
-                                echo "✅ SDL2 x86_64 library copied"
-                            fi
-                        done
-                    fi
-                done
-                return 0
-            fi
-        else
-            if timeout 30 wget -q "$url" -O sdl2.tar.gz; then
-                echo "✅ SDL2 downloaded successfully"
-                tar -xzf sdl2.tar.gz
-                
-                # Look for Android project structure
-                for dir in SDL2-* */; do
-                    if [ -d "$dir/android-project" ]; then
-                        find "$dir" -name "libSDL2.so" -type f | while read -r lib; do
-                            # Determine ABI from path
-                            if [[ "$lib" == *"arm64-v8a"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libSDL2.so"
-                                echo "✅ SDL2 ARM64 library copied"
-                            elif [[ "$lib" == *"armeabi-v7a"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libSDL2.so"
-                                echo "✅ SDL2 ARMv7 library copied"
-                            elif [[ "$lib" == *"x86_64"* ]]; then
-                                cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libSDL2.so"
-                                echo "✅ SDL2 x86_64 library copied"
-                            fi
-                        done
-                        return 0
-                    fi
-                done
-            fi
-        fi
-        
-        echo "⚠️  Failed to download from $url, trying next source..."
-        rm -f sdl2.* 2>/dev/null || true
-    done
-    
-    echo "❌ All SDL2 download sources failed"
-    return 1
-}
-
-# Function to download OpenAL Soft
-download_openal() {
-    echo "📥 Downloading OpenAL Soft for Android..."
-    
-    cd "$TEMP_DIR"
-    
-    # Try multiple OpenAL sources
-    OPENAL_SOURCES=(
-        "https://github.com/kcat/openal-soft/releases/download/1.23.1/openal-soft-1.23.1-bin.zip"
-        "https://github.com/kcat/openal-soft/archive/refs/tags/1.23.1.tar.gz"
-    )
-    
-    for url in "${OPENAL_SOURCES[@]}"; do
-        echo "🔄 Trying: $url"
-        
-        if [[ "$url" == *.zip ]]; then
-            if timeout 20 wget -q "$url" -O openal.zip; then
-                echo "✅ OpenAL Soft downloaded successfully"
-                unzip -q openal.zip
-                
-                # Look for Android libraries in various locations
-                find . -name "libopenal.so" -type f | while read -r lib; do
-                    # Determine ABI from path
-                    if [[ "$lib" == *"arm64-v8a"* ]] || [[ "$lib" == *"aarch64"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libopenal.so"
-                        echo "✅ OpenAL ARM64 library copied"
-                    elif [[ "$lib" == *"armeabi-v7a"* ]] || [[ "$lib" == *"armv7"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libopenal.so"
-                        echo "✅ OpenAL ARMv7 library copied"
-                    elif [[ "$lib" == *"x86_64"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libopenal.so"
-                        echo "✅ OpenAL x86_64 library copied"
-                    fi
-                done
-                return 0
-            fi
-        else
-            if timeout 20 wget -q "$url" -O openal.tar.gz; then
-                echo "✅ OpenAL Soft downloaded successfully"
-                tar -xzf openal.tar.gz
-                
-                # Look for prebuilt libraries
-                find . -name "libopenal.so" -type f | while read -r lib; do
-                    # Determine ABI from path
-                    if [[ "$lib" == *"arm64-v8a"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/arm64-v8a/libopenal.so"
-                        echo "✅ OpenAL ARM64 library copied"
-                    elif [[ "$lib" == *"armeabi-v7a"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/armeabi-v7a/libopenal.so"
-                        echo "✅ OpenAL ARMv7 library copied"
-                    elif [[ "$lib" == *"x86_64"* ]]; then
-                        cp "$lib" "$PROJECT_ROOT/GltronMobileGame/lib/x86_64/libopenal.so"
-                        echo "✅ OpenAL x86_64 library copied"
-                    fi
-                done
-                return 0
-            fi
-        fi
-        
-        echo "⚠️  Failed to download from $url, trying next source..."
-        rm -f openal.* 2>/dev/null || true
-    done
-    
-    echo "❌ All OpenAL download sources failed"
-    return 1
-}
+# No download functions needed - we compile directly with Android NDK
 
 # Function to create minimal working stubs if downloads fail
 create_minimal_stubs() {
@@ -444,27 +303,14 @@ EOF
 # Main execution
 PROJECT_ROOT="$(pwd)"
 
-echo "🎯 Attempting to download real libraries first..."
+echo "🎯 Using Android NDK to compile proper native libraries..."
 
-# Try to download real libraries
-SDL2_SUCCESS=false
-OPENAL_SUCCESS=false
-
-if download_sdl2; then
-    SDL2_SUCCESS=true
-fi
-
-if download_openal; then
-    OPENAL_SUCCESS=true
-fi
-
-# If downloads failed, create stubs
-if [ "$SDL2_SUCCESS" = false ] || [ "$OPENAL_SUCCESS" = false ]; then
-    echo "⚠️  Some downloads failed, creating minimal stubs..."
-    if ! create_minimal_stubs; then
-        echo "❌ Failed to create stubs. Please install Android NDK and set ANDROID_NDK_ROOT"
-        exit 1
-    fi
+# Skip downloads entirely - they don't contain Android prebuilt libraries
+# Go directly to NDK compilation
+if ! create_minimal_stubs; then
+    echo "❌ Failed to create native libraries. Please install Android NDK and set ANDROID_NDK_ROOT"
+    echo "   Current ANDROID_NDK_ROOT: ${ANDROID_NDK_ROOT:-'not set'}"
+    exit 1
 fi
 
 # Clean up

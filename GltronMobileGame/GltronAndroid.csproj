@@ -84,44 +84,25 @@
 
   <!-- FNA Native Libraries for Android -->
   <ItemGroup>
-    <!-- Automatically include all native libraries from lib directory -->
-    <AndroidNativeLibrary Include="lib\**\*.so">
-      <Abi>$([System.String]::Copy('%(RecursiveDir)').TrimEnd('\'))</Abi>
-    </AndroidNativeLibrary>
-  </ItemGroup>
-  
-  <!-- Explicit native library entries for better control (fallback) -->
-  <ItemGroup Condition="'$(UseExplicitNativeLibs)' == 'true'">
-    <!-- ARM64 libraries -->
+    <!-- Explicitly include SDL2 and OpenAL libraries for each ABI -->
     <AndroidNativeLibrary Include="lib\arm64-v8a\libSDL2.so" Condition="Exists('lib\arm64-v8a\libSDL2.so')">
       <Abi>arm64-v8a</Abi>
     </AndroidNativeLibrary>
     <AndroidNativeLibrary Include="lib\arm64-v8a\libopenal.so" Condition="Exists('lib\arm64-v8a\libopenal.so')">
       <Abi>arm64-v8a</Abi>
     </AndroidNativeLibrary>
-    <AndroidNativeLibrary Include="lib\arm64-v8a\libtheoraplay.so" Condition="Exists('lib\arm64-v8a\libtheoraplay.so')">
-      <Abi>arm64-v8a</Abi>
-    </AndroidNativeLibrary>
     
-    <!-- ARMv7 libraries -->
     <AndroidNativeLibrary Include="lib\armeabi-v7a\libSDL2.so" Condition="Exists('lib\armeabi-v7a\libSDL2.so')">
       <Abi>armeabi-v7a</Abi>
     </AndroidNativeLibrary>
     <AndroidNativeLibrary Include="lib\armeabi-v7a\libopenal.so" Condition="Exists('lib\armeabi-v7a\libopenal.so')">
       <Abi>armeabi-v7a</Abi>
     </AndroidNativeLibrary>
-    <AndroidNativeLibrary Include="lib\armeabi-v7a\libtheoraplay.so" Condition="Exists('lib\armeabi-v7a\libtheoraplay.so')">
-      <Abi>armeabi-v7a</Abi>
-    </AndroidNativeLibrary>
     
-    <!-- x86_64 libraries -->
     <AndroidNativeLibrary Include="lib\x86_64\libSDL2.so" Condition="Exists('lib\x86_64\libSDL2.so')">
       <Abi>x86_64</Abi>
     </AndroidNativeLibrary>
     <AndroidNativeLibrary Include="lib\x86_64\libopenal.so" Condition="Exists('lib\x86_64\libopenal.so')">
-      <Abi>x86_64</Abi>
-    </AndroidNativeLibrary>
-    <AndroidNativeLibrary Include="lib\x86_64\libtheoraplay.so" Condition="Exists('lib\x86_64\libtheoraplay.so')">
       <Abi>x86_64</Abi>
     </AndroidNativeLibrary>
   </ItemGroup>

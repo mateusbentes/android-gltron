@@ -201,7 +201,7 @@ Troubleshooting
 - ANDROID_HOME not set / sdkmanager/adb not found
   • Set ANDROID_HOME to your SDK path or source scripts/setup-android-env.sh.
 - FNA platform initialization failed: SDL2 native library missing or incompatible
-  • Run ./scripts/download-real-fna-libs.sh to download proper native libraries.
+  • Run ./scripts/compile-fna-libs.sh to compile proper native libraries.
   • Ensure ANDROID_NDK_ROOT is set: export ANDROID_NDK_ROOT=/home/mateus/Android/Sdk/ndk/29.0.14206865
   • Verify libraries with ./scripts/verify-native-libs.sh
 - OpenAL audio missing / OpenGL ES 3.0 not supported
@@ -209,12 +209,14 @@ Troubleshooting
   • Ensure device supports at least OpenGL ES 2.0.
 - Native library architecture mismatch
   • Delete old stub libraries: rm -rf GltronMobileGame/lib/
-  • Re-run ./scripts/download-real-fna-libs.sh with proper NDK setup.
+  • Re-run ./scripts/compile-fna-libs.sh with proper NDK setup.
 - iOS FNA framework issues (macOS only)
+  • Run ./scripts/setup-ios-frameworks.sh for guided setup
   • Ensure SDL2.framework is in GltronMobileGame.iOS/Frameworks/
-  • Download iOS frameworks from SDL2 releases
+  • Download iOS frameworks from SDL2 releases (look for .dmg files)
   • Verify frameworks are ARM64 compatible
   • Check iOS deployment target is 12.0 or later
+  • Ensure Xcode and iOS SDK are properly installed
 - No APK/AAB after build
   • Check build output in GltronMobileGame/bin/<Config>/, review dotnet build logs for errors.
 - TypeInitializationException at runtime

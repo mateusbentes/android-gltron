@@ -7,7 +7,7 @@ echo "🔄 Redirecting to download-real-fna-libs.sh for proper native libraries.
 echo ""
 
 # Run the new script
-exec "$(dirname "$0")/download-real-fna-libs.sh" "$@"
+exec "$(dirname "$0")/compile-fna-libs.sh" "$@"
 
 # Change to project root
 cd "$(dirname "$0")/.."
