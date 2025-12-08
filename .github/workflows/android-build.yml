@@ -1,4 +1,4 @@
-name: Android Debug Build
+name: FNA Android Build
 
 on:
   push:
@@ -38,33 +38,103 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Cache FNA native libraries
+      uses: actions/cache@v3
+      with:
+        path: GltronMobileGame/lib
+        key: ${{ runner.os }}-fna-natives-v1
+        restore-keys: |
+          ${{ runner.os }}-fna-natives-
+
+    - name: Setup FNA native libraries
+      run: |
+        # Create native library directories
+        mkdir -p GltronMobileGame/lib/arm64-v8a
+        mkdir -p GltronMobileGame/lib/armeabi-v7a
+        mkdir -p GltronMobileGame/lib/x86_64
+        
+        # Check if libraries already exist (from cache)
+        if [ ! -f "GltronMobileGame/lib/arm64-v8a/libSDL2.so" ]; then
+          echo "Downloading FNA native libraries..."
+          
+          # Download FNA native libraries (latest release)
+          wget -q https://github.com/FNA-XNA/FNA/releases/download/25.12/fnalibs.tar.bz2
+          
+          # Extract libraries
+          tar -xjf fnalibs.tar.bz2
+          
+          # Copy Android libraries to correct directories
+          if [ -d "fnalibs/lib64" ]; then
+            cp fnalibs/lib64/libSDL2.so GltronMobileGame/lib/arm64-v8a/ || echo "libSDL2.so not found for arm64"
+            cp fnalibs/lib64/libopenal.so GltronMobileGame/lib/arm64-v8a/ || echo "libopenal.so not found for arm64"
+            cp fnalibs/lib64/libtheoraplay.so GltronMobileGame/lib/arm64-v8a/ || echo "libtheoraplay.so not found for arm64"
+          fi
+          
+          if [ -d "fnalibs/lib" ]; then
+            cp fnalibs/lib/libSDL2.so GltronMobileGame/lib/armeabi-v7a/ || echo "libSDL2.so not found for armv7"
+            cp fnalibs/lib/libopenal.so GltronMobileGame/lib/armeabi-v7a/ || echo "libopenal.so not found for armv7"
+            cp fnalibs/lib/libtheoraplay.so GltronMobileGame/lib/armeabi-v7a/ || echo "libtheoraplay.so not found for armv7"
+          fi
+          
+          # For x86_64 (if available)
+          if [ -d "fnalibs/lib64" ]; then
+            cp fnalibs/lib64/libSDL2.so GltronMobileGame/lib/x86_64/ || echo "libSDL2.so not found for x86_64"
+            cp fnalibs/lib64/libopenal.so GltronMobileGame/lib/x86_64/ || echo "libopenal.so not found for x86_64"
+            cp fnalibs/lib64/libtheoraplay.so GltronMobileGame/lib/x86_64/ || echo "libtheoraplay.so not found for x86_64"
+          fi
+          
+          # Clean up
+          rm -rf fnalibs fnalibs.tar.bz2
+        else
+          echo "FNA native libraries found in cache"
+        fi
+        
+        # Verify libraries exist
+        echo "Checking for required native libraries..."
+        find GltronMobileGame/lib -name "*.so" -type f || echo "Warning: No .so files found"
+
     - name: Restore dependencies
-      run: dotnet restore GltronMobileGame/GltronAndroid.csproj
+      run: dotnet restore GltronMobile.sln
 
     - name: Build Debug APK
       run: |
-        dotnet publish GltronMobileGame/GltronAndroid.csproj \
-          -c Debug \
-          -f net9.0-android \
-          --no-restore
+        echo "Building FNA Android Debug APK..."
+        ./scripts/build-android.sh -c Debug
+        
+        # Find the generated APK
+        find GltronMobileGame/bin/Debug -name "*.apk" -type f
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: gltron-mobile-debug-apk
-        path: GltronMobileGame/bin/Debug/net9.0-android/publish/*.apk
+        name: gltron-mobile-fna-debug-apk
+        path: GltronMobileGame/bin/Debug/**/*.apk
         retention-days: 30
 
     - name: Build Release APK (unsigned)
       run: |
-        dotnet publish GltronMobileGame/GltronAndroid.csproj \
-          -c Release \
-          -f net9.0-android \
-          --no-restore
+        echo "Building FNA Android Release APK..."
+        ./scripts/build-android.sh -c Release
+        
+        # Find the generated APK
+        find GltronMobileGame/bin/Release -name "*.apk" -type f
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: gltron-mobile-release-apk
-        path: GltronMobileGame/bin/Release/net9.0-android/publish/*.apk
+        name: gltron-mobile-fna-release-apk
+        path: GltronMobileGame/bin/Release/**/*.apk
         retention-days: 30
+
+    - name: Build Summary
+      run: |
+        echo "🎉 FNA Android build completed!"
+        echo ""
+        echo "📱 Generated APKs:"
+        find GltronMobileGame/bin -name "*.apk" -type f -exec ls -lh {} \; || echo "No APKs found"
+        echo ""
+        echo "✅ FNA features enabled:"
+        echo "   • Direct activity management (no AndroidGameActivity)"
+        echo "   • Raw content loading (no XNB files)"
+        echo "   • Better .NET 9 compatibility"
+        echo "   • Native SDL2/OpenAL integration"

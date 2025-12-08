@@ -81,4 +81,41 @@
     <AndroidAsset Include="Content\**\*.obj" />
     <AndroidAsset Include="Content\**\*.mtl" />
   </ItemGroup>
+
+  <!-- FNA Native Libraries for Android -->
+  <ItemGroup>
+    <!-- ARM64 libraries -->
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libSDL2.so" Condition="Exists('lib\arm64-v8a\libSDL2.so')">
+      <Abi>arm64-v8a</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libopenal.so" Condition="Exists('lib\arm64-v8a\libopenal.so')">
+      <Abi>arm64-v8a</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libtheoraplay.so" Condition="Exists('lib\arm64-v8a\libtheoraplay.so')">
+      <Abi>arm64-v8a</Abi>
+    </AndroidNativeLibrary>
+    
+    <!-- ARMv7 libraries -->
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libSDL2.so" Condition="Exists('lib\armeabi-v7a\libSDL2.so')">
+      <Abi>armeabi-v7a</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libopenal.so" Condition="Exists('lib\armeabi-v7a\libopenal.so')">
+      <Abi>armeabi-v7a</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libtheoraplay.so" Condition="Exists('lib\armeabi-v7a\libtheoraplay.so')">
+      <Abi>armeabi-v7a</Abi>
+    </AndroidNativeLibrary>
+    
+    <!-- x86_64 libraries -->
+    <AndroidNativeLibrary Include="lib\x86_64\libSDL2.so" Condition="Exists('lib\x86_64\libSDL2.so')">
+      <Abi>x86_64</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\x86_64\libopenal.so" Condition="Exists('lib\x86_64\libopenal.so')">
+      <Abi>x86_64</Abi>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="lib\x86_64\libtheoraplay.so" Condition="Exists('lib\x86_64\libtheoraplay.so')">
+      <Abi>x86_64</Abi>
+    </AndroidNativeLibrary>
+  </ItemGroup>
+
 </Project>
