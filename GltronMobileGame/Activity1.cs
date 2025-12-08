@@ -49,11 +49,11 @@ namespace gltron.org.gltronmobile
             {
                 System.Diagnostics.Debug.WriteLine("=== DIRECT ACTIVITY SIMPLE INITIALIZATION ===");
 
-                // Create the full 3D GLTron game with graphics, music, and all features
-                if (!TryCreateFullGLTronGame())
+                // Create the full 3D GLTron game with proper MonoGame initialization
+                if (!TryCreateProperMonoGame())
                 {
-                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Full 3D game failed, showing error");
-                    ShowErrorScreen(new System.Exception("MonoGame initialization failed - platform context setup needed"));
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: MonoGame initialization failed, showing error");
+                    ShowErrorScreen(new System.Exception("MonoGame initialization failed - check logs for details"));
                 }
             }
             catch (System.Exception ex)
@@ -99,35 +99,36 @@ namespace gltron.org.gltronmobile
             }
         }
 
-        // Try to create the full 3D GLTron game with graphics, music, and all features
-        private bool TryCreateFullGLTronGame()
+        // Try to create the full MonoGame GLTron with proper initialization
+        private bool TryCreateProperMonoGame()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Attempting full 3D GLTron game initialization...");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Attempting proper MonoGame initialization...");
 
-                // Use our proper MonoGame initializer
-                _game = DirectMonoGameInitializer.CreateGame1WithProperInitialization(this);
+                // Use the proper MonoGame initializer
+                _game = ProperMonoGameInitializer.CreateInitializedGame1(this);
 
-                // Start the game - this should now show the full 3D GLTron experience
+                // Start the game
                 _game.Run();
 
-                // Get the view
+                // Get the view that MonoGame created
                 _view = _game.Services.GetService<View>();
-                
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: SUCCESS! Full 3D GLTron game is running!");
+
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: SUCCESS! Full MonoGame GLTron is running!");
                 System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: You should now see:");
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ 3D arena with walls and floor");
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Light cycles (bikes) and trails");
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Background music and sound effects");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Full 3D GLTron game with MonoGame graphics");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Menu system and background music");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ 3D arena, light cycles, and trails");
                 System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ HUD with score and instructions");
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Menu system and touch controls");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Touch controls and game mechanics");
                 System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Direct activity management (no AndroidGameActivity)");
+
                 return true;
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Full 3D game initialization failed: {ex}");
+                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: MonoGame initialization failed: {ex}");
                 System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Error details: {ex.Message}");
                 if (ex.InnerException != null)
                 {
