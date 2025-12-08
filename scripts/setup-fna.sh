@@ -38,6 +38,31 @@ echo "🍎 Setting up FNA native libraries for iOS..."
 # Create native library directories for iOS
 mkdir -p GltronMobileGame.iOS/Frameworks
 
+# Check if we're on macOS for iOS framework setup
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "📱 macOS detected - iOS framework setup available"
+    
+    # Check if iOS frameworks exist
+    if [ ! -d "GltronMobileGame.iOS/Frameworks/SDL2.framework" ]; then
+        echo "⚠️  SDL2.framework not found for iOS"
+        echo "   Download from: https://github.com/libsdl-org/SDL/releases"
+        echo "   Look for iOS framework in the release assets"
+    else
+        echo "✅ SDL2.framework found for iOS"
+    fi
+    
+    if [ ! -d "GltronMobileGame.iOS/Frameworks/OpenAL.framework" ]; then
+        echo "⚠️  OpenAL.framework not found for iOS"
+        echo "   This is typically provided by iOS system frameworks"
+        echo "   Or download OpenAL Soft iOS framework"
+    else
+        echo "✅ OpenAL.framework found for iOS"
+    fi
+else
+    echo "⚠️  Not on macOS - iOS framework setup skipped"
+    echo "   iOS development requires macOS with Xcode"
+fi
+
 echo "📋 FNA setup completed!"
 echo ""
 echo "📝 Next steps:"

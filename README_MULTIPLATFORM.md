@@ -210,6 +210,11 @@ Troubleshooting
 - Native library architecture mismatch
   • Delete old stub libraries: rm -rf GltronMobileGame/lib/
   • Re-run ./scripts/download-real-fna-libs.sh with proper NDK setup.
+- iOS FNA framework issues (macOS only)
+  • Ensure SDL2.framework is in GltronMobileGame.iOS/Frameworks/
+  • Download iOS frameworks from SDL2 releases
+  • Verify frameworks are ARM64 compatible
+  • Check iOS deployment target is 12.0 or later
 - No APK/AAB after build
   • Check build output in GltronMobileGame/bin/<Config>/, review dotnet build logs for errors.
 - TypeInitializationException at runtime

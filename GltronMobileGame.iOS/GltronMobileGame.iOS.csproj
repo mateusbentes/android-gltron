@@ -48,18 +48,32 @@
 
   <!-- FNA iOS Native Frameworks -->
   <ItemGroup>
-    <NativeReference Include="Frameworks\SDL2.framework">
+    <!-- SDL2 Framework (required) -->
+    <NativeReference Include="Frameworks\SDL2.framework" Condition="Exists('Frameworks\SDL2.framework')">
       <Kind>Framework</Kind>
       <Frameworks>SDL2</Frameworks>
     </NativeReference>
-    <NativeReference Include="Frameworks\OpenAL.framework">
+    
+    <!-- OpenAL Framework (required for audio) -->
+    <NativeReference Include="Frameworks\OpenAL.framework" Condition="Exists('Frameworks\OpenAL.framework')">
       <Kind>Framework</Kind>
       <Frameworks>OpenAL</Frameworks>
     </NativeReference>
-    <NativeReference Include="Frameworks\Theoraplay.framework">
+    
+    <!-- Theoraplay Framework (optional for video) -->
+    <NativeReference Include="Frameworks\Theoraplay.framework" Condition="Exists('Frameworks\Theoraplay.framework')">
       <Kind>Framework</Kind>
       <Frameworks>Theoraplay</Frameworks>
     </NativeReference>
   </ItemGroup>
+  
+  <!-- iOS-specific FNA configuration -->
+  <PropertyGroup>
+    <MtouchArch>ARM64</MtouchArch>
+    <MtouchLink>SdkOnly</MtouchLink>
+    <MtouchDebug>true</MtouchDebug>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <IOSDebuggerPort>10000</IOSDebuggerPort>
+  </PropertyGroup>
 
 </Project>

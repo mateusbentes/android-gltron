@@ -86,7 +86,7 @@
   <ItemGroup>
     <!-- Automatically include all native libraries from lib directory -->
     <AndroidNativeLibrary Include="lib\**\*.so">
-      <Abi>%(RecursiveDir)</Abi>
+      <Abi>$([System.String]::Copy('%(RecursiveDir)').TrimEnd('\'))</Abi>
     </AndroidNativeLibrary>
   </ItemGroup>
   
