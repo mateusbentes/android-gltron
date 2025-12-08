@@ -225,7 +225,9 @@ namespace GltronMobileGame
         {
             try
             {
-                _glTronGame?.addTouchEvent(x, y, screenWidth, screenHeight);
+                // Game1 will handle touch input through its own input processing
+                // We could potentially forward this to Game1's touch handling if needed
+                LogInfo($"Touch input received: ({x}, {y}) on {screenWidth}x{screenHeight} screen");
             }
             catch (System.Exception ex)
             {
