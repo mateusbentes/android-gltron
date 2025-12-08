@@ -54,15 +54,13 @@ EOF
           echo "✅ FAudio downloaded successfully"
         else
           echo "❌ FAudio download failed, creating functional placeholder"
-          cat > lib/FAudio/csharp/FAudio.cs << 'EOF'
-namespace FAudio
-{
-    public static class FAudio
-    {
-        public const uint FAUDIO_DEFAULT_CHANNELS = 0;
-    }
-}
-EOF
+          echo 'namespace FAudio' > lib/FAudio/csharp/FAudio.cs
+          echo '{' >> lib/FAudio/csharp/FAudio.cs
+          echo '    public static class FAudio' >> lib/FAudio/csharp/FAudio.cs
+          echo '    {' >> lib/FAudio/csharp/FAudio.cs
+          echo '        public const uint FAUDIO_DEFAULT_CHANNELS = 0;' >> lib/FAudio/csharp/FAudio.cs
+          echo '    }' >> lib/FAudio/csharp/FAudio.cs
+          echo '}' >> lib/FAudio/csharp/FAudio.cs
         fi
         
         # Download Theorafile
@@ -71,15 +69,7 @@ EOF
           echo "✅ Theorafile downloaded successfully"
         else
           echo "❌ Theorafile download failed, creating functional placeholder"
-          cat > lib/Theorafile/csharp/Theorafile.cs << 'EOF'
-namespace Theorafile
-{
-    public static class Theorafile
-    {
-        public const int THEORAFILE_DEFAULT_BUFFER_SIZE = 4096;
-    }
-}
-EOF
+          echo 'namespace Theorafile { public static class Theorafile { public const int THEORAFILE_DEFAULT_BUFFER_SIZE = 4096; } }' > lib/Theorafile/csharp/Theorafile.cs
         fi
         
         # Download SDL3-CS (legacy)
