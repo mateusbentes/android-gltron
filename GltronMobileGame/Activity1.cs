@@ -3,13 +3,6 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Input.Touch;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Media;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
 using GltronMobileGame;
 
 namespace gltron.org.gltronmobile
@@ -32,44 +25,49 @@ namespace gltron.org.gltronmobile
         {
             try
             {
-#if ANDROID
-                Android.Util.Log.Info("GLTRON", "=== MONOGAME GAME1 INITIALIZATION ===");
 
 
-#else
-                System.Diagnostics.Debug.WriteLine("GLTRON: === MONOGAME GAME1 INITIALIZATION ===");
-#endif
-
+                System.Diagnostics.Debug.WriteLine("=== MONOGAME GAME1 INITIALIZATION ===");
+                System.Diagnostics.Debug.WriteLine("Activity.OnCreate starting...");
+                
                 base.OnCreate(bundle);
 
+                System.Diagnostics.Debug.WriteLine("Activity.OnCreate completed");
 
 
-
-
+                System.Diagnostics.Debug.WriteLine("Step 1: Creating Game1 instance...");
+                
+                // Create the game instance
                 _game = new Game1();
 
+                System.Diagnostics.Debug.WriteLine("Game1 instance created successfully");
+                
 
+                System.Diagnostics.Debug.WriteLine("Step 2: Getting game view from services...");
+                var gameView = _game.Services.GetService(typeof(Android.Views.View));
+                if (gameView == null)
+                {
 
+                    System.Diagnostics.Debug.WriteLine("ERROR: Game view service is null!");
+                    throw new System.InvalidOperationException("Game view service not available");
+                }
 
+                System.Diagnostics.Debug.WriteLine("Game view service obtained successfully");
+                
 
+                System.Diagnostics.Debug.WriteLine("Step 3: Setting content view...");
+                SetContentView((Android.Views.View)gameView);
 
+                System.Diagnostics.Debug.WriteLine("Content view set successfully");
+                
 
+                System.Diagnostics.Debug.WriteLine("Step 4: Starting game loop...");
+                _game.RunOneFrame();
 
+                System.Diagnostics.Debug.WriteLine("Game loop started");
+                
 
-
-
-
-
-
-
-
-
-
-
-
-
-                SetContentView((View)_game.Services.GetService(typeof(View)));
-                _game.Run();
+                System.Diagnostics.Debug.WriteLine("MonoGame initialized successfully!");
             }
             catch (System.Exception ex)
             {
@@ -77,12 +75,11 @@ namespace gltron.org.gltronmobile
 
 
 
-
-#if ANDROID
-                Android.Util.Log.Error("GLTRON", $"Initialization failed: {ex}");
-#else
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Initialization failed: {ex}");
-#endif
+                System.Diagnostics.Debug.WriteLine("=== MONOGAME INITIALIZATION EXCEPTION ===");
+                System.Diagnostics.Debug.WriteLine($"EXCEPTION TYPE: {ex.GetType().FullName}");
+                System.Diagnostics.Debug.WriteLine($"EXCEPTION MESSAGE: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"EXCEPTION STACK: {ex.StackTrace}");
+                
                 ShowErrorScreen(ex);
             }
         }
@@ -103,47 +100,34 @@ namespace gltron.org.gltronmobile
                 errorView.SetPadding(20, 20, 20, 20);
                 SetContentView(errorView);
 
-#if ANDROID
-                Android.Util.Log.Info("GLTRON", "Error view displayed");
-#else
-                System.Diagnostics.Debug.WriteLine("GLTRON: Error view displayed");
-#endif
+                System.Diagnostics.Debug.WriteLine("Error view displayed");
             }
             catch (System.Exception ex2)
             {
 
-#if ANDROID
-                Android.Util.Log.Error("GLTRON", $"Failed to show error view: {ex2}");
-#else
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to show error view: {ex2}");
-#endif
+                System.Diagnostics.Debug.WriteLine($"Failed to show error view: {ex2}");
             }
         }
 
         protected override void OnPause()
         {
 
-            _game?.OnPause();
+            System.Diagnostics.Debug.WriteLine("Activity1.OnPause");
             base.OnPause();
         }
 
         protected override void OnResume()
         {
 
-            _game?.OnResume();
+            System.Diagnostics.Debug.WriteLine("Activity1.OnResume");
             base.OnResume();
         }
 
         protected override void OnDestroy()
         {
 
-
-#if ANDROID
-            Android.Util.Log.Info("GLTRON", "Activity1.OnDestroy");
-#else
-            System.Diagnostics.Debug.WriteLine("GLTRON: Activity1.OnDestroy");
-#endif
-
+            System.Diagnostics.Debug.WriteLine("Activity1.OnDestroy");
+            
             try
             {
                 _game?.Dispose();
@@ -152,14 +136,11 @@ namespace gltron.org.gltronmobile
             catch (System.Exception ex)
             {
 
-#if ANDROID
-                Android.Util.Log.Error("GLTRON", $"Error disposing game: {ex}");
-#else
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Error disposing game: {ex}");
-#endif
+                System.Diagnostics.Debug.WriteLine($"Error disposing game: {ex}");
             }
             
             base.OnDestroy();
         }
     }
 }
+
