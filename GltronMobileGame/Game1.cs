@@ -28,61 +28,20 @@ public class Game1 : Game
 
     public Game1()
     {
-        // IMMEDIATE logging - this should appear if base constructor succeeds
+        // ABSOLUTE MINIMAL constructor - only what's required for FNA base constructor to work
         System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor ENTRY POINT");
 #if ANDROID
         try { Android.Util.Log.Info("GLTRON", "Game1 constructor ENTRY POINT"); } catch { }
 #endif
         
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor body starting");
+        // Only create GraphicsDeviceManager - nothing else!
+        _graphics = new GraphicsDeviceManager(this);
+        Content.RootDirectory = "Content";
+        
+        System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor completed - deferred initialization to Initialize()");
 #if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "Game1 constructor body starting"); } catch { }
+        try { Android.Util.Log.Info("GLTRON", "Game1 constructor completed - deferred initialization to Initialize()"); } catch { }
 #endif
-            
-            // Minimal constructor - defer everything to Initialize()
-            System.Diagnostics.Debug.WriteLine("GLTRON: Creating GraphicsDeviceManager...");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "Creating GraphicsDeviceManager..."); } catch { }
-#endif
-            
-            _graphics = new GraphicsDeviceManager(this);
-            
-            System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDeviceManager created");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "GraphicsDeviceManager created"); } catch { }
-#endif
-            
-            // Set Content root directory
-            Content.RootDirectory = "Content";
-            
-            System.Diagnostics.Debug.WriteLine("GLTRON: Content root set");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "Content root set"); } catch { }
-#endif
-            
-            // Create GLTronGame
-            _glTronGame = new GLTronGame();
-            
-            System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "GLTronGame created"); } catch { }
-#endif
-            
-            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor completed successfully");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", "Game1 constructor completed successfully"); } catch { }
-#endif
-        }
-        catch (System.Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Game1 constructor failed: {ex}");
-#if ANDROID
-            try { Android.Util.Log.Error("GLTRON", $"Game1 constructor failed: {ex}"); } catch { }
-#endif
-            throw;
-        }
     }
 
     protected override void Initialize()
@@ -197,10 +156,30 @@ public class Game1 : Game
             }
             catch { /* Ignore platform-specific logging errors */ }
             
-            // Initialize game with screen size - GLTronGame was created in constructor
+            // CRITICAL: Create GLTronGame here in Initialize() instead of constructor
             if (_glTronGame == null)
             {
-                throw new System.InvalidOperationException("GLTronGame is null in Initialize - constructor failed");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Creating GLTronGame in Initialize()...");
+#if ANDROID
+                try { Android.Util.Log.Info("GLTRON", "Creating GLTronGame in Initialize()..."); } catch { }
+#endif
+                
+                try
+                {
+                    _glTronGame = new GLTronGame();
+                    System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created successfully in Initialize()");
+#if ANDROID
+                    try { Android.Util.Log.Info("GLTRON", "GLTronGame created successfully in Initialize()"); } catch { }
+#endif
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame creation failed in Initialize(): {ex}");
+#if ANDROID
+                    try { Android.Util.Log.Error("GLTRON", $"GLTronGame creation failed in Initialize(): {ex}"); } catch { }
+#endif
+                    throw new System.InvalidOperationException($"GLTronGame creation failed in Initialize(): {ex.Message}", ex);
+                }
             }
 
             try
