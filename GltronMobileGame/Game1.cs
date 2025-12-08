@@ -54,8 +54,9 @@ public class Game1 : Game
             _graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             
             // Set reasonable default resolution for mobile devices
-            _graphics.PreferredBackBufferWidth = 1280;
-            _graphics.PreferredBackBufferHeight = 720;
+            // Use more conservative resolution to avoid graphics issues
+            _graphics.PreferredBackBufferWidth = 1024;
+            _graphics.PreferredBackBufferHeight = 576;
             
             // CRITICAL: Create GLTronGame in constructor to avoid null reference issues
             _glTronGame = new GLTronGame();
@@ -90,19 +91,56 @@ public class Game1 : Game
                 throw new System.InvalidOperationException(error);
             }
             
-            // Apply graphics settings with retry logic for platform stability
+            // Apply graphics settings with retry logic and fallback resolution
             int applyRetries = 3;
+            bool graphicsApplied = false;
+            
             for (int i = 0; i < applyRetries; i++)
             {
                 try
                 {
                     _graphics.ApplyChanges();
+                    graphicsApplied = true;
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Graphics settings applied successfully on attempt {i + 1}");
                     break;
                 }
                 catch (System.Exception ex) when (i < applyRetries - 1)
                 {
                     System.Diagnostics.Debug.WriteLine($"GLTRON: ApplyChanges attempt {i + 1} failed: {ex.Message}");
+                    
+                    // Try progressively lower resolutions
+                    if (i == 0)
+                    {
+                        _graphics.PreferredBackBufferWidth = 800;
+                        _graphics.PreferredBackBufferHeight = 480;
+                        System.Diagnostics.Debug.WriteLine("GLTRON: Trying fallback resolution 800x480");
+                    }
+                    else if (i == 1)
+                    {
+                        _graphics.PreferredBackBufferWidth = 640;
+                        _graphics.PreferredBackBufferHeight = 360;
+                        System.Diagnostics.Debug.WriteLine("GLTRON: Trying minimal resolution 640x360");
+                    }
+                    
                     System.Threading.Thread.Sleep(100); // Brief delay before retry
+                }
+            }
+            
+            if (!graphicsApplied)
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: WARNING - All ApplyChanges attempts failed, using default settings");
+                try
+                {
+                    // Last resort - let the system choose
+                    _graphics.PreferredBackBufferWidth = 0;
+                    _graphics.PreferredBackBufferHeight = 0;
+                    _graphics.ApplyChanges();
+                    System.Diagnostics.Debug.WriteLine("GLTRON: System-default resolution applied successfully");
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: CRITICAL - Even default resolution failed: {ex.Message}");
+                    throw new System.InvalidOperationException("Graphics initialization completely failed", ex);
                 }
             }
             
@@ -111,7 +149,27 @@ public class Game1 : Game
             {
                 var error = "GraphicsDevice is null after ApplyChanges!";
                 System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
-                throw new System.InvalidOperationException(error);
+                
+                // Try to force base.Initialize() to create GraphicsDevice
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to force GraphicsDevice creation...");
+                    base.Initialize();
+                    
+                    if (GraphicsDevice != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDevice created successfully after base.Initialize()");
+                    }
+                    else
+                    {
+                        throw new System.InvalidOperationException("GraphicsDevice still null after base.Initialize()");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to create GraphicsDevice: {ex}");
+                    throw new System.InvalidOperationException($"Graphics initialization failed: {ex.Message}", ex);
+                }
             }
             
             // Log resolution info (multiplatform compatible)
@@ -187,6 +245,9 @@ public class Game1 : Game
         try
         {
             System.Diagnostics.Debug.WriteLine("GLTRON: LoadContent start");
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "LoadContent starting...");
+#endif
             
             // CRITICAL: Check GraphicsDevice exists before using it
             if (GraphicsDevice == null)
@@ -388,13 +449,37 @@ public class Game1 : Game
         }
         catch (System.Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: LoadContent failed: {ex}");
-            try { 
+            System.Diagnostics.Debug.WriteLine($"GLTRON: CRITICAL LoadContent failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: LoadContent stack trace: {ex.StackTrace}");
+            
 #if ANDROID
-                Android.Util.Log.Error("GLTRON", $"LoadContent failed: {ex}"); 
+            try 
+            { 
+                Android.Util.Log.Error("GLTRON", $"CRITICAL LoadContent failed: {ex}"); 
+                Android.Util.Log.Error("GLTRON", $"LoadContent stack trace: {ex.StackTrace}");
+            } 
+            catch { }
 #endif
-            } catch { }
-            throw; // Critical failure
+            
+            // Try to identify the specific failure point
+            string failureContext = "Unknown";
+            if (ex.Message.Contains("GraphicsDevice"))
+                failureContext = "Graphics Device Creation";
+            else if (ex.Message.Contains("SpriteBatch"))
+                failureContext = "SpriteBatch Creation";
+            else if (ex.Message.Contains("Content"))
+                failureContext = "Content Loading";
+            else if (ex.Message.Contains("Font"))
+                failureContext = "Font Loading";
+            else if (ex.Message.Contains("Sound"))
+                failureContext = "Sound System";
+            
+            System.Diagnostics.Debug.WriteLine($"GLTRON: LoadContent failure context: {failureContext}");
+#if ANDROID
+            try { Android.Util.Log.Error("GLTRON", $"LoadContent failure context: {failureContext}"); } catch { }
+#endif
+            
+            throw new System.InvalidOperationException($"LoadContent failed in {failureContext}: {ex.Message}", ex);
         }
     }
 
@@ -427,19 +512,52 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        // CRITICAL: Comprehensive error handling for entire Draw method
         try
         {
+            System.Diagnostics.Debug.WriteLine("GLTRON: Draw method starting...");
+#if ANDROID
+            Android.Util.Log.Verbose("GLTRON", "Draw method starting...");
+#endif
             // CRITICAL: Check GraphicsDevice before any rendering
             if (GraphicsDevice == null)
             {
+                System.Diagnostics.Debug.WriteLine("GLTRON: GraphicsDevice is null in Draw!");
+#if ANDROID
                 Android.Util.Log.Error("GLTRON", "GraphicsDevice is null in Draw!");
+#endif
+                return;
+            }
+
+            // CRITICAL: Check if GraphicsDevice is in a valid state
+            try
+            {
+                var viewport = GraphicsDevice.Viewport;
+                if (viewport.Width <= 0 || viewport.Height <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Invalid viewport size: {viewport.Width}x{viewport.Height}");
+#if ANDROID
+                    Android.Util.Log.Error("GLTRON", $"Invalid viewport size: {viewport.Width}x{viewport.Height}");
+#endif
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: GraphicsDevice viewport check failed: {ex.Message}");
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"GraphicsDevice viewport check failed: {ex.Message}");
+#endif
                 return;
             }
 
             // CRITICAL: Check SpriteBatch before using it
             if (_spriteBatch == null)
             {
+                System.Diagnostics.Debug.WriteLine("GLTRON: SpriteBatch is null in Draw!");
+#if ANDROID
                 Android.Util.Log.Error("GLTRON", "SpriteBatch is null in Draw!");
+#endif
                 return;
             }
 
@@ -477,46 +595,21 @@ public class Game1 : Game
                     try
                     {
                         GraphicsDevice.Clear(Color.Black);
-                        try
-                        {
+                        System.Diagnostics.Debug.WriteLine("GLTRON: Screen cleared successfully");
 #if ANDROID
-                            Android.Util.Log.Info("GLTRON", "Screen cleared with black for 3D game");
+                        Android.Util.Log.Debug("GLTRON", "Screen cleared with black for 3D game");
 #endif
-                        }
-                        catch { }
                     }
                     catch (System.Exception ex)
                     {
-                        try
-                        {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Clear failed: {ex.Message}");
 #if ANDROID
-                            Android.Util.Log.Error("GLTRON", $"Simple clear failed: {ex.Message}");
+                        Android.Util.Log.Error("GLTRON", $"Clear failed: {ex.Message}");
 #endif
-                        }
-                        catch { }
                         
-                        // Fallback: try basic clear
-                        try
-                        {
-                            GraphicsDevice.Clear(Color.Red);
-                            try
-                            {
-#if ANDROID
-                                Android.Util.Log.Info("GLTRON", "Fallback red clear worked");
-#endif
-                            }
-                            catch { }
-                        }
-                        catch (System.Exception ex2)
-                        {
-                            try
-                            {
-#if ANDROID
-                                Android.Util.Log.Error("GLTRON", $"All clear methods failed: {ex2.Message}");
-#endif
-                            }
-                            catch { }
-                        }
+                        // If we can't even clear the screen, skip 3D rendering entirely
+                        System.Diagnostics.Debug.WriteLine("GLTRON: Skipping 3D rendering due to clear failure");
+                        return;
                     }
 
                     // CRITICAL FIX: Immediate camera update - get real player position without delay
@@ -1050,15 +1143,46 @@ public class Game1 : Game
         }
         catch { }
 
-        base.Draw(gameTime);
-        
+        // CRITICAL: Wrap base.Draw in comprehensive error handling
         try
         {
+            base.Draw(gameTime);
+            
+            System.Diagnostics.Debug.WriteLine("GLTRON: base.Draw completed successfully");
 #if ANDROID
-            Android.Util.Log.Info("GLTRON", "Completed base.Draw(gameTime)");
+            Android.Util.Log.Debug("GLTRON", "Completed base.Draw(gameTime)");
 #endif
         }
-        catch { }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: CRITICAL base.Draw error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: base.Draw stack trace: {ex.StackTrace}");
+            
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", $"CRITICAL base.Draw error: {ex}");
+            Android.Util.Log.Error("GLTRON", $"base.Draw stack trace: {ex.StackTrace}");
+#endif
+            
+            // Try emergency recovery
+            try
+            {
+                if (GraphicsDevice != null)
+                {
+                    GraphicsDevice.Clear(Color.DarkRed);
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Emergency recovery clear successful");
+                }
+            }
+            catch (System.Exception recoveryEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Emergency recovery failed: {recoveryEx.Message}");
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"Emergency recovery failed: {recoveryEx.Message}");
+#endif
+                // Graphics system is completely broken - app will likely crash
+                throw new System.InvalidOperationException("Graphics system failure - unable to recover", ex);
+            }
+        }
+
     }
     
     private void ProcessSwipeInput(GameTime gameTime)

@@ -65,6 +65,10 @@ namespace gltron.org.gltronmobile
                 _game = new Game1();
                 FNAHelper.LogInfo("Game1 instance created successfully");
                 
+                // Add crash detection
+                AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+                Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += OnAndroidUnhandledException;
+                
                 // Start the game loop
                 FNAHelper.LogInfo("Starting FNA game loop...");
                 _game.Run();
@@ -335,6 +339,43 @@ namespace gltron.org.gltronmobile
             }
             
             base.OnDestroy();
+        }
+
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                var exception = e.ExceptionObject as System.Exception;
+                FNAHelper.LogError("=== UNHANDLED EXCEPTION DETECTED ===");
+                FNAHelper.LogError($"Exception: {exception?.GetType().FullName}");
+                FNAHelper.LogError($"Message: {exception?.Message}");
+                FNAHelper.LogError($"Stack Trace: {exception?.StackTrace}");
+                FNAHelper.LogError($"Is Terminating: {e.IsTerminating}");
+                FNAHelper.LogError("=== END UNHANDLED EXCEPTION ===");
+            }
+            catch
+            {
+                // Last resort logging
+                System.Diagnostics.Debug.WriteLine("GLTRON: Unhandled exception occurred but logging failed");
+            }
+        }
+
+        private void OnAndroidUnhandledException(object sender, Android.Runtime.RaiseThrowableEventArgs e)
+        {
+            try
+            {
+                FNAHelper.LogError("=== ANDROID UNHANDLED EXCEPTION DETECTED ===");
+                FNAHelper.LogError($"Exception: {e.Exception?.GetType().FullName}");
+                FNAHelper.LogError($"Message: {e.Exception?.Message}");
+                FNAHelper.LogError($"Stack Trace: {e.Exception?.StackTrace}");
+                FNAHelper.LogError("=== END ANDROID UNHANDLED EXCEPTION ===");
+                e.Handled = false; // Let the system handle it after logging
+            }
+            catch
+            {
+                // Last resort logging
+                System.Diagnostics.Debug.WriteLine("GLTRON: Android unhandled exception occurred but logging failed");
+            }
         }
     }
 }
