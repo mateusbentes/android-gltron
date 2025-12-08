@@ -225,11 +225,28 @@ jobs:
         echo "Checking for required native libraries..."
         find GltronMobileGame/lib -name "*.so" -type f || echo "Warning: No .so files found"
 
+    - name: Clean build artifacts
+      run: |
+        echo "Cleaning build artifacts to avoid GUID mismatches..."
+        # Clean all bin and obj directories
+        find . -name "bin" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name "obj" -type d -exec rm -rf {} + 2>/dev/null || true
+        
+        # Clean NuGet cache
+        dotnet nuget locals all --clear
+        
+        echo "Clean completed"
+
     - name: Restore dependencies
       run: |
         # Restore individual projects for Android build (avoid iOS dependencies on Linux)
+        echo "Restoring FNA project..."
         dotnet restore GltronMobileGame/FNA/FNA.NetStandard.csproj
+        
+        echo "Restoring Engine project..."
         dotnet restore GltronMobileEngine/GltronMobileEngine.csproj
+        
+        echo "Restoring Android project..."
         dotnet restore GltronMobileGame/GltronAndroid.csproj
 
     - name: Verify FNA Build Environment
@@ -268,7 +285,8 @@ jobs:
     - name: Build Release APK (unsigned)
       run: |
         echo "Building FNA Android Release APK..."
-        ./scripts/build-android.sh -c Release
+        # Use dotnet publish for proper APK generation
+        dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net9.0-android36.0
         
         # Find the generated APK
         find GltronMobileGame/bin/Release -name "*.apk" -type f
