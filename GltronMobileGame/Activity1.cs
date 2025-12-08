@@ -3,7 +3,10 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using GltronMobileGame;
+using System;
+using System.Reflection;
 
 // Define the namespace for the GLTron mobile game.
 // This groups related classes and avoids naming conflicts with other projects.
@@ -27,9 +30,8 @@ namespace gltron.org.gltronmobile
             ConfigChanges.ScreenLayout,          // Handles screen layout changes
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen" // Uses a fullscreen theme without a title bar
     )]
-    // Activity1 inherits from Android's base Activity class (instead of AndroidGameActivity).
-    // This gives full control over the Activity's behavior and lifecycle.
-    // We emulate AndroidGameActivity functionality by manually managing the MonoGame integration.
+    // Activity1 inherits directly from Android.App.Activity for complete control.
+    // We manually implement all MonoGame integration without using AndroidGameActivity.
     public class Activity1 : Activity
     {
         private Game1 _game;  // Instance of the MonoGame game (Game1 class)
@@ -37,6 +39,7 @@ namespace gltron.org.gltronmobile
 
         // OnCreate is called when the Activity is first created.
         // This is where you initialize the game and set up the UI.
+        // We manually implement MonoGame integration without AndroidGameActivity.
         protected override void OnCreate(Bundle bundle)
         {
             // Call the base class's OnCreate method to ensure proper initialization.
@@ -46,21 +49,20 @@ namespace gltron.org.gltronmobile
             {
                 System.Diagnostics.Debug.WriteLine("=== DIRECT ACTIVITY MONOGAME INITIALIZATION ===");
 
-                // Step 1: Create an instance of the MonoGame game (Game1 class).
-                // Game1 is the main game class that inherits from Microsoft.Xna.Framework.Game.
+                // CRITICAL: Set up MonoGame's static activity reference before creating Game1
+                // This is what AndroidGameActivity does internally
+                SetMonoGameActivity();
+
+                // Step 1: Create the Game1 instance
                 _game = new Game1();
 
-                // Step 2: Register this Activity in the game's service container.
-                // This is crucial - MonoGame's Android platform needs access to the Activity.
+                // Step 2: Register this activity in the game services
                 _game.Services.AddService(typeof(Activity), this);
 
-                // Step 3: Start the MonoGame game loop.
-                // MonoGame will internally create the graphics device, view, and handle the lifecycle.
-                // The Game.Run() method will set up everything needed for Android.
+                // Step 3: Start the MonoGame game loop
                 _game.Run();
 
-                // Step 4: Try to retrieve the view that MonoGame created.
-                // This is optional - MonoGame should have already set it as the content view.
+                // Step 4: Get the view that MonoGame created
                 _view = _game.Services.GetService<View>();
                 if (_view != null)
                 {
@@ -76,6 +78,39 @@ namespace gltron.org.gltronmobile
 
                 // Display an error screen to the user if initialization fails.
                 ShowErrorScreen(ex);
+            }
+        }
+
+        // Set up MonoGame's internal activity reference using reflection
+        private void SetMonoGameActivity()
+        {
+            try
+            {
+                // Try to find and set MonoGame's internal activity reference
+                var gameType = typeof(Microsoft.Xna.Framework.Game);
+                var activityField = gameType.GetField("Activity", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                if (activityField != null)
+                {
+                    activityField.SetValue(null, this);
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Set MonoGame static Activity reference");
+                    return;
+                }
+
+                // Try alternative field names
+                activityField = gameType.GetField("_activity", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+                if (activityField != null)
+                {
+                    activityField.SetValue(null, this);
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Set MonoGame static _activity reference");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Could not find MonoGame activity field, continuing anyway");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: SetMonoGameActivity failed: {ex.Message}");
+                // Continue anyway - MonoGame might still work
             }
         }
 
