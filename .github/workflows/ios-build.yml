@@ -115,12 +115,8 @@ jobs:
     - name: Build Debug iOS App
       run: |
         echo "Building FNA iOS Debug App..."
-        ./scripts/build-ios.sh -c Debug || echo "iOS build script not found, using direct build"
-        
-        # Fallback to direct build if script doesn't exist
-        if [ ! -f "./scripts/build-ios.sh" ]; then
-          dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net9.0-ios
-        fi
+        # Use the build script which handles FNA properly
+        ./scripts/build-ios.sh -c Debug -p iPhoneSimulator
         
         # Find the generated app
         find GltronMobileGame.iOS/bin/Debug -name "*.app" -type d

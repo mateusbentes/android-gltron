@@ -66,7 +66,7 @@ else
   echo "FNA dependencies found"
 fi
 
-# Restore solution
+# Restore solution (includes FNA project reference)
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
 
