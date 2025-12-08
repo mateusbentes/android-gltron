@@ -130,32 +130,32 @@ jobs:
           ${{ runner.os }}-fna-natives-v2-
           ${{ runner.os }}-fna-natives-
 
-        - name: Setup FNA Native Libraries
-          run: |
-            echo "Setting up FNA native libraries for Android CI..."
+    - name: Setup FNA Native Libraries
+      run: |
+        echo "Setting up FNA native libraries for Android CI..."
         
-            # Check if libraries already exist (from cache)
-            if [ ! -f "GltronMobileGame/lib/arm64-v8a/libSDL2.so" ] || [ ! -f "GltronMobileGame/lib/arm64-v8a/libopenal.so" ]; then
-              echo "Native libraries not found in cache, setting up..."
+        # Check if libraries already exist (from cache)
+        if [ ! -f "GltronMobileGame/lib/arm64-v8a/libSDL2.so" ] || [ ! -f "GltronMobileGame/lib/arm64-v8a/libopenal.so" ]; then
+          echo "Native libraries not found in cache, setting up..."
           
-              # Set Android NDK environment for CI
-              export ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME
-              echo "Using Android NDK: $ANDROID_NDK_ROOT"
+          # Set Android NDK environment for CI
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME
+          echo "Using Android NDK: $ANDROID_NDK_ROOT"
           
-              # Make scripts executable
-              chmod +x scripts/download-real-fna-libs.sh
-              chmod +x scripts/verify-native-libs.sh
+          # Make scripts executable
+          chmod +x scripts/download-real-fna-libs.sh
+          chmod +x scripts/verify-native-libs.sh
           
-              # Run our improved native library setup
-              if timeout 300 ./scripts/download-real-fna-libs.sh; then
-                echo "✅ Native library setup completed successfully"
-              else
-                echo "⚠️ Native library setup timed out or failed, but continuing..."
-                echo "This may result in a non-functional APK, but build will complete for testing"
-              fi
-            else
-              echo "✅ FNA native libraries found in cache"
-            fi
+          # Run our improved native library setup
+          if timeout 300 ./scripts/download-real-fna-libs.sh; then
+            echo "✅ Native library setup completed successfully"
+          else
+            echo "⚠️ Native library setup timed out or failed, but continuing..."
+            echo "This may result in a non-functional APK, but build will complete for testing"
+          fi
+        else
+          echo "✅ FNA native libraries found in cache"
+        fi
         
         # Verify libraries using our verification script
         echo "=== VERIFYING FNA NATIVE LIBRARIES ==="
