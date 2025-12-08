@@ -26,16 +26,23 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   
-  <!-- FNA will be included as source files -->
-  <ItemGroup>
-    <!-- We'll add FNA source files directly to the project -->
-    <Compile Include="FNA\src\**\*.cs" />
-  </ItemGroup>
-  
-  <!-- FNA compilation symbols -->
+  <!-- Disable default compile items to avoid conflicts with FNA -->
   <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);FNA</DefineConstants>
   </PropertyGroup>
+  
+  <!-- Explicitly include our game files -->
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="Video\*.cs" />
+    <Compile Include="Sound\*.cs" />
+  </ItemGroup>
+  
+  <!-- Include FNA source files -->
+  <ItemGroup>
+    <Compile Include="FNA\src\**\*.cs" />
+  </ItemGroup>
   
   <!-- Add Android-specific properties for FNA -->
   <PropertyGroup>
