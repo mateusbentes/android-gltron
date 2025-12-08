@@ -5,7 +5,6 @@ using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
 using System;
-using Java.Lang;
 
 namespace gltron.org.gltronmobile
 {
@@ -23,23 +22,8 @@ namespace gltron.org.gltronmobile
     {
         private Game1 _game;
         
-        // CRITICAL: Load native libraries before FNA initialization
-        static Activity1()
-        {
-            try
-            {
-                // Load FNA native libraries in correct order
-                System.loadLibrary("SDL2");
-                System.loadLibrary("openal");
-                System.loadLibrary("theoraplay");
-                System.Diagnostics.Debug.WriteLine("FNA native libraries loaded successfully");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to load FNA native libraries: {ex}");
-                // Continue anyway - libraries might be loaded differently
-            }
-        }
+        // Note: FNA handles native library loading automatically
+        // when libraries are properly included in the APK via AndroidNativeLibrary items
 
         protected override void OnCreate(Bundle bundle)
         {

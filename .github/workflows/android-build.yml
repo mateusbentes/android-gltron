@@ -88,15 +88,7 @@ EOF
           echo "✅ SDL3-CS downloaded successfully"
         else
           echo "❌ SDL3-CS download failed, creating functional placeholder"
-          cat > lib/SDL3-CS/SDL3/SDL3.Legacy.cs << 'EOF'
-namespace SDL3
-{
-    public static class SDL
-    {
-        public const string HINT_ORIENTATIONS = "SDL_IOS_ORIENTATIONS";
-    }
-}
-EOF
+          echo 'namespace SDL3 { public static class SDL { public const string HINT_ORIENTATIONS = "SDL_IOS_ORIENTATIONS"; } }' > lib/SDL3-CS/SDL3/SDL3.Legacy.cs
         fi
         
         echo "✅ FNA dependencies setup completed"
