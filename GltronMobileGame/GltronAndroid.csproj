@@ -31,6 +31,8 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);FNA</DefineConstants>
+    <!-- Disable SDK auto-generated assembly info to avoid conflicts with FNA -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   
   <!-- Explicitly include our game files -->
@@ -40,11 +42,9 @@
     <Compile Include="Sound\*.cs" />
   </ItemGroup>
   
-  <!-- Include FNA source files -->
+  <!-- Reference FNA as a proper project dependency -->
   <ItemGroup>
-    <Compile Include="FNA\src\**\*.cs" />
-    <!-- Exclude platform-specific files that don't apply to Android -->
-    <Compile Remove="FNA\src\FNAPlatform\SDL3_FNAPlatform.cs" />
+    <ProjectReference Include="FNA\FNA.NetStandard.csproj" />
   </ItemGroup>
   
   <!-- Add Android-specific properties for FNA -->

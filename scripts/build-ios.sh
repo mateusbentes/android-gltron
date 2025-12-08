@@ -57,6 +57,17 @@ if [ ! -f "$SOLUTION_FILE" ]; then
   exit 1
 fi
 
+# Initialize FNA submodules if needed
+echo "Checking FNA submodules..."
+if [ ! -f "GltronMobileGame/FNA/lib/SDL2-CS/src/SDL2.cs" ]; then
+  echo "Initializing FNA submodules..."
+  cd GltronMobileGame/FNA
+  git submodule update --init --recursive
+  cd ../..
+else
+  echo "FNA submodules already initialized"
+fi
+
 # Restore solution
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"

@@ -17,6 +17,8 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);FNA</DefineConstants>
+    <!-- Disable SDK auto-generated assembly info to avoid conflicts with FNA -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <!-- Explicitly include our game files -->
@@ -26,11 +28,9 @@
     <Compile Include="..\GltronMobileGame\Sound\*.cs" />
   </ItemGroup>
 
-  <!-- Include FNA source files -->
+  <!-- Reference FNA as a proper project dependency -->
   <ItemGroup>
-    <Compile Include="..\GltronMobileGame\FNA\src\**\*.cs" />
-    <!-- Exclude platform-specific files that don't apply to iOS -->
-    <Compile Remove="..\GltronMobileGame\FNA\src\FNAPlatform\SDL3_FNAPlatform.cs" />
+    <ProjectReference Include="..\GltronMobileGame\FNA\FNA.NetStandard.csproj" />
   </ItemGroup>
 
   <!-- Shared Engine -->

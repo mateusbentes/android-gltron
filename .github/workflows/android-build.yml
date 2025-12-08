@@ -15,6 +15,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        submodules: recursive
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -58,7 +59,7 @@ jobs:
           echo "Downloading FNA native libraries..."
           
           # Download FNA native libraries (latest release)
-          wget -q https://github.com/FNA-XNA/FNA/releases/download/25.12/fnalibs.tar.bz2
+          wget -q https://github.com/FNA-XNA/FNA/releases/download/24.02/fnalibs.tar.bz2
           
           # Extract libraries
           tar -xjf fnalibs.tar.bz2
