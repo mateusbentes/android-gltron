@@ -5,6 +5,7 @@ using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
 using System;
+using Java.Lang;
 
 namespace gltron.org.gltronmobile
 {
@@ -21,6 +22,24 @@ namespace gltron.org.gltronmobile
     public class Activity1 : Activity
     {
         private Game1 _game;
+        
+        // CRITICAL: Load native libraries before FNA initialization
+        static Activity1()
+        {
+            try
+            {
+                // Load FNA native libraries in correct order
+                System.loadLibrary("SDL2");
+                System.loadLibrary("openal");
+                System.loadLibrary("theoraplay");
+                System.Diagnostics.Debug.WriteLine("FNA native libraries loaded successfully");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load FNA native libraries: {ex}");
+                // Continue anyway - libraries might be loaded differently
+            }
+        }
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -34,12 +53,21 @@ namespace gltron.org.gltronmobile
                 System.Diagnostics.Debug.WriteLine("Activity.OnCreate completed");
 
                 System.Diagnostics.Debug.WriteLine("Step 1: Setting up FNA environment...");
-                // FNA requires the activity to be set before creating the game
+                // CRITICAL: FNA requires proper environment setup before creating the game
                 SetupFNAEnvironment();
 
                 System.Diagnostics.Debug.WriteLine("Step 2: Creating Game1 instance...");
-                _game = new Game1();
-                System.Diagnostics.Debug.WriteLine("Game1 instance created successfully");
+                try
+                {
+                    _game = new Game1();
+                    System.Diagnostics.Debug.WriteLine("Game1 instance created successfully");
+                }
+                catch (System.TypeInitializationException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CRITICAL: TypeInitializationException in Game1 creation: {ex}");
+                    System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException}");
+                    throw new System.Exception($"FNA initialization failed: {ex.InnerException?.Message ?? ex.Message}", ex);
+                }
 
                 System.Diagnostics.Debug.WriteLine("Step 3: Registering activity in game services...");
                 _game.Services.AddService(typeof(Activity), this);
@@ -62,30 +90,52 @@ namespace gltron.org.gltronmobile
         {
             try
             {
-                // Set environment variables that FNA needs for Android
+                // CRITICAL: Set FNA environment variables BEFORE any FNA initialization
                 System.Environment.SetEnvironmentVariable("FNA_PLATFORM_BACKEND", "SDL2");
                 System.Environment.SetEnvironmentVariable("FNA_AUDIO_BACKEND", "OpenAL");
                 System.Environment.SetEnvironmentVariable("FNA_GRAPHICS_BACKEND", "OpenGL");
                 
-                // Set the current activity for FNA
-                // FNA uses a different approach than other frameworks for activity management
-                var fnaType = System.Type.GetType("Microsoft.Xna.Framework.FNAPlatform");
-                if (fnaType != null)
+                // CRITICAL: Set Android-specific FNA environment variables
+                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_ES3", "1");
+                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_COMPATIBILITY_PROFILE", "1");
+                
+                // CRITICAL: Initialize FNA platform BEFORE creating Game instance
+                // This must be done before any Microsoft.Xna.Framework types are used
+                try
                 {
-                    var setActivityMethod = fnaType.GetMethod("SetActivity", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
-                    if (setActivityMethod != null)
+                    var fnaType = System.Type.GetType("Microsoft.Xna.Framework.FNAPlatform, FNA");
+                    if (fnaType != null)
                     {
-                        setActivityMethod.Invoke(null, new object[] { this });
-                        System.Diagnostics.Debug.WriteLine("FNA activity set successfully");
+                        // Call FNAPlatform.PrepareWindowInfo with Android activity
+                        var prepareMethod = fnaType.GetMethod("PrepareWindowInfo", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                        if (prepareMethod != null)
+                        {
+                            prepareMethod.Invoke(null, new object[] { });
+                            System.Diagnostics.Debug.WriteLine("FNA PrepareWindowInfo called successfully");
+                        }
+                        
+                        // Set Android activity context
+                        var setActivityMethod = fnaType.GetMethod("SetActivity", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                        if (setActivityMethod != null)
+                        {
+                            setActivityMethod.Invoke(null, new object[] { this });
+                            System.Diagnostics.Debug.WriteLine("FNA activity set successfully");
+                        }
                     }
                 }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"FNA platform initialization failed: {ex}");
+                    // This is critical - if FNA platform init fails, the app won't work
+                    throw;
+                }
 
-                System.Diagnostics.Debug.WriteLine("FNA environment setup completed");
+                System.Diagnostics.Debug.WriteLine("FNA environment setup completed successfully");
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"FNA environment setup failed: {ex}");
-                // Continue anyway - FNA might still work
+                System.Diagnostics.Debug.WriteLine($"CRITICAL: FNA environment setup failed: {ex}");
+                throw; // Don't continue if FNA setup fails
             }
         }
 

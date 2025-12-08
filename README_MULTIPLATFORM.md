@@ -1,4 +1,4 @@
-GLTron Mobile - Android and iOS build instructions (MonoGame)
+GLTron Mobile - Android and iOS build instructions (FNA)
 
 Overview
 This guide explains how to build and package GLTron Mobile for Android and iOS using FNA (FNA's Not Accurate) and .NET 9. FNA is a reimplementation of Microsoft XNA Game Studio 4.0 that provides better compatibility and easier deployment than MonoGame. The Android build works on Linux/Windows/macOS, while iOS build requires macOS with Xcode.
@@ -70,36 +70,48 @@ FNA Quick Setup
 ===============
 Run the automated setup script:
 
-    # Set up FNA source and directory structure
-    ./scripts/setup-fna.sh
+    # Set up FNA C# dependencies
+    ./scripts/setup-fna-deps.sh
     
     # This will:
-    # - Download FNA source code
-    # - Create native library directories
-    # - Show instructions for downloading native libraries
+    # - Download FNA C# bindings (SDL2-CS, FAudio, Theorafile)
+    # - Set up FNA dependency structure
+    # - Prepare for FNA builds
 
 Android Build Steps
 ===================
-Option A: One-shot end-to-end script (recommended)
+Option A: Development builds (recommended for testing)
 - Make scripts executable (once):
   chmod +x scripts/*.sh
-- Set up FNA (first time only):
-  ./scripts/setup-fna.sh
-  # Follow the instructions to download FNA native libraries
-- Verify setup: ./scripts/verify-build.sh
-- Run the app builder (builds with Release configuration by default):
-  ./scripts/build-android-app.sh
-- On success, the script prints the APK/AAB path and an adb install command.
+- Set up FNA dependencies (first time only):
+  ./scripts/setup-fna-deps.sh
+- Build debug APK:
+  ./scripts/build-android.sh -c Debug
+- Build release APK:
+  ./scripts/build-android.sh -c Release
 
-Option B: Manual steps (advanced)
-1) Create a MonoGame Android project:
-   dotnet new mgandroid -n GltronMobileGame
-2) Copy game code and content from GltronMobileEngine into GltronMobileGame
-   - Files: Game1.cs, GLTronGame.cs, Player.cs, Segment.cs, Vec.cs
-   - Folders: Video/*, Sound/*, Content/*
-3) Ensure FNA native libraries are in place (see setup-fna.sh output)
-4) Build APK:
-   dotnet build GltronMobileGame -c Release -f net9.0-android
+Option B: Production builds (for Google Play Store)
+- Set up FNA dependencies (first time only):
+  ./scripts/setup-fna-deps.sh
+- Create keystore for signing (one time only):
+  ./scripts/create-keystore.sh
+- Build production APK and AAB (signed):
+  ./scripts/build-production-fna.sh -k gltron-release.keystore -a gltron-release-key
+- Or build just AAB for Play Store:
+  ./scripts/build-production-fna.sh -t aab -k gltron-release.keystore -a gltron-release-key
+- Or use the dedicated AAB signing script:
+  ./scripts/sign-aab.sh
+
+Option C: Manual steps (advanced)
+1) Set up FNA dependencies:
+   ./scripts/setup-fna-deps.sh
+2) Build APK manually:
+   dotnet build GltronMobileGame -c Release -f net9.0-android36.0
+3) For production, add signing parameters:
+   dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net9.0-android36.0 \
+     -p:AndroidPackageFormat=aab -p:AndroidKeyStore=true \
+     -p:AndroidSigningKeyStore=gltron-release.keystore \
+     -p:AndroidSigningKeyAlias=gltron-release-key
 
 iOS Build Instructions (macOS only)
 ===================================
@@ -111,20 +123,45 @@ Prerequisites for iOS:
 
 Building for iOS:
 Option A: Using build scripts (recommended)
-- Set up FNA (first time only):
-  ./scripts/setup-fna.sh
-  # Follow the instructions to download FNA iOS frameworks
-- Verify iOS setup: ./scripts/verify-ios.sh
-- Build for iOS Simulator: ./scripts/build-ios-app.sh -p iPhoneSimulator
-- Build for iOS Device: ./scripts/build-ios-app.sh -p iPhone
+- Set up FNA dependencies (first time only):
+  ./scripts/setup-fna-deps.sh
+- Build for iOS Simulator: ./scripts/build-ios.sh -c Debug -p iPhoneSimulator
+- Build for iOS Device: ./scripts/build-ios.sh -c Release -p iPhone
 
 Option B: Manual dotnet commands
 1) Build for iOS Simulator:
-   dotnet build GltronMobileGame.iOS -c Release -f net8.0-ios /p:Platform=iPhoneSimulator
+   dotnet build GltronMobileGame.iOS -c Release -f net9.0-ios /p:Platform=iPhoneSimulator
 2) Build for iOS Device:
-   dotnet build GltronMobileGame.iOS -c Release -f net8.0-ios /p:Platform=iPhone
+   dotnet build GltronMobileGame.iOS -c Release -f net9.0-ios /p:Platform=iPhone
+
+Note: iOS builds are currently disabled in CI. See docs/ios-setup.md for setup instructions.
 
 Note: iOS builds require proper Apple Developer certificates for device deployment.
+
+Production Builds for Google Play Store
+=======================================
+For releasing to Google Play Store, use the production build system:
+
+1) Create a signing keystore (one time setup):
+   ./scripts/create-keystore.sh
+   # Follow prompts to create gltron-release.keystore
+   # Keep the keystore file and passwords safe!
+
+2) Build signed production APK and AAB:
+   ./scripts/build-production-fna.sh -k gltron-release.keystore -a gltron-release-key
+   
+3) Or build just AAB (recommended for Play Store):
+   ./scripts/build-production-fna.sh -t aab -k gltron-release.keystore -a gltron-release-key
+
+4) Alternative: Use dedicated AAB signing script:
+   ./scripts/sign-aab.sh
+
+Production builds include:
+- Code shrinking with ProGuard
+- IL trimming for smaller APK size
+- Optimized FNA runtime
+- Digital signing for Play Store
+- Support for both APK and AAB formats
 
 Deploying to device/emulator
 ============================
@@ -141,23 +178,28 @@ iOS:
 Troubleshooting
 ===============
 - dotnet: command not found
-  • Install .NET 8 SDK and ensure dotnet is on PATH.
-- mgcb or mgcb-editor not found
-  • Install MGCB editor tool and add ~/.dotnet/tools to PATH.
+  • Install .NET 9 SDK and ensure dotnet is on PATH.
+- FNA dependencies missing (CS0234 errors)
+  • Run ./scripts/setup-fna-deps.sh to download FNA C# bindings.
 - ANDROID_HOME not set / sdkmanager/adb not found
   • Set ANDROID_HOME to your SDK path or source scripts/setup-android-env.sh.
 - No APK/AAB after build
   • Check build output in GltronMobileGame/bin/<Config>/, review dotnet build logs for errors.
+- TypeInitializationException at runtime
+  • Ensure FNA native libraries are included in APK (check lib/ directories).
 - Content not found at runtime
-  • Ensure Content.mgcb built for platform and content files exist under Content/bin/<Platform>.
+  • FNA uses raw content files - ensure PNG/OGG/TTF files exist in Content/Assets/.
+- Production build signing errors
+  • Verify keystore exists and passwords are correct.
 
 Multiplatform Notes
 ==================
-- This repo contains both Android (GltronMobileGame) and iOS (GltronMobileGame.iOS) MonoGame projects
+- This repo contains both Android (GltronMobileGame) and iOS (GltronMobileGame.iOS) FNA projects
 - Both projects share the same game engine code (GltronMobileEngine) and content assets
+- FNA uses raw content files (PNG, OGG, TTF) - no XNB conversion needed
 - The original Java Android project under GlTron/ is kept for reference only
 - iOS builds require macOS with Xcode and proper Apple Developer setup
-- Content pipeline automatically builds for the target platform (Android/iOS)
+- FNA provides better .NET 9 compatibility than MonoGame
 
 Solution Files:
 - GltronMobile.sln: Android-only solution (works on Linux/Windows/macOS)
@@ -166,6 +208,20 @@ Solution Files:
 Platform Detection:
 Run ./scripts/detect-platform.sh to see available build options for your platform.
 
+FNA Features
+============
+This project uses FNA (FNA's Not Accurate) instead of MonoGame for better compatibility:
+
+✅ **Better .NET 9 Support**: FNA works seamlessly with .NET 9
+✅ **Raw Content Loading**: No XNB conversion needed - use PNG, OGG, TTF directly
+✅ **Native Integration**: Direct SDL2/OpenAL integration for better performance
+✅ **Easier Deployment**: Simplified build process and dependency management
+✅ **XNA4 Compatibility**: Drop-in replacement for XNA/MonoGame code
+✅ **Cross-Platform**: Same codebase works on Android, iOS, and desktop
+
 Support
 =======
-If you want, ask me to run the one-shot builder once your Android SDK and .NET are installed, and I'll verify the APK generation for you. For iOS builds, ensure you're on macOS with the iOS workload installed.
+- For build issues, check the troubleshooting section above
+- For FNA-specific questions, see: https://fna-xna.github.io/docs/
+- For production builds, ensure you have a valid keystore for signing
+- iOS builds require macOS with Xcode and the iOS workload installed
