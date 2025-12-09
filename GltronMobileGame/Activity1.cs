@@ -37,22 +37,40 @@ namespace gltron.org.gltronmobile
                 // Try multiple approaches to set the Android context
                 try
                 {
-                    // Approach 1: Try AndroidGamePlatform._currentActivity
-                    var platformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
+                    // Try multiple assembly names for AndroidGamePlatform
+                    Type platformType = null;
+                    string[] assemblyNames = { 
+                        "MonoGame.Framework.Android", 
+                        "MonoGame.Framework", 
+                        "Microsoft.Xna.Framework.Android",
+                        "Microsoft.Xna.Framework"
+                    };
+                    
+                    foreach (var assemblyName in assemblyNames)
+                    {
+                        platformType = System.Type.GetType($"Microsoft.Xna.Framework.AndroidGamePlatform, {assemblyName}");
+                        if (platformType != null)
+                        {
+                            Android.Util.Log.Info("GLTRON", $"Found AndroidGamePlatform type in {assemblyName}");
+                            break;
+                        }
+                    }
+                    
                     if (platformType != null)
                     {
-                        Android.Util.Log.Info("GLTRON", "Found AndroidGamePlatform type");
-                        
                         // Try different field names
-                        string[] fieldNames = { "_currentActivity", "currentActivity", "Activity", "_activity", "Context", "_context" };
+                        string[] fieldNames = { "_currentActivity", "currentActivity", "Activity", "_activity", "Context", "_context", "_game" };
                         foreach (var fieldName in fieldNames)
                         {
-                            var field = platformType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+                            var field = platformType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
                             if (field != null)
                             {
-                                field.SetValue(null, this);
-                                Android.Util.Log.Info("GLTRON", $"Set {fieldName} field successfully");
-                                break;
+                                Android.Util.Log.Info("GLTRON", $"Found field: {fieldName} (Type: {field.FieldType.Name}, Static: {field.IsStatic})");
+                                if (field.IsStatic && (field.FieldType == typeof(Activity) || field.FieldType.IsAssignableFrom(typeof(Activity))))
+                                {
+                                    field.SetValue(null, this);
+                                    Android.Util.Log.Info("GLTRON", $"Set {fieldName} field successfully");
+                                }
                             }
                         }
                         
@@ -61,13 +79,20 @@ namespace gltron.org.gltronmobile
                         foreach (var propName in propertyNames)
                         {
                             var prop = platformType.GetProperty(propName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
-                            if (prop != null && prop.CanWrite)
+                            if (prop != null)
                             {
-                                prop.SetValue(null, this);
-                                Android.Util.Log.Info("GLTRON", $"Set {propName} property successfully");
-                                break;
+                                Android.Util.Log.Info("GLTRON", $"Found property: {propName} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
+                                if (prop.CanWrite && (prop.PropertyType == typeof(Activity) || prop.PropertyType.IsAssignableFrom(typeof(Activity))))
+                                {
+                                    prop.SetValue(null, this);
+                                    Android.Util.Log.Info("GLTRON", $"Set {propName} property successfully");
+                                }
                             }
                         }
+                    }
+                    else
+                    {
+                        Android.Util.Log.Info("GLTRON", "AndroidGamePlatform type not found in any assembly");
                     }
                     
                     // Approach 2: Try setting Android.App.Application.Context
