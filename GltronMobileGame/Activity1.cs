@@ -16,6 +16,7 @@ namespace gltron.org.gltronmobile
     public class Activity1 : Activity
     {
         private Game1 _game;
+        private AndroidGameView _gameView;
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
@@ -62,45 +63,28 @@ namespace gltron.org.gltronmobile
                 else
                 {
                     Android.Util.Log.Debug("GLTRON", "EXPECTED: No view available from services - MonoGame .NET 9 behavior");
-                    Android.Util.Log.Debug("GLTRON", "Creating AndroidGameView manually");
+                    Android.Util.Log.Debug("GLTRON", "Creating custom AndroidGameView");
                     
-                    // Create AndroidGameView manually for MonoGame .NET 9
+                    // Create our custom AndroidGameView for MonoGame .NET 9
                     try
                     {
-                        // Try to find and create AndroidGameView
-                        var androidGameViewType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGameView, MonoGame.Framework");
-                        if (androidGameViewType != null)
-                        {
-                            Android.Util.Log.Debug("GLTRON", "Found AndroidGameView type, creating instance");
-                            
-                            // Create AndroidGameView with this activity as context
-                            var androidGameView = System.Activator.CreateInstance(androidGameViewType, this) as View;
-                            if (androidGameView != null)
-                            {
-                                Android.Util.Log.Debug("GLTRON", "AndroidGameView created successfully");
-                                SetContentView(androidGameView);
-                                
-                                // Set the game view in the game's services
-                                _game.Services.AddService(typeof(View), androidGameView);
-                                
-                                _game.Run();
-                            }
-                            else
-                            {
-                                Android.Util.Log.Error("GLTRON", "Failed to create AndroidGameView instance");
-                                throw new InvalidOperationException("Could not create AndroidGameView");
-                            }
-                        }
-                        else
-                        {
-                            Android.Util.Log.Error("GLTRON", "AndroidGameView type not found");
-                            throw new InvalidOperationException("AndroidGameView type not available");
-                        }
+                        _gameView = new AndroidGameView(this, _game);
+                        Android.Util.Log.Debug("GLTRON", "Custom AndroidGameView created successfully");
+                        
+                        SetContentView(_gameView);
+                        
+                        // Register the view in game services
+                        _game.Services.AddService(typeof(View), _gameView);
+                        
+                        Android.Util.Log.Debug("GLTRON", "AndroidGameView set as content view");
+                        
+                        // Note: We don't call _game.Run() here because our AndroidGameView
+                        // handles the game loop through OpenGL rendering callbacks
                     }
                     catch (Exception viewEx)
                     {
-                        Android.Util.Log.Error("GLTRON", $"Failed to create AndroidGameView: {viewEx.Message}");
-                        throw new InvalidOperationException($"MonoGame AndroidGameView creation failed: {viewEx.Message}", viewEx);
+                        Android.Util.Log.Error("GLTRON", $"Failed to create custom AndroidGameView: {viewEx.Message}");
+                        throw new InvalidOperationException($"Custom AndroidGameView creation failed: {viewEx.Message}", viewEx);
                     }
                 }
             }
@@ -134,17 +118,20 @@ namespace gltron.org.gltronmobile
         protected override void OnPause()
         {
             base.OnPause();
+            _gameView?.Pause();
         }
 
         protected override void OnResume()
         {
             base.OnResume();
+            _gameView?.Resume();
         }
 
         protected override void OnDestroy()
         {
             try
             {
+                _gameView = null;
                 _game?.Dispose();
                 _game = null;
             }
