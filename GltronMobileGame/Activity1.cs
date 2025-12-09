@@ -20,124 +20,84 @@ namespace gltron.org.gltronmobile
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
+            base.OnCreate(savedInstanceState);
+
+            // Enable fullscreen and keep the screen on while playing.
+            Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
+            Window?.SetFlags(WindowManagerFlags.KeepScreenOn, WindowManagerFlags.KeepScreenOn);
+
             try
             {
-                base.OnCreate(savedInstanceState);
-
-                // Enable edge-to-edge fullscreen
-                Window?.SetFlags(
-                    WindowManagerFlags.Fullscreen,
-                    WindowManagerFlags.Fullscreen
-                );
-
-                Window?.SetFlags(
-                    WindowManagerFlags.KeepScreenOn,
-                    WindowManagerFlags.KeepScreenOn
-                );
-
-                // Create the game instance
+                // Create the MonoGame Game instance.
+                // Note: MonoGame no longer automatically attaches a view or starts the game loop on Android (.NET 8/9),
+                // so the Activity is responsible for providing a GL surface and driving the frame updates.
                 _game = new Game1();
 
-                // Debug: Check specific services we're interested in
-                Android.Util.Log.Debug("GLTRON", "=== Checking MonoGame Services ===");
-                
-                var viewService = _game.Services.GetService(typeof(View));
-                Android.Util.Log.Debug("GLTRON", $"View service: {viewService?.GetType().FullName ?? "NULL"}");
-                
-                var androidViewService = _game.Services.GetService(typeof(Android.Views.View));
-                Android.Util.Log.Debug("GLTRON", $"Android.Views.View service: {androidViewService?.GetType().FullName ?? "NULL"}");
-                
-                // Try common MonoGame Android view types
-                var gameViewService = _game.Services.GetService(System.Type.GetType("Microsoft.Xna.Framework.AndroidGameView"));
-                Android.Util.Log.Debug("GLTRON", $"AndroidGameView service: {gameViewService?.GetType().FullName ?? "NULL"}");
+                // Create our custom AndroidGameView wrapper.
+                // This class creates a GLSurfaceView and uses its render thread to call RunOneFrame(),
+                // becoming the primary driver of the MonoGame update/draw loop.
+                _gameView = new AndroidGameView(this, _game);
 
-                // Try to get the view from MonoGame services
-                var gameView = _game.Services.GetService(typeof(View)) as View;
-
-                if (gameView != null)
-                {
-                    Android.Util.Log.Debug("GLTRON", "SUCCESS: Using view from services");
-                    SetContentView(gameView);
-                    _game.Run();
-                }
-                else
-                {
-                    Android.Util.Log.Debug("GLTRON", "EXPECTED: No view available from services - MonoGame .NET 9 behavior");
-                    Android.Util.Log.Debug("GLTRON", "Creating custom AndroidGameView");
-                    
-                    // Create our custom AndroidGameView for MonoGame .NET 9
-                    try
-                    {
-                        _gameView = new AndroidGameView(this, _game);
-                        Android.Util.Log.Debug("GLTRON", "Custom AndroidGameView created successfully");
-                        
-                        SetContentView(_gameView);
-                        
-                        Android.Util.Log.Debug("GLTRON", "AndroidGameView set as content view");
-                        
-                        // Note: We don't call _game.Run() here because our AndroidGameView
-                        // handles the game loop through OpenGL rendering callbacks
-                    }
-                    catch (Exception viewEx)
-                    {
-                        Android.Util.Log.Error("GLTRON", $"Failed to create custom AndroidGameView: {viewEx.Message}");
-                        throw new InvalidOperationException($"Custom AndroidGameView creation failed: {viewEx.Message}", viewEx);
-                    }
-                }
+                // Attach the custom view to the Activity.
+                // IMPORTANT: Do NOT call _game.Run() on Android. 
+                // The game loop is driven automatically by AndroidGameView's OpenGL callbacks.
+                SetContentView(_gameView);
             }
             catch (Exception ex)
             {
+                // If initialization fails, show a readable on-screen error instead of a silent crash.
                 ShowErrorScreen(ex);
             }
         }
 
+        /// <summary>
+        /// Displays a simple centered error message if the game fails to initialize.
+        /// This avoids black-screen crashes and gives immediate feedback to the user.
+        /// </summary>
         private void ShowErrorScreen(Exception ex)
         {
-            try
+            var errorView = new Android.Widget.TextView(this)
             {
-                var errorView = new Android.Widget.TextView(this);
-                errorView.Text = $"GLTron Mobile - Initialization Error\n\n" +
-                               $"Error Type: {ex.GetType().Name}\n" +
-                               $"Message: {ex.Message}\n\n" +
-                               $"Please restart the application.";
-                errorView.SetTextColor(Android.Graphics.Color.White);
-                errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
-                errorView.Gravity = Android.Views.GravityFlags.Center;
-                errorView.SetPadding(20, 20, 20, 20);
-                SetContentView(errorView);
-            }
-            catch (Exception)
-            {
-                // Ignore secondary errors
-            }
+                Text = $"GLTron Mobile - Initialization Error\n\n{ex}",
+                Gravity = GravityFlags.Center
+            };
+
+            errorView.SetTextColor(Android.Graphics.Color.White);
+            errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
+            errorView.SetPadding(20, 20, 20, 20);
+
+            SetContentView(errorView);
         }
 
         protected override void OnPause()
         {
             base.OnPause();
+
+            // Pause rendering + GL thread safely.
+            // This prevents crashes on home-button press or app minimization.
             _gameView?.Pause();
         }
 
         protected override void OnResume()
         {
             base.OnResume();
+
+            // Resume rendering + GL thread.
+            // This restores the MonoGame frame loop on returning to the app.
             _gameView?.Resume();
         }
 
         protected override void OnDestroy()
         {
-            try
-            {
-                _gameView = null;
-                _game?.Dispose();
-                _game = null;
-            }
-            catch (Exception ex)
-            {
-                // Log error if needed
-            }
-            
             base.OnDestroy();
+
+            // When the Activity is destroyed, dispose the Game instance.
+            // DO NOT manually dispose the AndroidGameView or underlying GL surface;
+            // Android handles teardown of GLSurfaceView and EGL contexts automatically.
+            _game?.Dispose();
+            _game = null;
+
+            _gameView = null; // Allow GC cleanup
         }
     }
 }
