@@ -1,0 +1,47 @@
+stages:
+  - build
+
+variables:
+  ANDROID_HOME: "/usr/local/share/android-sdk"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+# Global before_script runs for every job
+before_script:
+  - apt-get update && apt-get install -y openjdk-17-jdk unzip wget
+  - dotnet --info
+  - dotnet workload install android
+
+# Cache NuGet packages to speed up builds
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - ~/.nuget/packages/
+
+build_debug:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🔄 Restoring dependencies"
+    - dotnet restore GltronMobileGame/GltronAndroid.csproj
+    - echo "🐛 Building Debug APK"
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal
+  artifacts:
+    name: "gltron-mobile-debug-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - GltronMobileGame/bin/Debug/net8.0-android/publish/*.apk
+    expire_in: 30 days
+
+build_release:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🔄 Restoring dependencies"
+    - dotnet restore GltronMobileGame/GltronAndroid.csproj
+    - echo "🚀 Building Release APK"
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal
+  artifacts:
+    name: "gltron-mobile-release-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - GltronMobileGame/bin/Release/net8.0-android/publish/*.apk
+    expire_in: 30 days
