@@ -37,30 +37,36 @@ namespace gltron.org.gltronmobile
                 // Create the game instance
                 _game = new Game1();
 
-                // Debug: Check what services are available
-                Android.Util.Log.Debug("GLTRON", "=== Available Services ===");
-                foreach (var service in _game.Services)
-                {
-                    Android.Util.Log.Debug("GLTRON", $"Service: {service.GetType().FullName}");
-                }
+                // Debug: Check specific services we're interested in
+                Android.Util.Log.Debug("GLTRON", "=== Checking MonoGame Services ===");
+                
+                var viewService = _game.Services.GetService(typeof(View));
+                Android.Util.Log.Debug("GLTRON", $"View service: {viewService?.GetType().FullName ?? "NULL"}");
+                
+                var androidViewService = _game.Services.GetService(typeof(Android.Views.View));
+                Android.Util.Log.Debug("GLTRON", $"Android.Views.View service: {androidViewService?.GetType().FullName ?? "NULL"}");
+                
+                // Try common MonoGame Android view types
+                var gameViewService = _game.Services.GetService(System.Type.GetType("Microsoft.Xna.Framework.AndroidGameView"));
+                Android.Util.Log.Debug("GLTRON", $"AndroidGameView service: {gameViewService?.GetType().FullName ?? "NULL"}");
 
                 // Try to get the view from MonoGame services
                 var gameView = _game.Services.GetService(typeof(View)) as View;
-                Android.Util.Log.Debug("GLTRON", $"GameView from services: {gameView?.GetType().FullName ?? "NULL"}");
 
                 if (gameView != null)
                 {
-                    Android.Util.Log.Debug("GLTRON", "Using view from services");
+                    Android.Util.Log.Debug("GLTRON", "SUCCESS: Using view from services");
                     SetContentView(gameView);
+                    _game.Run();
                 }
                 else
                 {
-                    Android.Util.Log.Debug("GLTRON", "No view available from services - MonoGame .NET 9 behavior");
-                    // For now, let's see what happens if we just run the game
+                    Android.Util.Log.Debug("GLTRON", "EXPECTED: No view available from services - MonoGame .NET 9 behavior");
+                    Android.Util.Log.Debug("GLTRON", "Will need to implement manual AndroidGameView creation");
+                    
+                    // For now, just try running the game to see what happens
+                    _game.Run();
                 }
-
-                // Run the game
-                _game.Run();
             }
             catch (Exception ex)
             {
