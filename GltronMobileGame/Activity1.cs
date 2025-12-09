@@ -1,25 +1,21 @@
 using System;
 using Android.App;
-using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using AndroidX.Activity;
+using AndroidX.Core.View;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
 
 namespace gltron.org.gltronmobile
 {
     [Activity(
-        Label = "@string/app_name",
-        Icon = "@drawable/Icon",
+        Label = "GLTron Mobile",
         MainLauncher = true,
-        AlwaysRetainTaskState = true,
-        LaunchMode = LaunchMode.SingleInstance,
-        ScreenOrientation = ScreenOrientation.SensorLandscape,
-        ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
-        Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
+        Theme = "@style/Theme.AppCompat.Light.NoActionBar",
+        ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape
     )]
-
-    public class Activity1 : Activity
+    public class Activity1 : ComponentActivity
     {
         private Game1 _game;
 
@@ -29,12 +25,27 @@ namespace gltron.org.gltronmobile
             {
                 base.OnCreate(savedInstanceState);
 
+                // Enable edge-to-edge fullscreen
+                Window?.SetFlags(
+                    WindowManagerFlags.Fullscreen,
+                    WindowManagerFlags.Fullscreen
+                );
+
+                Window?.SetFlags(
+                    WindowManagerFlags.KeepScreenOn,
+                    WindowManagerFlags.KeepScreenOn
+                );
+
                 // Create the game instance
                 _game = new Game1();
 
                 // Get the view from MonoGame services and set it as content view
-                var gameView = (View)_game.Services.GetService(typeof(View));
-                SetContentView(gameView);
+                var gameView = _game.Services.GetService(typeof(View)) as View;
+
+                if (gameView != null)
+                {
+                    SetContentView(gameView);
+                }
 
                 // Run the game
                 _game.Run();
