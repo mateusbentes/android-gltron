@@ -7,12 +7,9 @@ variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
 
-# Global before_script runs for every job
 before_script:
   - apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl
   - dotnet --info
-  
-  # Install Android SDK
   - mkdir -p $ANDROID_HOME
   - cd $ANDROID_HOME
   - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
@@ -20,19 +17,12 @@ before_script:
   - mkdir -p cmdline-tools/latest
   - mv cmdline-tools/* cmdline-tools/latest/ || true
   - rm commandlinetools-linux-11076708_latest.zip
-  
-  # Set up Android SDK path
   - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
   - export PATH=$ANDROID_HOME/platform-tools:$PATH
-  
-  # Accept licenses and install required SDK components
   - yes | sdkmanager --licenses || true
   - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-  
-  # Install .NET Android workload
   - dotnet workload install android
 
-# Cache NuGet packages to speed up builds
 cache:
   key: "${CI_COMMIT_REF_SLUG}"
   paths:
@@ -44,13 +34,13 @@ build_debug:
   timeout: 30m
   retry: 1
   script:
-    - echo "🔍 Debugging: Current directory and file structure"
+    - echo "Debugging - Current directory and file structure"
     - pwd
     - ls -la
     - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
-    - echo "🔄 Restoring dependencies"
+    - echo "Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🐛 Building Debug APK"
+    - echo "Building Debug APK"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
@@ -65,13 +55,13 @@ build_release:
   timeout: 30m
   retry: 1
   script:
-    - echo "🔍 Debugging: Current directory and file structure"
+    - echo "Debugging - Current directory and file structure"
     - pwd
     - ls -la
     - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
-    - echo "🔄 Restoring dependencies"
+    - echo "Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🚀 Building Release APK"
+    - echo "Building Release APK"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
