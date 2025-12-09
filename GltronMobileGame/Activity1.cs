@@ -2,8 +2,6 @@ using System;
 using Android.App;
 using Android.OS;
 using Android.Views;
-using AndroidX.Activity;
-using AndroidX.Core.View;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
 
@@ -12,10 +10,10 @@ namespace gltron.org.gltronmobile
     [Activity(
         Label = "GLTron Mobile",
         MainLauncher = true,
-        Theme = "@style/Theme.AppCompat.Light.NoActionBar",
+        Theme = "@android:style/Theme.NoTitleBar.Fullscreen",
         ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape
     )]
-    public class Activity1 : ComponentActivity
+    public class Activity1 : Activity
     {
         private Game1 _game;
 
