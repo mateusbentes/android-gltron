@@ -34,10 +34,17 @@ build_debug:
   timeout: 30m
   retry: 1
   script:
-    - echo "Debugging - Current directory and file structure"
+    - echo "=== DEBUGGING FILE STRUCTURE ==="
     - pwd
+    - echo "Root directory contents:"
     - ls -la
+    - echo "Looking for .csproj files:"
+    - find . -name "*.csproj" -type f
+    - echo "Looking for GltronMobileGame directory:"
     - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
+    - echo "Checking if GltronAndroid.csproj exists:"
+    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
+    - echo "=== END DEBUGGING ==="
     - echo "Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "Building Debug APK"
@@ -55,10 +62,17 @@ build_release:
   timeout: 30m
   retry: 1
   script:
-    - echo "Debugging - Current directory and file structure"
+    - echo "=== DEBUGGING FILE STRUCTURE ==="
     - pwd
+    - echo "Root directory contents:"
     - ls -la
+    - echo "Looking for .csproj files:"
+    - find . -name "*.csproj" -type f
+    - echo "Looking for GltronMobileGame directory:"
     - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
+    - echo "Checking if GltronAndroid.csproj exists:"
+    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
+    - echo "=== END DEBUGGING ==="
     - echo "Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "Building Release APK"
