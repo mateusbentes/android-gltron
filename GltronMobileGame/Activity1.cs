@@ -29,22 +29,30 @@ namespace gltron.org.gltronmobile
 
             try
             {
-                Android.Util.Log.Debug("GLTRON", "Testing MonoGame 3.8.5-develop.13 with .NET 9...");
+                Android.Util.Log.Debug("GLTRON", "Trying MonoGame .NET 9 official approach...");
                 
-                // Now that we're using MonoGame 3.8.5-develop.13 which should support .NET 9,
-                // let's try the standard approach
+                // Try the official MonoGame .NET 9 approach - let the game handle its own view creation
+                Android.Util.Log.Debug("GLTRON", "Creating Game1 and letting it handle Android integration...");
                 
-                Android.Util.Log.Debug("GLTRON", "Creating Game1 instance...");
                 _game = new Game1();
-                Android.Util.Log.Debug("GLTRON", "SUCCESS: Game1 created with MonoGame 3.8.5-develop.13!");
+                Android.Util.Log.Debug("GLTRON", "Game1 created successfully!");
                 
-                Android.Util.Log.Debug("GLTRON", "Creating AndroidGameView...");
-                _gameView = new AndroidGameView(this, _game);
+                // Try to get the view that MonoGame should create automatically
+                Android.Util.Log.Debug("GLTRON", "Checking if MonoGame created a view automatically...");
+                var gameView = _game.Services.GetService(typeof(Android.Views.View)) as Android.Views.View;
                 
-                Android.Util.Log.Debug("GLTRON", "Setting AndroidGameView as content view...");
-                SetContentView(_gameView);
-                
-                Android.Util.Log.Debug("GLTRON", "MonoGame setup complete!");
+                if (gameView != null)
+                {
+                    Android.Util.Log.Debug("GLTRON", "SUCCESS: MonoGame created view automatically!");
+                    SetContentView(gameView);
+                    _game.Run();
+                }
+                else
+                {
+                    Android.Util.Log.Debug("GLTRON", "MonoGame didn't create view automatically, trying Run() directly...");
+                    // Some MonoGame versions handle view creation in Run()
+                    _game.Run();
+                }
             }
             catch (Exception ex)
             {
@@ -67,71 +75,6 @@ namespace gltron.org.gltronmobile
             errorView.SetPadding(20, 20, 20, 20);
 
             SetContentView(errorView);
-        }
-
-        private void SetupProperGameView(Game1 game)
-        {
-            try
-            {
-                Android.Util.Log.Debug("GLTRON", "Setting up proper AndroidGameView with working game instance...");
-                
-                _game = game;
-                _gameView = new AndroidGameView(this, _game);
-                SetContentView(_gameView);
-                
-                Android.Util.Log.Debug("GLTRON", "AndroidGameView setup complete");
-            }
-            catch (Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Failed to setup AndroidGameView: {ex.Message}");
-                ShowErrorScreen(ex);
-            }
-        }
-
-        private void SetAndroidContext()
-        {
-            try
-            {
-                // Set the current activity for MonoGame's AndroidGamePlatform
-                // This must be done BEFORE creating the Game instance
-                
-                // Try multiple approaches to set the Android context
-                var gameType = typeof(Microsoft.Xna.Framework.Game);
-                
-                // Approach 1: Try to find and set Activity field
-                var activityField = gameType.GetField("Activity", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                if (activityField != null)
-                {
-                    activityField.SetValue(null, this);
-                    Android.Util.Log.Debug("GLTRON", "Set Game.Activity field");
-                    return;
-                }
-                
-                // Approach 2: Try AndroidGamePlatform static fields
-                var platformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
-                if (platformType != null)
-                {
-                    var currentActivityField = platformType.GetField("_currentActivity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                    if (currentActivityField != null)
-                    {
-                        currentActivityField.SetValue(null, this);
-                        Android.Util.Log.Debug("GLTRON", "Set AndroidGamePlatform._currentActivity field");
-                        return;
-                    }
-                }
-                
-                // Approach 3: Set Android.App.Application context
-                if (Android.App.Application.Context == null)
-                {
-                    Android.Util.Log.Debug("GLTRON", "Application.Context is null - this might be the issue");
-                }
-                
-                Android.Util.Log.Debug("GLTRON", "Could not set Android context via reflection");
-            }
-            catch (Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Failed to set Android context: {ex.Message}");
-            }
         }
 
         protected override void OnPause()
