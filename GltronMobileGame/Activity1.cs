@@ -5,7 +5,6 @@ using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
-using System.Reflection;
 
 namespace gltron.org.gltronmobile
 {
@@ -19,82 +18,34 @@ namespace gltron.org.gltronmobile
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
+
     public class Activity1 : Activity
     {
         private Game1 _game;
 
-        protected override void OnCreate(Bundle bundle)
+        protected override void OnCreate(Bundle? savedInstanceState)
         {
             try
             {
-                Android.Util.Log.Info("GLTRON", "=== MONOGAME GAME1 INITIALIZATION ===");
-                Android.Util.Log.Info("GLTRON", "Activity.OnCreate starting...");
-                
-                base.OnCreate(bundle);
-                Android.Util.Log.Info("GLTRON", "Activity.OnCreate completed");
+                base.OnCreate(savedInstanceState);
 
-                Android.Util.Log.Info("GLTRON", "Step 1: Setting up Android environment...");
-                
-                // Simplified Reflection to set the Activity context for MonoGame.
-                // This is necessary when not inheriting from MonoGame.Framework.Android.GameActivity.
-                try
-                {
-                    // Find the internal static field that holds the Activity reference in MonoGame.Framework
-                    var gameType = typeof(Microsoft.Xna.Framework.Game);
-                    var activityField = gameType.GetField("Activity", BindingFlags.Static | BindingFlags.Public) ??
-                                        gameType.GetField("_activity", BindingFlags.Static | BindingFlags.NonPublic);
-
-                    if (activityField != null)
-                    {
-                        activityField.SetValue(null, this);
-                        Android.Util.Log.Info("GLTRON", $"Set MonoGame Activity reference via field: {activityField.Name}");
-                    }
-                    else
-                    {
-                        Android.Util.Log.Info("GLTRON", "Could not find MonoGame Activity field for reflection.");
-                    }
-                    
-                    // Also try to initialize the AndroidGamePlatform directly
-                    var platformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
-                    if (platformType != null)
-                    {
-                        var initMethod = platformType.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public);
-                        initMethod?.Invoke(null, new object[] { this });
-                        Android.Util.Log.Info("GLTRON", "Attempted AndroidGamePlatform.Initialize()");
-                    }
-                    
-                }
-                catch (System.Exception ex)
-                {
-                    Android.Util.Log.Error("GLTRON", $"Reflection Setup failed: {ex.Message}");
-                }
-                
-                Android.Util.Log.Info("GLTRON", "Step 2: Creating Game1 instance...");
-                
                 // Create the game instance
                 _game = new Game1();
-                Android.Util.Log.Info("GLTRON", "Game1 instance created successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 3: Running game...");
+
+                // Get the view from MonoGame services and set it as content view
+                var gameView = (View)_game.Services.GetService(typeof(View));
+                SetContentView(gameView);
+
+                // Run the game
                 _game.Run();
-                Android.Util.Log.Info("GLTRON", "Game started successfully");
-                
-                Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", "=== MONOGAME INITIALIZATION EXCEPTION ===");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION TYPE: {ex.GetType().FullName}");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION MESSAGE: {ex.Message}");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION STACK: {ex.StackTrace}");
-                
                 ShowErrorScreen(ex);
             }
         }
 
-
-
-        private void ShowErrorScreen(System.Exception ex)
+        private void ShowErrorScreen(Exception ex)
         {
             try
             {
@@ -102,45 +53,39 @@ namespace gltron.org.gltronmobile
                 errorView.Text = $"GLTron Mobile - Initialization Error\n\n" +
                                $"Error Type: {ex.GetType().Name}\n" +
                                $"Message: {ex.Message}\n\n" +
-                               $"Please restart the application.\n" +
-                               $"If the problem persists, try restarting your device.";
+                               $"Please restart the application.";
                 errorView.SetTextColor(Android.Graphics.Color.White);
                 errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
                 errorView.Gravity = Android.Views.GravityFlags.Center;
                 errorView.SetPadding(20, 20, 20, 20);
                 SetContentView(errorView);
-                Android.Util.Log.Info("GLTRON", "Error view displayed");
             }
-            catch (System.Exception ex2)
+            catch (Exception)
             {
-                Android.Util.Log.Error("GLTRON", $"Failed to show error view: {ex2}");
+                // Ignore secondary errors
             }
         }
 
         protected override void OnPause()
         {
-            Android.Util.Log.Info("GLTRON", "Activity1.OnPause");
             base.OnPause();
         }
 
         protected override void OnResume()
         {
-            Android.Util.Log.Info("GLTRON", "Activity1.OnResume");
             base.OnResume();
         }
 
         protected override void OnDestroy()
         {
-            Android.Util.Log.Info("GLTRON", "Activity1.OnDestroy");
-            
             try
             {
                 _game?.Dispose();
                 _game = null;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", $"Error disposing game: {ex}");
+                // Log error if needed
             }
             
             base.OnDestroy();
