@@ -29,40 +29,22 @@ namespace gltron.org.gltronmobile
 
             try
             {
-                Android.Util.Log.Debug("GLTRON", "Setting up Android environment...");
+                Android.Util.Log.Debug("GLTRON", "Testing MonoGame 3.8.5-develop.13 with .NET 9...");
                 
-                // Set the current activity in Android.App.Application context
-                // This is what MonoGame's AndroidGamePlatform might be looking for
-                if (Android.App.Application.Context == null)
-                {
-                    Android.Util.Log.Error("GLTRON", "Application.Context is null - this is likely the problem");
-                }
+                // Now that we're using MonoGame 3.8.5-develop.13 which should support .NET 9,
+                // let's try the standard approach
                 
-                // Try to set the activity using Java interop
-                try
-                {
-                    var javaClass = Java.Lang.Class.ForName("mono.MonoPackageManager");
-                    if (javaClass != null)
-                    {
-                        Android.Util.Log.Debug("GLTRON", "Found MonoPackageManager class");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Android.Util.Log.Debug("GLTRON", $"MonoPackageManager not found: {ex.Message}");
-                }
+                Android.Util.Log.Debug("GLTRON", "Creating Game1 instance...");
+                _game = new Game1();
+                Android.Util.Log.Debug("GLTRON", "SUCCESS: Game1 created with MonoGame 3.8.5-develop.13!");
                 
-                // Create AndroidGameView first to establish OpenGL context
-                Android.Util.Log.Debug("GLTRON", "Creating AndroidGameView without Game first...");
+                Android.Util.Log.Debug("GLTRON", "Creating AndroidGameView...");
+                _gameView = new AndroidGameView(this, _game);
                 
-                // Create the view first
-                _gameView = new AndroidGameView(this, null);
+                Android.Util.Log.Debug("GLTRON", "Setting AndroidGameView as content view...");
                 SetContentView(_gameView);
                 
-                Android.Util.Log.Debug("GLTRON", "AndroidGameView created and set as content view");
-                
-                // Now try to create the game in the OpenGL context
-                Android.Util.Log.Debug("GLTRON", "Will create Game1 in OpenGL context...");
+                Android.Util.Log.Debug("GLTRON", "MonoGame setup complete!");
             }
             catch (Exception ex)
             {
@@ -85,6 +67,25 @@ namespace gltron.org.gltronmobile
             errorView.SetPadding(20, 20, 20, 20);
 
             SetContentView(errorView);
+        }
+
+        private void SetupProperGameView(Game1 game)
+        {
+            try
+            {
+                Android.Util.Log.Debug("GLTRON", "Setting up proper AndroidGameView with working game instance...");
+                
+                _game = game;
+                _gameView = new AndroidGameView(this, _game);
+                SetContentView(_gameView);
+                
+                Android.Util.Log.Debug("GLTRON", "AndroidGameView setup complete");
+            }
+            catch (Exception ex)
+            {
+                Android.Util.Log.Error("GLTRON", $"Failed to setup AndroidGameView: {ex.Message}");
+                ShowErrorScreen(ex);
+            }
         }
 
         private void SetAndroidContext()
