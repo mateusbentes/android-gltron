@@ -44,6 +44,10 @@ build_debug:
   timeout: 30m
   retry: 1
   script:
+    - echo "🔍 Debugging: Current directory and file structure"
+    - pwd
+    - ls -la
+    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "🐛 Building Debug APK"
@@ -61,6 +65,10 @@ build_release:
   timeout: 30m
   retry: 1
   script:
+    - echo "🔍 Debugging: Current directory and file structure"
+    - pwd
+    - ls -la
+    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "🚀 Building Release APK"
