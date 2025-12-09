@@ -37,12 +37,26 @@ namespace gltron.org.gltronmobile
                 // Create the game instance
                 _game = new Game1();
 
-                // Get the view from MonoGame services and set it as content view
+                // Debug: Check what services are available
+                Android.Util.Log.Debug("GLTRON", "=== Available Services ===");
+                foreach (var service in _game.Services)
+                {
+                    Android.Util.Log.Debug("GLTRON", $"Service: {service.GetType().FullName}");
+                }
+
+                // Try to get the view from MonoGame services
                 var gameView = _game.Services.GetService(typeof(View)) as View;
+                Android.Util.Log.Debug("GLTRON", $"GameView from services: {gameView?.GetType().FullName ?? "NULL"}");
 
                 if (gameView != null)
                 {
+                    Android.Util.Log.Debug("GLTRON", "Using view from services");
                     SetContentView(gameView);
+                }
+                else
+                {
+                    Android.Util.Log.Debug("GLTRON", "No view available from services - MonoGame .NET 9 behavior");
+                    // For now, let's see what happens if we just run the game
                 }
 
                 // Run the game
