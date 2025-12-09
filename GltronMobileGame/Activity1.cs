@@ -35,85 +35,38 @@ namespace gltron.org.gltronmobile
 
                 Android.Util.Log.Info("GLTRON", "Step 1: Setting up Android environment...");
                 
-                // Try multiple approaches to set the Android context
+                // Simplified Reflection to set the Activity context for MonoGame.
+                // This is necessary when not inheriting from MonoGame.Framework.Android.GameActivity.
                 try
                 {
-                    // Try multiple assembly names for AndroidGamePlatform
-                    Type platformType = null;
-                    string[] assemblyNames = { 
-                        "MonoGame.Framework.Android", 
-                        "MonoGame.Framework", 
-                        "Microsoft.Xna.Framework.Android",
-                        "Microsoft.Xna.Framework"
-                    };
-                    
-                    foreach (var assemblyName in assemblyNames)
+                    // Find the internal static field that holds the Activity reference in MonoGame.Framework
+                    var gameType = typeof(Microsoft.Xna.Framework.Game);
+                    var activityField = gameType.GetField("Activity", BindingFlags.Static | BindingFlags.Public) ??
+                                        gameType.GetField("_activity", BindingFlags.Static | BindingFlags.NonPublic);
+
+                    if (activityField != null)
                     {
-                        platformType = System.Type.GetType($"Microsoft.Xna.Framework.AndroidGamePlatform, {assemblyName}");
-                        if (platformType != null)
-                        {
-                            Android.Util.Log.Info("GLTRON", $"Found AndroidGamePlatform type in {assemblyName}");
-                            break;
-                        }
+                        activityField.SetValue(null, this);
+                        Android.Util.Log.Info("GLTRON", $"Set MonoGame Activity reference via field: {activityField.Name}");
+                    }
+                    else
+                    {
+                        Android.Util.Log.Info("GLTRON", "Could not find MonoGame Activity field for reflection.");
                     }
                     
+                    // Also try to initialize the AndroidGamePlatform directly
+                    var platformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
                     if (platformType != null)
                     {
-                        // Try different field names
-                        string[] fieldNames = { "_currentActivity", "currentActivity", "Activity", "_activity", "Context", "_context", "_game" };
-                        foreach (var fieldName in fieldNames)
-                        {
-                            var field = platformType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-                            if (field != null)
-                            {
-                                Android.Util.Log.Info("GLTRON", $"Found field: {fieldName} (Type: {field.FieldType.Name}, Static: {field.IsStatic})");
-                                if (field.IsStatic && (field.FieldType == typeof(Activity) || field.FieldType.IsAssignableFrom(typeof(Activity))))
-                                {
-                                    field.SetValue(null, this);
-                                    Android.Util.Log.Info("GLTRON", $"Set {fieldName} field successfully");
-                                }
-                            }
-                        }
-                        
-                        // Try properties too
-                        string[] propertyNames = { "CurrentActivity", "Activity", "Context" };
-                        foreach (var propName in propertyNames)
-                        {
-                            var prop = platformType.GetProperty(propName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
-                            if (prop != null)
-                            {
-                                Android.Util.Log.Info("GLTRON", $"Found property: {propName} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
-                                if (prop.CanWrite && (prop.PropertyType == typeof(Activity) || prop.PropertyType.IsAssignableFrom(typeof(Activity))))
-                                {
-                                    prop.SetValue(null, this);
-                                    Android.Util.Log.Info("GLTRON", $"Set {propName} property successfully");
-                                }
-                            }
-                        }
+                        var initMethod = platformType.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public);
+                        initMethod?.Invoke(null, new object[] { this });
+                        Android.Util.Log.Info("GLTRON", "Attempted AndroidGamePlatform.Initialize()");
                     }
-                    else
-                    {
-                        Android.Util.Log.Info("GLTRON", "AndroidGamePlatform type not found in any assembly");
-                    }
-                    
-                    // Approach 2: Try setting Android.App.Application.Context
-                    if (Android.App.Application.Context == null)
-                    {
-                        Android.Util.Log.Info("GLTRON", "Application.Context is null, trying to set it");
-                        // This might not work, but worth trying
-                    }
-                    else
-                    {
-                        Android.Util.Log.Info("GLTRON", "Application.Context is available");
-                    }
-                    
-                    // Approach 3: Set current activity in a global way
-                    Java.Lang.JavaSystem.SetProperty("mono.android.activity", this.GetType().FullName);
                     
                 }
                 catch (System.Exception ex)
                 {
-                    Android.Util.Log.Error("GLTRON", $"Setup failed: {ex.Message}");
+                    Android.Util.Log.Error("GLTRON", $"Reflection Setup failed: {ex.Message}");
                 }
                 
                 Android.Util.Log.Info("GLTRON", "Step 2: Creating Game1 instance...");
