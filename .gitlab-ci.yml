@@ -302,7 +302,7 @@ ai_test_false_positives:
     - echo "Attempting to run NosimusAI analysis..."
     - nosimus-ai analyze --path . --output-format console || echo "NosimusAI command not found"
     - dotnet /tmp/nosimus-ai/bin/Release/net8.0/NosimusAI.TestSuite.DotNet.dll --analyze . || echo "Built version not available"
-    - echo "Fallback: Basic code analysis"
+    - echo "Fallback Basic code analysis"
     - find . -name "*.cs" -type f | head -5 | while read file; do echo "Analyzing $file"; done
     - echo "4. Performance regression detection"
     - echo "Looking for APK files..."
@@ -324,10 +324,10 @@ ai_test_false_positives:
     - echo "6. AI-powered false positive detection"
     - echo "Analyzing previous test results for false positives..."
     - echo "FALSE POSITIVE ANALYSIS:"
-    - echo "- System.Diagnostics.Debug.dll.so: This is NORMAL .NET runtime, not debug symbols"
-    - echo "- aapt analysis failed: This is OK, we have unzip fallback working"
-    - echo "- Missing MonoGame content warnings: Expected when using fallback content pipeline"
-    - echo "- GLIBC warnings in earlier builds: RESOLVED by using Ubuntu Noble image"
+    - echo "- System.Diagnostics.Debug.dll.so This is NORMAL .NET runtime, not debug symbols"
+    - echo "- aapt analysis failed This is OK, we have unzip fallback working"
+    - echo "- Missing MonoGame content warnings Expected when using fallback content pipeline"
+    - echo "- GLIBC warnings in earlier builds RESOLVED by using Ubuntu Noble image"
     - echo ""
     - echo "REAL ISSUES TO MONITOR:"
     - echo "- APK size growth over time"
@@ -335,7 +335,7 @@ ai_test_false_positives:
     - echo "- Actual debug symbols (.pdb, .mdb files)"
     - echo "- Test code in production builds"
     - echo ""
-    - echo "AI RECOMMENDATION: Current alerts are FALSE POSITIVES - build is healthy!"
+    - echo "AI RECOMMENDATION Current alerts are FALSE POSITIVES - build is healthy!"
     - echo "AI Analysis completed successfully!"
   allow_failure: true
 
