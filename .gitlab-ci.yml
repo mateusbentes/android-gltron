@@ -265,7 +265,7 @@ validate_apk_release:
 ai_test_false_positives:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: 
+  needs:
     - job: "build_debug"
       artifacts: true
     - job: "build_release"
