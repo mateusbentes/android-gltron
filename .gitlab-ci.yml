@@ -385,11 +385,11 @@ ai_powered_analysis:
     - echo "Analyzing common .NET Android false positives..."
     - echo "=== APK ANALYSIS ==="
     - APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
-    - echo "APK files found: $APK_COUNT"
+    - echo "APK files found $APK_COUNT"
     - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "System.Diagnostics.Debug" || echo "0")
-    - echo "Debug libraries: $DEBUG_LIBS (normal .NET runtime)"
+    - echo "Debug libraries $DEBUG_LIBS (normal .NET runtime)"
     - NATIVE_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "\.so$" || echo "0")
-    - echo "Native libraries: $NATIVE_LIBS"
+    - echo "Native libraries $NATIVE_LIBS"
     - echo "=== APK ANALYSIS COMPLETE ==="
     - echo "REAL ANALYSIS VERDICT:"
     - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep "System.Diagnostics.Debug" | wc -l)
