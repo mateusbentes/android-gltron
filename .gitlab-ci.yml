@@ -400,7 +400,7 @@ ai_powered_analysis:
     - find . -name "*sonar*" -type f | while read file; do echo "- $file ($(stat -c%s "$file" 2>/dev/null || echo "0") bytes)"; done
     - echo ""
     - echo "REAL code analysis results:"
-    - find .sonarqube -name "*.json" -exec echo "JSON report: {}" \; -exec head -10 {} \; 2>/dev/null || echo "No JSON reports found"
+    - find .sonarqube -name "*.json" -exec echo "JSON report {}" \; -exec head -10 {} \; 2>/dev/null || echo "No JSON reports found"
     - echo "=== END REAL SONARQUBE RESULTS ==="
     - echo ""
     - echo "2. CUSTOM AI PATTERN ANALYSIS"
@@ -416,8 +416,8 @@ ai_powered_analysis:
     - echo "=== END APK ANALYSIS LOGS ==="
     - echo "REAL ANALYSIS VERDICT:"
     - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep "System.Diagnostics.Debug" | wc -l)
-    - echo "- System.Diagnostics.Debug libraries found: $DEBUG_LIBS"
-    - echo "- Analysis: This is normal .NET runtime (FALSE POSITIVE if flagged as debug symbols)"
+    - echo "- System.Diagnostics.Debug libraries found $DEBUG_LIBS"
+    - echo "- Analysis This is normal .NET runtime (FALSE POSITIVE if flagged as debug symbols)"
     - echo ""
     - echo "REAL AAPT tool status:"
     - aapt version 2>/dev/null && echo "- AAPT is available" || echo "- AAPT not available (using unzip fallback - EXPECTED)"
