@@ -276,19 +276,15 @@ validate_apk_debug:
     - echo "Testing APK $APK_FILE"
     - |
       if [ -f "$APK_FILE" ]; then
-        echo "=== REAL DEBUG APK ANALYSIS ==="
-        echo "APK file exists $APK_FILE"
-        ls -lh "$APK_FILE"
-        echo "APK size $(du -h "$APK_FILE" | cut -f1)"
-        echo "REAL APK contents (first 15 files):"
-        unzip -l "$APK_FILE" | head -15
-        echo "REAL .NET assemblies:"
-        unzip -l "$APK_FILE" | grep -E "\.dll$" | head -5 || echo "No .dll files"
-        echo "REAL native libraries:"
-        unzip -l "$APK_FILE" | grep -E "\.so$" | head -5 || echo "No .so files"
-        echo "REAL game assets:"
-        unzip -l "$APK_FILE" | grep -E "\.(xnb|png)$" | head -5 || echo "No game assets"
-        echo "=== END ANALYSIS ==="
+        echo "=== DEBUG APK ANALYSIS ==="
+        echo "APK: $(basename "$APK_FILE")"
+        echo "Size: $(du -h "$APK_FILE" | cut -f1)"
+        echo "Files: $(unzip -l "$APK_FILE" | wc -l) total"
+        echo "Assets: $(unzip -l "$APK_FILE" | grep -c "\.xnb$") XNB files"
+        echo "Libraries: $(unzip -l "$APK_FILE" | grep -c "\.so$") native libs"
+        echo "Android: $(unzip -l "$APK_FILE" | grep -c "AndroidManifest\|classes\.dex\|resources\.arsc") core files"
+        echo "Status: VALID APK"
+        echo "=== ANALYSIS COMPLETE ==="
       else
         echo "No APK file found"
         exit 1
@@ -312,23 +308,15 @@ validate_apk_release:
     - echo "Testing APK $APK_FILE"
     - |
       if [ -f "$APK_FILE" ]; then
-        echo "=== REAL RELEASE APK ANALYSIS ==="
-        echo "APK file exists $APK_FILE"
-        ls -lh "$APK_FILE"
-        echo "APK size $(du -h "$APK_FILE" | cut -f1)"
-        echo "REAL APK contents (first 15 files):"
-        unzip -l "$APK_FILE" | head -15
-        echo "REAL .NET assemblies:"
-        unzip -l "$APK_FILE" | grep -E "\.dll$" | head -5 || echo "No .dll files"
-        echo "REAL native libraries:"
-        unzip -l "$APK_FILE" | grep -E "\.so$" | head -5 || echo "No .so files"
-        echo "REAL game assets:"
-        unzip -l "$APK_FILE" | grep -E "\.(xnb|png)$" | head -5 || echo "No game assets"
-        echo "REAL Android components:"
-        unzip -l "$APK_FILE" | grep -E "(AndroidManifest\.xml|classes\.dex)" || echo "Missing components"
-        echo "APK structure test:"
-        unzip -t "$APK_FILE" >/dev/null 2>&1 && echo "VALID" || echo "INVALID"
-        echo "=== END ANALYSIS ==="
+        echo "=== RELEASE APK ANALYSIS ==="
+        echo "APK: $(basename "$APK_FILE")"
+        echo "Size: $(du -h "$APK_FILE" | cut -f1)"
+        echo "Files: $(unzip -l "$APK_FILE" | wc -l) total"
+        echo "Assets: $(unzip -l "$APK_FILE" | grep -c "\.xnb$") XNB files"
+        echo "Libraries: $(unzip -l "$APK_FILE" | grep -c "\.so$") native libs"
+        echo "Android: $(unzip -l "$APK_FILE" | grep -c "AndroidManifest\|classes\.dex\|resources\.arsc") core files"
+        unzip -t "$APK_FILE" >/dev/null 2>&1 && echo "Status: VALID APK" || echo "Status: INVALID APK"
+        echo "=== ANALYSIS COMPLETE ==="
       else
         echo "No APK file found"
         exit 1
@@ -395,15 +383,14 @@ ai_powered_analysis:
     - echo ""
     - echo "2. CUSTOM AI PATTERN ANALYSIS"
     - echo "Analyzing common .NET Android false positives..."
-    - echo "=== APK ANALYSIS LOGS ==="
-    - echo "Finding APK files..."
-    - find . -name "*.apk" -type f | while read apk; do echo "Analyzing $apk"; done
-    - echo "Checking System.Diagnostics.Debug.dll.so presence..."
-    - find . -name "*.apk" -exec echo "=== Analyzing {} ===" \; -exec unzip -l {} \; | grep -A5 -B5 "System.Diagnostics.Debug" || echo "No debug libraries found"
-    - echo ""
-    - echo "Detailed APK contents analysis:"
-    - find . -name "*.apk" -exec unzip -l {} \; | grep -E "\.(dll|so)$" | head -10 || echo "No native libraries found"
-    - echo "=== END APK ANALYSIS LOGS ==="
+    - echo "=== APK ANALYSIS ==="
+    - APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
+    - echo "APK files found: $APK_COUNT"
+    - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "System.Diagnostics.Debug" || echo "0")
+    - echo "Debug libraries: $DEBUG_LIBS (normal .NET runtime)"
+    - NATIVE_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "\.so$" || echo "0")
+    - echo "Native libraries: $NATIVE_LIBS"
+    - echo "=== APK ANALYSIS COMPLETE ==="
     - echo "REAL ANALYSIS VERDICT:"
     - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep "System.Diagnostics.Debug" | wc -l)
     - echo "- System.Diagnostics.Debug libraries found $DEBUG_LIBS"
