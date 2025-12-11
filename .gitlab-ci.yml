@@ -59,6 +59,8 @@ cache:
 cleanup_old_jobs:
   stage: cleanup
   image: alpine:latest
+  tags:
+    - saas-linux-small-amd64
   script:
     - echo "=== CLEANING UP OLD JOBS AND ARTIFACTS ==="
     - echo "Installing curl and jq for GitLab API calls..."
@@ -103,6 +105,8 @@ cleanup_old_jobs:
 optimize_pipeline:
   stage: cleanup
   image: alpine:latest
+  tags:
+    - saas-linux-small-amd64
   script:
     - echo "=== PIPELINE OPTIMIZATION FOR COMPUTE MINUTES ==="
     - echo ""
@@ -135,6 +139,8 @@ optimize_pipeline:
 build_debug:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-medium-amd64
   timeout: 30m
   retry: 1
   script:
@@ -161,6 +167,8 @@ build_debug:
 build_release:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-medium-amd64
   timeout: 30m
   retry: 1
   script:
@@ -187,6 +195,8 @@ build_release:
 unit_test_graphics:
   stage: unit_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   script:
     - echo "Running Graphics Pipeline Unit Tests"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
@@ -205,6 +215,8 @@ unit_test_graphics:
 unit_test_engine:
   stage: unit_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   script:
     - echo "Running Engine Unit Tests"
     - dotnet restore GltronMobileEngine/GltronMobileEngine.csproj
@@ -222,6 +234,8 @@ unit_test_engine:
 integration_test_android:
   stage: integration_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   needs: ["build_debug"]
   script:
     - echo "Running Android Integration Tests"
@@ -255,6 +269,8 @@ integration_test_android:
 integration_test_content:
   stage: integration_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   script:
     - echo "Running Content Pipeline Integration Tests"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
@@ -285,6 +301,8 @@ integration_test_content:
 validate_apk_debug:
   stage: validation_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   needs: ["build_debug"]
   script:
     - echo "Testing Debug APK"
@@ -315,6 +333,8 @@ validate_apk_debug:
 validate_apk_release:
   stage: validation_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-small-amd64
   needs: ["build_release"]
   script:
     - echo "Testing Release APK"
@@ -349,6 +369,8 @@ validate_apk_release:
 ai_powered_analysis:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
+  tags:
+    - saas-linux-medium-amd64
   needs:
     - job: "build_debug"
       artifacts: true
