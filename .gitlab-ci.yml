@@ -149,6 +149,7 @@ build_release:
     expire_in: 7 days
 
 unit_test_graphics:
+  <<: *build_setup
   stage: unit_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -169,6 +170,7 @@ unit_test_graphics:
     - echo "Graphics pipeline unit tests completed"
 
 unit_test_engine:
+  <<: *build_setup
   stage: unit_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -188,6 +190,7 @@ unit_test_engine:
     - echo "Engine unit tests completed"
 
 integration_test_android:
+  <<: *build_setup
   stage: integration_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -223,6 +226,7 @@ integration_test_android:
       fi
 
 integration_test_content:
+  <<: *build_setup
   stage: integration_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -255,6 +259,7 @@ integration_test_content:
       fi
 
 validate_apk_debug:
+  <<: *build_setup
   stage: validation_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -287,6 +292,7 @@ validate_apk_debug:
       fi
 
 validate_apk_release:
+  <<: *build_setup
   stage: validation_test
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -323,6 +329,7 @@ validate_apk_release:
       fi
 
 ai_powered_analysis:
+  <<: *build_setup
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
