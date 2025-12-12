@@ -25,6 +25,11 @@ public class Game1 : Game
     private bool _swipeInProgress = false;
     private const float MIN_SWIPE_DISTANCE = 30f; // Shorter minimum distance for more responsive swipes
     private const double MAX_SWIPE_TIME = 500; // Shorter time for more responsive swipes (milliseconds)
+    
+    // CRITICAL FIX: Keyboard input system (like original GLTron)
+    private KeyboardState _previousKeyboardState = new KeyboardState();
+    private string _lastKeyboardAction = "";
+    private double _keyboardActionTime = 0;
 
     public Game1()
     {
@@ -359,6 +364,9 @@ public class Game1 : Game
         {
             return;
         }
+
+        // CRITICAL FIX: Process keyboard input (like original GLTron)
+        ProcessKeyboardInput(gameTime);
 
         // CRITICAL FIX: Process swipe gestures instead of simple taps
         ProcessSwipeInput(gameTime);
@@ -859,11 +867,17 @@ public class Game1 : Game
                         var centerX = viewport.Width / 2;
                         var centerY = viewport.Height / 2;
                         
-                        // Main instruction - "Tap screen to Start"
-                        var startText = "Tap screen to Start";
+                        // Main instruction - "Tap screen to Start" with keyboard alternative
+                        var startText = "Tap screen or press SPACE/ENTER to Start";
                         var startSize = _font.MeasureString(startText);
                         _spriteBatch.DrawString(_font, startText, 
                             new Vector2(centerX - startSize.X/2, centerY + 100), Color.White);
+                        
+                        // Keyboard controls instruction
+                        var keyboardText = "Keyboard: Arrow Keys or A/D to turn | R to restart";
+                        var keyboardSize = _font.MeasureString(keyboardText);
+                        _spriteBatch.DrawString(_font, keyboardText, 
+                            new Vector2(centerX - keyboardSize.X/2, centerY + 130), Color.Cyan);
                         
                         // Additional instructions
                         var controlsText = "Top-left: Toggle Recognizer | Top-right: Switch Camera";
@@ -912,11 +926,22 @@ public class Game1 : Game
                             _spriteBatch.DrawString(_font, "Tap top-left to toggle recognizer", new Vector2(10, viewport.Height - 140), Color.Gray);
                         }
                         
-                        // Swipe instructions - CRITICAL FIX: Remove swipe text per user request
-                        // _spriteBatch.DrawString(_font, "◄ Swipe Left", new Vector2(10, viewport.Height - 80), Color.Yellow);
-                        // _spriteBatch.DrawString(_font, "Swipe Right ►", new Vector2(viewport.Width - 150, viewport.Height - 80), Color.Yellow);
+                        // Keyboard controls instructions
+                        _spriteBatch.DrawString(_font, "◄ A/Left Arrow", new Vector2(10, viewport.Height - 80), Color.Yellow);
+                        _spriteBatch.DrawString(_font, "D/Right Arrow ►", new Vector2(viewport.Width - 150, viewport.Height - 80), Color.Yellow);
+                        _spriteBatch.DrawString(_font, "R = Quick Restart", new Vector2(10, viewport.Height - 60), Color.Cyan);
                         
-                        // No visual feedback during swipe - keep it clean like original GLTron
+                        // Show recent keyboard action feedback
+                        if (!string.IsNullOrEmpty(_lastKeyboardAction) && 
+                            gameTime.TotalGameTime.TotalSeconds - _keyboardActionTime < 1.0)
+                        {
+                            float fadeAlpha = (float)(1.0 - (gameTime.TotalGameTime.TotalSeconds - _keyboardActionTime));
+                            _spriteBatch.DrawString(_font, _lastKeyboardAction, 
+                                new Vector2(viewport.Width / 2 - 50, viewport.Height - 100), 
+                                Color.Lime * fadeAlpha);
+                        }
+                        
+                        // Touch controls still work alongside keyboard
                         
 
                     }
@@ -969,7 +994,7 @@ public class Game1 : Game
                     _spriteBatch.DrawString(_font, scoreText, scorePos, Color.White);
                     
                     // Restart instruction with pulsing effect
-                    string restartText = "TAP TO RESTART";
+                    string restartText = "TAP TO RESTART or press SPACE/ENTER/R";
                     float pulse = (float)(System.Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3) * 0.3f + 0.7f);
                     Vector2 restartSize = _font.MeasureString(restartText);
                     Vector2 restartPos = new Vector2(
@@ -1240,6 +1265,142 @@ public class Game1 : Game
             {
 #if ANDROID
                 Android.Util.Log.Error("GLTRON", $"ProcessTurnInput error: {ex}");
+#endif
+#pragma warning disable CS0168 // Variable is used in conditional compilation
+            }
+            catch { }
+#pragma warning restore CS0168
+        }
+    }
+    
+    /// <summary>
+    /// CRITICAL FIX: Add keyboard input processing like original GLTron
+    /// Supports: Arrow Keys, WASD, Space/Enter (start/restart), R (quick restart), Escape (exit)
+    /// Works alongside existing touch/swipe controls for multiplatform compatibility
+    /// </summary>
+    private void ProcessKeyboardInput(GameTime gameTime)
+    {
+        try
+        {
+            KeyboardState currentKeyboardState = Keyboard.GetState();
+            var viewport = GraphicsDevice.Viewport;
+            
+            // Check for key presses (not held keys) to avoid rapid-fire input
+            bool leftPressed = currentKeyboardState.IsKeyDown(Keys.Left) && !_previousKeyboardState.IsKeyDown(Keys.Left);
+            bool rightPressed = currentKeyboardState.IsKeyDown(Keys.Right) && !_previousKeyboardState.IsKeyDown(Keys.Right);
+            bool aPressed = currentKeyboardState.IsKeyDown(Keys.A) && !_previousKeyboardState.IsKeyDown(Keys.A);
+            bool dPressed = currentKeyboardState.IsKeyDown(Keys.D) && !_previousKeyboardState.IsKeyDown(Keys.D);
+            bool spacePressed = currentKeyboardState.IsKeyDown(Keys.Space) && !_previousKeyboardState.IsKeyDown(Keys.Space);
+            bool enterPressed = currentKeyboardState.IsKeyDown(Keys.Enter) && !_previousKeyboardState.IsKeyDown(Keys.Enter);
+            bool rPressed = currentKeyboardState.IsKeyDown(Keys.R) && !_previousKeyboardState.IsKeyDown(Keys.R);
+            
+            // BONUS: Add W/S keys for potential future features (like speed control)
+            bool wPressed = currentKeyboardState.IsKeyDown(Keys.W) && !_previousKeyboardState.IsKeyDown(Keys.W);
+            bool sPressed = currentKeyboardState.IsKeyDown(Keys.S) && !_previousKeyboardState.IsKeyDown(Keys.S);
+            
+            // Handle menu state - Space or Enter to start
+            if (_glTronGame?.IsShowingMenu() == true)
+            {
+                if (spacePressed || enterPressed)
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Keyboard start game detected");
+                    // Simulate center screen tap to start game
+                    _glTronGame?.addTouchEvent(viewport.Width / 2f, viewport.Height / 2f, viewport.Width, viewport.Height);
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Info("GLTRON", "Keyboard start game detected");
+#endif
+                    }
+                    catch { }
+                }
+            }
+            // Handle game over state - Space, Enter, or R to restart
+            else if (_glTronGame != null && _glTronGame.IsGameOver())
+            {
+                if (spacePressed || enterPressed || rPressed)
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Keyboard restart game detected");
+                    // Simulate center screen tap to restart game
+                    _glTronGame?.addTouchEvent(viewport.Width / 2f, viewport.Height / 2f, viewport.Width, viewport.Height);
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Info("GLTRON", "Keyboard restart game detected");
+#endif
+                    }
+                    catch { }
+                }
+            }
+            // Handle gameplay - Arrow keys and WASD for turning
+            else if (_glTronGame != null && !_glTronGame.IsShowingMenu() && !_glTronGame.IsGameOver())
+            {
+                // Turn left: Left arrow or A key
+                if (leftPressed || aPressed)
+                {
+                    string keyName = leftPressed ? "Left Arrow" : "A";
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Keyboard TURN_LEFT detected ({keyName})");
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
+                    
+                    // Store action for UI feedback
+                    _lastKeyboardAction = $"◄ {keyName}";
+                    _keyboardActionTime = gameTime.TotalGameTime.TotalSeconds;
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Debug("GLTRON", $"Keyboard TURN_LEFT detected ({keyName})");
+#endif
+                    }
+                    catch { }
+                }
+                // Turn right: Right arrow or D key
+                else if (rightPressed || dPressed)
+                {
+                    string keyName = rightPressed ? "Right Arrow" : "D";
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Keyboard TURN_RIGHT detected ({keyName})");
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
+                    
+                    // Store action for UI feedback
+                    _lastKeyboardAction = $"{keyName} ►";
+                    _keyboardActionTime = gameTime.TotalGameTime.TotalSeconds;
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Debug("GLTRON", $"Keyboard TURN_RIGHT detected ({keyName})");
+#endif
+                    }
+                    catch { }
+                }
+                // Quick restart during gameplay: R key
+                else if (rPressed)
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Keyboard quick restart detected");
+                    // Simulate center screen tap to restart game
+                    _glTronGame?.addTouchEvent(viewport.Width / 2f, viewport.Height / 2f, viewport.Width, viewport.Height);
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Info("GLTRON", "Keyboard quick restart detected");
+#endif
+                    }
+                    catch { }
+                }
+            }
+            
+            // Store current state for next frame
+            _previousKeyboardState = currentKeyboardState;
+        }
+        catch (System.Exception ex)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"ProcessKeyboardInput error: {ex}");
 #endif
 #pragma warning disable CS0168 // Variable is used in conditional compilation
             }

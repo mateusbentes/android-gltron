@@ -28,9 +28,15 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
 
-  <!-- Share all .cs of the game -->
+  <!-- Share specific .cs files, excluding Android-specific ones -->
   <ItemGroup>
-    <Compile Include="..\GltronMobileGame\**\*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\GltronMobileGame\Game1.cs" Link="Game1.cs" />
+    <Compile Include="..\GltronMobileGame\GameState.cs" Link="GameState.cs" />
+    <Compile Include="..\GltronMobileGame\GLTronGame.cs" Link="GLTronGame.cs" />
+    <Compile Include="..\GltronMobileGame\Segment.cs" Link="Segment.cs" />
+    <Compile Include="..\GltronMobileGame\Video\*.cs" Link="Video\%(Filename)%(Extension)" />
+    <Compile Include="..\GltronMobileGame\Sound\*.cs" Link="Sound\%(Filename)%(Extension)" />
+    <!-- Explicitly exclude Activity1.cs and other Android-specific files -->
   </ItemGroup>
 
   <!-- Use default MGCB pipeline -->
